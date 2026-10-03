@@ -358,8 +358,7 @@
       animation: pop 520ms var(--ease-spring) both;
       animation-delay: calc(var(--d, 0ms) + 700ms);
     }
-    .arms-race .live-ring,
-    .live-dot::after {
+    .arms-race .live-ring {
       transform-box: fill-box;
       transform-origin: center;
       animation: live 2.4s var(--ease-out) infinite;
@@ -399,16 +398,6 @@
   .mobile-menu > * {
     min-height: 0;
     overflow: hidden;
-  }
-
-  /* A small pulsing "live" dot; the pulse itself only runs when motion is allowed. */
-  .live-dot::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: inherit;
-    opacity: 0;
   }
 
   /* Navigation progress bar for slow page loads. */
