@@ -1,0 +1,23 @@
+name: MoonsecV3Dumper
+author: richdentistboy
+tagline: Constant and string dumper for MoonSec v3, with regex pattern tooling.
+description: >-
+  Dumps decrypted constants and strings from MoonSec v3 scripts. It does not recover program
+  logic, so on its own it only partially breaks the protection.
+repo: https://github.com/richdentistboy/MoonsecV3Dumper
+access: open-source
+techniques: [constant-dump]
+outputLevel: constants
+# Last repository update.
+firstSeen: "~2024-03"
+maintenance: stale
+targets:
+  - obfuscator: moonsec
+    versions: ["3"]
+    support: full
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/richdentistboy/MoonsecV3Dumper
+    title: richdentistboy/MoonsecV3Dumper
+    accessed: 2026-10-03

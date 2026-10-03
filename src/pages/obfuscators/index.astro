@@ -1,0 +1,78 @@
+---
+import FilterBar, { type FilterDef, type SortDef } from '~/components/FilterBar.astro';
+import Icon from '~/components/Icon.astro';
+import ObfuscatorCard from '~/components/ObfuscatorCard.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import Base from '~/layouts/Base.astro';
+import { getSiteData } from '~/lib/data';
+import { issueUrl } from '~/lib/site';
+import { DISPLAY_STATUSES, PRICING, PRICING_LABEL, RUNTIMES, RUNTIME_LABEL, STATUS_META } from '~/lib/taxonomy';
+
+const { obfuscators } = await getSiteData();
+const countBy = (pred: (o: (typeof obfuscators)[number]) => boolean) => obfuscators.filter(pred).length;
+
+const filters: FilterDef[] = [
+  {
+    key: 'status',
+    label: 'Status',
+    kind: 'segmented',
+    options: DISPLAY_STATUSES.filter((s) => countBy((o) => o.status === s)).map((s) => ({
+      value: s,
+      label: STATUS_META[s].label,
+      count: countBy((o) => o.status === s),
+    })),
+  },
+  {
+    key: 'pricing',
+    label: 'Pricing',
+    kind: 'select',
+    options: PRICING.filter((p) => countBy((o) => o.data.pricing === p)).map((p) => ({
+      value: p,
+      label: PRICING_LABEL[p],
+      count: countBy((o) => o.data.pricing === p),
+    })),
+  },
+  {
+    key: 'runtime',
+    label: 'Runtime',
+    kind: 'select',
+    options: RUNTIMES.filter((r) => countBy((o) => o.data.targets.includes(r))).map((r) => ({
+      value: r,
+      label: RUNTIME_LABEL[r],
+      count: countBy((o) => o.data.targets.includes(r)),
+    })),
+  },
+];
+const sorts: SortDef[] = [
+  { value: 'score', label: 'Security Score', dir: 'desc', type: 'number' },
+  { value: 'name', label: 'Name', dir: 'asc', type: 'string' },
+  { value: 'released', label: 'Latest release', dir: 'desc', type: 'number' },
+  { value: 'broken', label: 'Recently broken', dir: 'desc', type: 'number' },
+];
+---
+
+<Base
+  title="Obfuscators"
+  description="Every tracked Lua and Luau obfuscator, with its current version, break status, Security Score and links."
+>
+  <PageHeader
+    eyebrow="Directory"
+    title="Obfuscators"
+    description="Every Lua and Luau obfuscator we track, with its current version, whether it has been publicly broken, and a Security Score computed from sourced data."
+  />
+  <div class="container-page py-10">
+    <FilterBar filters={filters} sorts={sorts} total={obfuscators.length} noun={['obfuscator', 'obfuscators']} />
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {obfuscators.map((o, i) => <ObfuscatorCard o={o} index={i} />)}
+    </div>
+    <div data-empty hidden class="surface mt-4 p-10 text-center">
+      <p class="text-fg">No obfuscators match these filters.</p>
+      <p class="mt-1 text-sm text-muted">Clear a filter, or tell us about one we're missing.</p>
+    </div>
+    <p class="mt-8 flex items-center gap-2 text-sm text-muted">
+      <Icon name="plus" size={15} />
+      Missing an obfuscator?
+      <a href={issueUrl('new-obfuscator')} class="link">Submit it with a source</a>
+    </p>
+  </div>
+</Base>

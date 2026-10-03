@@ -1,0 +1,32 @@
+name: Refresh GitHub stats
+
+on:
+  schedule:
+    - cron: '41 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tsx scripts/refresh-github.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/refresh-github-stats
+          commit-message: Refresh GitHub repository stats
+          title: Refresh GitHub repository stats
+          body: Weekly refresh of stars and last-push dates for repositories linked from the dataset.
+          add-paths: src/data/_generated/github.json

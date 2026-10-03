@@ -1,0 +1,38 @@
+name: Version release
+description: A tracked obfuscator shipped a new version.
+title: "New version: "
+labels: [data, version]
+body:
+  - type: input
+    id: obfuscator
+    attributes:
+      label: Obfuscator
+      placeholder: e.g. Luraph
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: e.g. 15.1
+    validations:
+      required: true
+  - type: input
+    id: released
+    attributes:
+      label: Release date
+      description: Exact if known, otherwise month with a ~ (e.g. ~2026-10).
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: Notable changes
+      description: Especially anything aimed at known deobfuscators.
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: Changelog, announcement or release page. One URL per line.
+    validations:
+      required: true

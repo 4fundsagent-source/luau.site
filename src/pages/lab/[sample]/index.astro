@@ -1,0 +1,66 @@
+---
+import CodePanel from '~/components/CodePanel.astro';
+import Icon from '~/components/Icon.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import Section from '~/components/Section.astro';
+import Base from '~/layouts/Base.astro';
+import { formatVersion, getSiteData } from '~/lib/data';
+import { formatBytes } from '~/lib/highlight';
+import { loadLab, readLabFile, recovered, type Sample } from '~/lib/lab';
+
+export function getStaticPaths() {
+  return loadLab().samples.map((s) => ({ params: { sample: s.id }, props: { s } }));
+}
+
+interface Props {
+  s: Sample;
+}
+const { s } = Astro.props;
+const { obf } = await getSiteData();
+const source = readLabFile('corpus', s.id, 'source.luau');
+const expected = readLabFile('corpus', s.id, 'expected.txt');
+---
+
+<Base title={`${s.meta.title} · Lab`} description={s.meta.description}>
+  <PageHeader eyebrow="Lab sample" title={s.meta.title} description={s.meta.description} crumbs={[{ href: '/lab', label: 'Lab' }]}>
+    <div class="mt-5 flex flex-wrap gap-1.5">{s.meta.exercises.map((e) => <span class="chip">{e}</span>)}</div>
+  </PageHeader>
+
+  <div class="container-page space-y-12 py-10">
+    <div class="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <CodePanel title="source.luau" subtitle="original" code={source} download={`/lab/files/corpus/${s.id}/source.luau`} result={s.result} />
+      <CodePanel title="expected.txt" subtitle="stdout" code={expected} lang="text" download={`/lab/files/corpus/${s.id}/expected.txt`} />
+    </div>
+
+    <Section title="Runs" description="Each obfuscator build of this sample, and what the deobfuscators made of it.">
+      {
+        s.runs.length ? (
+          <ul class="surface divide-y divide-line text-sm">
+            {s.runs.map((r) => (
+              <li>
+                <a href={`/lab/${s.id}/${r.id}`} class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-hover">
+                  <span class="font-medium text-fg">
+                    {obf.get(r.obfuscator)?.data.name ?? r.obfuscator} <span class="num text-muted">{formatVersion(r.version)}</span>
+                  </span>
+                  <span class="num flex items-center gap-4 text-xs text-muted">
+                    <span>
+                      {formatBytes(r.bytes)} (×{(r.bytes / s.bytes).toFixed(1)})
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                      <Icon name={recovered(r) ? 'unlock' : 'shield'} size={13} class={recovered(r) ? 'text-broken' : 'text-holding'} />
+                      {recovered(r) ? 'Recovered' : 'Held'}
+                    </span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div class="surface p-6 text-sm text-muted">
+            No runs yet for this sample. <a href="/lab#contribute" class="link">Add one</a>
+          </div>
+        )
+      }
+    </Section>
+  </div>
+</Base>

@@ -1,0 +1,25 @@
+---
+interface Props {
+  items: { label: string; value?: string | number | null; href?: string }[];
+}
+const items = Astro.props.items.filter((i) => i.value !== undefined && i.value !== null && i.value !== '');
+---
+
+<dl class="surface divide-y divide-line text-sm" data-reveal style="--reveal-i:1">
+  {
+    items.map((i) => (
+      <div class="flex items-baseline justify-between gap-4 px-4 py-2.5">
+        <dt class="text-subtle">{i.label}</dt>
+        <dd class="min-w-0 text-right text-fg">
+          {i.href ? (
+            <a href={i.href} class="link">
+              {i.value}
+            </a>
+          ) : (
+            i.value
+          )}
+        </dd>
+      </div>
+    ))
+  }
+</dl>

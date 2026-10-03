@@ -1,0 +1,56 @@
+name: New obfuscator
+description: Add a Lua or Luau obfuscator to the directory.
+title: "New obfuscator: "
+labels: [data, new-entry]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every entry needs at least one **source** (official site, repository, docs or changelog). Entries without sources can't be merged.
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      placeholder: e.g. Luraph
+    validations:
+      required: true
+  - type: input
+    id: website
+    attributes:
+      label: Website or repository
+      placeholder: https://
+    validations:
+      required: true
+  - type: dropdown
+    id: pricing
+    attributes:
+      label: Pricing
+      options: [Free, Freemium, Paid, Open source]
+    validations:
+      required: true
+  - type: checkboxes
+    id: targets
+    attributes:
+      label: Supported runtimes
+      options:
+        - label: Luau
+        - label: Lua 5.1
+        - label: Lua 5.2–5.4
+        - label: LuaJIT
+  - type: input
+    id: version
+    attributes:
+      label: Current version and release date
+      placeholder: "v3.2, released 2026-08-14 (or ~2026-08 if approximate)"
+  - type: textarea
+    id: techniques
+    attributes:
+      label: Protection techniques
+      description: VM virtualization, constant encryption, anti-tamper… as documented by the vendor.
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: One URL per line. Archive links (web.archive.org) are welcome.
+    validations:
+      required: true

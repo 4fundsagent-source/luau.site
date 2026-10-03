@@ -1,0 +1,80 @@
+---
+import { formatPlainDate } from '~/lib/dates';
+import { getSiteData } from '~/lib/data';
+import { SITE } from '~/lib/site';
+import Logo from './Logo.astro';
+
+const { builtAt } = await getSiteData();
+
+const columns = [
+  {
+    title: 'Directory',
+    links: [
+      { href: '/obfuscators', label: 'Obfuscators' },
+      { href: '/deobfuscators', label: 'Deobfuscators' },
+      { href: '/auth', label: 'Auth services' },
+    ],
+  },
+  {
+    title: 'Analysis',
+    links: [
+      { href: '/rankings', label: 'Rankings' },
+      { href: '/timeline', label: 'Timeline' },
+      { href: '/lab', label: 'The Lab' },
+    ],
+  },
+  {
+    title: 'Project',
+    links: [
+      { href: '/methodology', label: 'Methodology' },
+      { href: '/learn', label: 'Glossary' },
+      { href: '/about', label: 'About' },
+      { href: '/submit', label: 'Submit & correct' },
+    ],
+  },
+  {
+    title: 'Open data',
+    links: [
+      { href: '/api', label: 'JSON API' },
+      { href: '/feed.xml', label: 'RSS feed' },
+      { href: SITE.repo, label: 'GitHub' },
+    ],
+  },
+];
+---
+
+<footer class="mt-24 border-t border-line">
+  <div class="container-page grid gap-10 py-12 md:grid-cols-[1.4fr_repeat(4,1fr)]">
+    <div class="max-w-xs">
+      <a href="/" class="flex items-center gap-2 font-semibold tracking-tight">
+        <Logo />
+        <span>luau<span class="text-subtle">.site</span></span>
+      </a>
+      <p class="mt-3 text-sm leading-relaxed text-muted">
+        An independent, sourced index of the Lua &amp; Luau protection scene. No paid placement. Every change is a public commit.
+      </p>
+    </div>
+    {
+      columns.map((col) => (
+        <div>
+          <h2 class="eyebrow">{col.title}</h2>
+          <ul class="mt-3 space-y-2 text-sm">
+            {col.links.map((l) => (
+              <li>
+                <a href={l.href} class="text-muted transition-colors hover:text-fg">
+                  {l.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+  <div class="border-t border-line">
+    <div class="container-page flex flex-col gap-2 py-5 text-xs text-subtle sm:flex-row sm:items-center sm:justify-between">
+      <p>Data rebuilt {formatPlainDate(builtAt)} · Statuses and scores are computed from sourced data.</p>
+      <p>Not affiliated with any listed project.</p>
+    </div>
+  </div>
+</footer>

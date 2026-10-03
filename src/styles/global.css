@@ -1,0 +1,392 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* ------------------------------------------------------------------ tokens */
+/* Status colors are validated with the dataviz palette checker for both
+   surfaces; they always ship with an icon + label, never color alone. */
+
+:root {
+  color-scheme: light;
+  --bg: #fafaf9;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f2f2f0;
+  --bg-hover: #f5f5f4;
+  --fg: #0b0b0c;
+  --fg-muted: #57575f;
+  --fg-subtle: #696972;
+  --line: #e6e6e3;
+  --line-strong: #d4d4d0;
+  --accent: #0069c2;
+  --accent-soft: #e6f1fb;
+  --holding: #0f8a63;
+  --partial: #c26f08;
+  --broken: #dc2c50;
+  --open: #57575f;
+  --shadow-card: 0 1px 0 rgb(0 0 0 / 0.02), 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 12px -4px rgb(0 0 0 / 0.06);
+  --shadow-lift: 0 1px 0 rgb(0 0 0 / 0.02), 0 2px 4px rgb(0 0 0 / 0.04), 0 12px 32px -12px rgb(0 0 0 / 0.14);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.6);
+  --glow: radial-gradient(60% 60% at 50% 0%, rgb(0 105 194 / 0.10), transparent 70%);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #09090b;
+  --bg-elev: #111113;
+  --bg-sunken: #0d0d0f;
+  --bg-hover: #17171a;
+  --fg: #ededef;
+  --fg-muted: #a0a0aa;
+  --fg-subtle: #8b8b95;
+  --line: #1f1f23;
+  --line-strong: #2c2c32;
+  --accent: #4db2ff;
+  --accent-soft: #0b2238;
+  --holding: #14a58a;
+  --partial: #c4860c;
+  --broken: #ef4f6c;
+  --open: #a0a0aa;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-lift: 0 16px 40px -16px rgb(0 0 0 / 0.7);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  --glow: radial-gradient(60% 60% at 50% 0%, rgb(77 178 255 / 0.12), transparent 70%);
+}
+
+@theme inline {
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --color-bg: var(--bg);
+  --color-elev: var(--bg-elev);
+  --color-sunken: var(--bg-sunken);
+  --color-hover: var(--bg-hover);
+  --color-fg: var(--fg);
+  --color-muted: var(--fg-muted);
+  --color-subtle: var(--fg-subtle);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-holding: var(--holding);
+  --color-partial: var(--partial);
+  --color-broken: var(--broken);
+  --color-open: var(--open);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-lift);
+}
+
+/* -------------------------------------------------------------------- base */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--accent) 25%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/* -------------------------------------------------------------- components */
+
+@layer components {
+  .container-page {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .container-page {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  .surface {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow-card), var(--highlight);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: 1.5rem;
+    padding-inline: 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: var(--fg-muted);
+    background: var(--bg-elev);
+    white-space: nowrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 2.25rem;
+    padding-inline: 0.875rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid var(--line);
+    background: var(--bg-elev);
+    color: var(--fg);
+    box-shadow: var(--shadow-card), var(--highlight);
+    transition:
+      background-color 150ms,
+      border-color 150ms,
+      transform 150ms;
+    white-space: nowrap;
+  }
+  .btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--line-strong);
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn-primary {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+  }
+  .btn-primary:hover {
+    background: color-mix(in oklab, var(--fg) 88%, var(--bg));
+    border-color: color-mix(in oklab, var(--fg) 88%, var(--bg));
+  }
+
+  .icon-btn {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    color: var(--fg-muted);
+    transition:
+      background-color 150ms,
+      color 150ms;
+  }
+  .icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--fg);
+  }
+
+  .link {
+    color: var(--fg);
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 150ms;
+  }
+  .link:hover {
+    text-decoration-color: var(--fg);
+  }
+
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Stretched-link cards: the title link covers the card, other links sit above it. */
+  .card-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  .card-raise {
+    position: relative;
+    z-index: 1;
+  }
+  .card-hover {
+    transition:
+      border-color 200ms,
+      box-shadow 200ms,
+      transform 200ms;
+  }
+  .card-hover:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-lift), var(--highlight);
+    transform: translateY(-1px);
+  }
+
+  .hairline-grid {
+    background-image:
+      linear-gradient(to right, var(--line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  /* Prose for long-form pages (methodology, about, learn). */
+  .prose-site {
+    color: var(--fg-muted);
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+  .prose-site > * + * {
+    margin-top: 1.1em;
+  }
+  .prose-site h2 {
+    color: var(--fg);
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: 2.5rem;
+    scroll-margin-top: 6rem;
+  }
+  .prose-site h3 {
+    color: var(--fg);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    margin-top: 1.75rem;
+    scroll-margin-top: 6rem;
+  }
+  .prose-site strong {
+    color: var(--fg);
+    font-weight: 600;
+  }
+  .prose-site a {
+    color: var(--fg);
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 3px;
+  }
+  .prose-site a:hover {
+    text-decoration-color: var(--fg);
+  }
+  .prose-site ul,
+  .prose-site ol {
+    padding-left: 1.25rem;
+  }
+  .prose-site ul {
+    list-style: disc;
+  }
+  .prose-site ol {
+    list-style: decimal;
+  }
+  .prose-site li + li {
+    margin-top: 0.4em;
+  }
+  .prose-site li::marker {
+    color: var(--fg-subtle);
+  }
+  .prose-site code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    padding: 0.1em 0.35em;
+    border-radius: 5px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    color: var(--fg);
+  }
+  .prose-site table {
+    width: 100%;
+    font-size: 0.9rem;
+    border-collapse: collapse;
+  }
+  .prose-site th,
+  .prose-site td {
+    text-align: left;
+    padding: 0.55rem 0.75rem 0.55rem 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  .prose-site th {
+    color: var(--fg);
+    font-weight: 500;
+  }
+}
+
+/* ------------------------------------------------------------- code blocks */
+
+.code-block pre {
+  margin: 0;
+  padding: 1rem 1.125rem;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  tab-size: 4;
+  background: transparent !important;
+}
+.code-block pre code {
+  counter-reset: line;
+}
+.code-block.wrap pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Shiki dual themes: light by default, swap on dark. */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+}
+[data-theme='dark'] .shiki,
+[data-theme='dark'] .shiki span {
+  color: var(--shiki-dark);
+}
+
+/* ------------------------------------------------------------------ motion */
+/* Animations live in motion.css. Reduced motion: stop everything. */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .status-icon {
+    forced-color-adjust: auto;
+  }
+}

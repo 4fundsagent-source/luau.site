@@ -1,0 +1,75 @@
+---
+import { formatDate, parseDate } from '~/lib/dates';
+import type { SourceRef } from '~/lib/data';
+import { editUrl, issueUrl } from '~/lib/site';
+import Icon from './Icon.astro';
+
+interface Props {
+  sources: SourceRef[];
+  verified: boolean;
+  lastVerified: string;
+  stale: boolean;
+  /** Repo-relative path of the YAML file, for "edit" links. */
+  file: string;
+  name: string;
+}
+const { sources, verified, lastVerified, stale, file, name } = Astro.props;
+const host = (u: string) => new URL(u).hostname.replace(/^www\./, '');
+---
+
+<div class="surface p-5" data-reveal>
+  <div class="flex flex-wrap items-center gap-2 text-sm">
+    {
+      verified ? (
+        <span class="chip">
+          <Icon name="check" size={13} class="text-holding" />
+          Verified
+        </span>
+      ) : (
+        <span class="chip">
+          <Icon name="alert" size={13} class="text-partial" />
+          Not yet verified
+        </span>
+      )
+    }
+    <span class="text-muted">Last checked {formatDate(parseDate(lastVerified))}</span>
+    {stale && <span class="text-fg">· may be outdated</span>}
+  </div>
+
+  <ol class="mt-4 space-y-3 text-sm">
+    {
+      sources.map((s, i) => (
+        <li class="flex gap-3">
+          <span class="num mt-px w-5 shrink-0 text-right text-xs text-subtle">{i + 1}.</span>
+          <div class="min-w-0">
+            <a href={s.url} rel="noopener nofollow" target="_blank" class="link break-words">
+              {s.title ?? s.url}
+            </a>
+            <p class="mt-0.5 text-xs text-subtle">
+              {host(s.url)} · accessed {formatDate(parseDate(s.accessed))}
+              {s.archive && (
+                <>
+                  {' · '}
+                  <a href={s.archive} rel="noopener nofollow" target="_blank" class="link">
+                    archived copy
+                  </a>
+                </>
+              )}
+            </p>
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+
+  <div class="mt-5 flex flex-wrap gap-2 border-t border-line pt-4">
+    <a href={issueUrl('correction', { title: `Correction: ${name}` })} class="btn">
+      <Icon name="alert" size={14} />
+      Report a correction
+    </a>
+    <a href={editUrl(file)} class="btn">
+      <Icon name="pencil" size={14} />
+      Edit on GitHub
+    </a>
+  </div>
+</div>

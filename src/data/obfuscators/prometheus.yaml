@@ -1,0 +1,29 @@
+name: Prometheus
+tagline: Open-source Lua obfuscator written in pure Lua, inspired by javascript-obfuscator.
+description: >-
+  Prometheus applies AST-level transformations — including a VM step, constant encryption and
+  control-flow obfuscation — and ships a CLI plus a browser playground. Lua 5.1 is fully supported;
+  Luau support is basic. Its license allows commercial use with attribution.
+website: https://prometheus-lua.github.io/Prometheus/
+repo: https://github.com/prometheus-lua/Prometheus
+pricing: open-source
+license: Prometheus License (MIT-style, attribution required)
+targets: [lua51, luau]
+techniques: [vm, const-encryption, string-encryption, cff, renaming]
+codebase:
+  vm: 2
+  randomization: 2
+  antiTamper: 1
+  luau: 1
+  maintenance: 3
+  notes: Preliminary grade. A single-layer VM step with randomized naming and constants; basic Luau support; actively maintained and widely starred.
+  assessedOn: 2026-10-03
+versions:
+  - version: main
+    notes: Rolling releases from the main branch.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/prometheus-lua/Prometheus
+    title: prometheus-lua/Prometheus
+    accessed: 2026-10-03

@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ASTRO_TELEMETRY_DISABLED: 1
+
+jobs:
+  check:
+    name: Check, test, validate, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate data
+        run: pnpm validate
+      - name: Type-check
+        run: pnpm check
+      - name: Unit tests
+        run: pnpm test
+      - name: Install Luau CLI
+        run: |
+          mkdir -p lab/.bin
+          curl -fsSL -o /tmp/luau.zip https://github.com/luau-lang/luau/releases/latest/download/luau-ubuntu.zip
+          unzip -o /tmp/luau.zip luau -d lab/.bin
+      - name: Lab — verify corpus and committed results
+        run: pnpm lab:verify --check
+      - name: Build
+        run: pnpm build

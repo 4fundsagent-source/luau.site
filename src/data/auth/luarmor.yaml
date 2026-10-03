@@ -1,0 +1,33 @@
+name: Luarmor
+tagline: Licensing and protection service for Lua scripts, built on Luraph obfuscation.
+description: >-
+  Luarmor combines script licensing — keys and whitelisting — with obfuscation, so authors can
+  control who runs their scripts and make redistribution harder. Its obfuscation layer is Luraph,
+  which means scripts protected by Luarmor inherit Luraph's break status: Luraph v14.7–v15 can be
+  devirtualized with public tools. The key system itself has no tracked public bypass.
+website: https://luarmor.net
+pricing: paid
+features: [key-system, whitelist, obfuscation, loader]
+bundledObfuscator: luraph
+bypass:
+  status: none-known
+  note: No public bypass of the key system is tracked.
+protection:
+  status: broken
+  note: >-
+    Luarmor-protected scripts are obfuscated with Luraph, and Luraph v14.7–v15 are broken by public
+    open-source tools. The Luraph link is reported by the luau.site maintainers and still needs a
+    public source.
+  sources:
+    - url: https://github.com/KryptIT/luraph-v15-v14.x-deobfuscator
+      title: Luraph v14.7–v15 deobfuscator (KryptIT)
+      accessed: 2026-10-03
+    - url: https://github.com/caomod2077/Deobfuscator-Luraph-V15
+      title: Luraph v15 deobfuscator (caomod2077)
+      accessed: 2026-10-03
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://luarmor.net
+    title: Luarmor
+    accessed: 2026-10-03

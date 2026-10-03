@@ -1,0 +1,95 @@
+---
+import { OSS_CAP, PROVING_DAYS, PROVISIONAL_BELOW, UNRATED_BELOW, type Score } from '~/lib/score';
+
+interface Props {
+  score: Score;
+  class?: string;
+}
+const { score, class: className } = Astro.props;
+const backed = Math.round(score.confidence * 100);
+const hasCodebase = score.components.some((c) => c.key === 'codebase');
+---
+
+<div class:list={['surface p-5', className]} data-reveal>
+  <div class="flex items-center justify-between">
+    <p class="eyebrow">Security Score</p>
+    <a href="/methodology#score" class="text-xs text-subtle hover:text-fg">How it works</a>
+  </div>
+
+  {
+    score.unrated ? (
+      <div class="mt-3">
+        <p class="text-2xl font-semibold tracking-tight text-fg">Unrated</p>
+        <p class="mt-2 text-xs leading-relaxed text-muted">
+          Only {backed}% of the score is backed by data (needs {Math.round(UNRATED_BELOW * 100)}% to rate). The breakdown below shows
+          what is known so far.
+        </p>
+      </div>
+    ) : (
+      <>
+        <div class="mt-3 flex items-end gap-3">
+          <span class="text-5xl leading-none font-semibold tracking-tight text-fg" data-countup={score.total}>
+            {score.total}
+          </span>
+          <span class="pb-1 text-sm text-subtle">/ {hasCodebase ? OSS_CAP : 100}</span>
+          <span
+            class:list={[
+              'num ml-auto grid size-10 place-items-center rounded-lg border text-lg font-semibold',
+              score.provisional ? 'border-dashed border-line-strong' : 'border-line',
+            ]}
+            aria-label={`Tier ${score.tier}`}
+          >
+            {score.tier}
+          </span>
+        </div>
+        <p class="mt-2 text-xs text-muted">
+          {backed}% backed by data
+          {score.provisional && (
+            <>
+              {' '}
+              · <span class="text-fg">provisional</span> (needs {Math.round(PROVISIONAL_BELOW * 100)}%)
+            </>
+          )}
+        </p>
+      </>
+    )
+  }
+
+  {
+    hasCodebase && (
+      <p class="mt-3 rounded-lg bg-sunken px-3 py-2 text-xs leading-relaxed text-muted">
+        Open source can't hold, so it's graded on its codebase and capped at {OSS_CAP}.{score.capped && ' The cap applies here.'}
+      </p>
+    )
+  }
+  {
+    score.provingDay !== undefined && (
+      <p class="mt-3 rounded-lg bg-sunken px-3 py-2 text-xs leading-relaxed text-muted">
+        New release in its proving period: day {score.provingDay} of {PROVING_DAYS}. Resistance grows each day it stays unbroken.
+      </p>
+    )
+  }
+
+  <ul class="mt-5 space-y-4">
+    {
+      score.components.map((c) => (
+        <li>
+          <div class="flex items-baseline justify-between text-sm">
+            <span class="text-fg">{c.label}</span>
+            <span class="num text-xs text-muted">
+              {c.points}
+              <span class="text-subtle">/{c.weight}</span>
+            </span>
+          </div>
+          <div class="mt-1.5 h-1 overflow-hidden rounded-full bg-sunken">
+            <div
+              class:list={['score-fill h-full rounded-full', c.imputed && 'opacity-35']}
+              style={`width:${(c.points / c.weight) * 100}%;background:var(--fg)`}
+            />
+          </div>
+          <p class="mt-1.5 text-xs leading-relaxed text-subtle">{c.detail}</p>
+        </li>
+      ))
+    }
+  </ul>
+</div>

@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-10-03T17:49:35.650Z",
+  "samples": {
+    "hello": {
+      "original": {
+        "ok": true,
+        "ms": 6
+      },
+      "runs": {}
+    },
+    "control-flow": {
+      "original": {
+        "ok": true,
+        "ms": 5
+      },
+      "runs": {}
+    },
+    "closures-upvalues": {
+      "original": {
+        "ok": true,
+        "ms": 7
+      },
+      "runs": {}
+    },
+    "strings-constants": {
+      "original": {
+        "ok": true,
+        "ms": 6
+      },
+      "runs": {}
+    },
+    "luau-syntax": {
+      "original": {
+        "ok": true,
+        "ms": 7
+      },
+      "runs": {}
+    }
+  }
+}

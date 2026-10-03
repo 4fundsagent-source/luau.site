@@ -1,0 +1,59 @@
+name: New deobfuscator
+description: Report a public tool that breaks or partially breaks a tracked obfuscator.
+title: "New deobfuscator: "
+labels: [data, new-entry]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We list **publicly verifiable** tools only: a repository, a public release, or a reproducible demonstration. We link to tools — we never host them or their output on third-party scripts.
+  - type: input
+    id: name
+    attributes:
+      label: Tool name and author
+      placeholder: e.g. Deobfuscator-Luraph-V15 by caomod2077
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Repository or release link
+      placeholder: https://
+    validations:
+      required: true
+  - type: textarea
+    id: targets
+    attributes:
+      label: Targets
+      description: Which obfuscator versions, and how well (full / partial / experimental)?
+      placeholder: |
+        Luraph 15 — full
+        Luraph 14.7–14.9 — experimental
+    validations:
+      required: true
+  - type: dropdown
+    id: output
+    attributes:
+      label: What does it recover?
+      options: [Constants only, Bytecode / VM instructions, Readable source, Near-original source]
+    validations:
+      required: true
+  - type: dropdown
+    id: access
+    attributes:
+      label: Access
+      options: [Open source, Free (closed source), Paid, Private (demonstrated but not distributed)]
+    validations:
+      required: true
+  - type: input
+    id: first-seen
+    attributes:
+      label: When did it become public?
+      placeholder: "2026-09-02 (or ~2026-09)"
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: One URL per line.
+    validations:
+      required: true

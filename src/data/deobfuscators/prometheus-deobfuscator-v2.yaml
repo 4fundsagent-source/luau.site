@@ -1,0 +1,27 @@
+name: Prometheus-DeobfuscatorV2
+author: "0x251"
+tagline: Static-plus-dynamic Prometheus deobfuscator, built to test AI-assisted reverse engineering.
+description: >-
+  Static passes peel common layers first (constant-array decoding, string decryption, proxy-local
+  unwrapping), then an optional sandboxed trace runs the script and records calls. VM
+  devirtualization is "dynamic-first". The author presents it as research software built to test
+  GPT-5-driven reverse-engineering workflows, and warns the sandbox is not a security boundary.
+repo: https://github.com/0x251/Prometheus-DeobfuscatorV2
+access: open-source
+techniques: [ast-cleanup, constant-dump, dynamic-trace, ai-assisted]
+outputLevel: readable
+firstSeen: 2025-08-08
+maintenance: stale
+targets:
+  - obfuscator: prometheus
+    versions: [main]
+    support: full
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/0x251/Prometheus-DeobfuscatorV2
+    title: 0x251/Prometheus-DeobfuscatorV2 (README)
+    accessed: 2026-10-03
+  - url: https://github.com/0x251/Prometheus-DeobfuscatorV2/commits/main
+    title: Commit history — first commit August 8, 2025
+    accessed: 2026-10-03

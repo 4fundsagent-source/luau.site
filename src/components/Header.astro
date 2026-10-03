@@ -1,0 +1,102 @@
+---
+import { NAV, SITE } from '~/lib/site';
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
+---
+
+<header class="site-header sticky top-0 z-40 border-b border-line/70 bg-bg/80 backdrop-blur-xl backdrop-saturate-150">
+  <div class="container-page flex h-14 items-center gap-6">
+    <a href="/" class="flex items-center gap-2 text-[0.9375rem] font-semibold tracking-tight text-fg" aria-label="luau.site home">
+      <Logo />
+      <span>luau<span class="text-subtle">.site</span></span>
+    </a>
+
+    <nav class="hidden items-center gap-0.5 text-sm md:flex" aria-label="Primary">
+      {
+        NAV.map((item) => (
+          <a
+            href={item.href}
+            class:list={[
+              'rounded-md px-2.5 py-1.5 transition-colors duration-200',
+              isActive(item.href) ? 'nav-active bg-hover text-fg' : 'text-muted hover:bg-hover/60 hover:text-fg',
+            ]}
+            aria-current={isActive(item.href) ? 'page' : undefined}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="ml-auto flex items-center gap-1.5">
+      <button
+        type="button"
+        data-search-open
+        class="hidden h-8 w-52 items-center gap-2 rounded-lg border border-line bg-elev px-2.5 text-sm text-subtle shadow-card transition-colors hover:border-line-strong hover:text-muted lg:flex"
+      >
+        <Icon name="search" size={14} />
+        <span>Search…</span>
+        <kbd class="num ml-auto rounded border border-line bg-sunken px-1.5 py-px text-[0.6875rem] text-subtle">⌘K</kbd>
+      </button>
+      <button type="button" data-search-open class="icon-btn lg:hidden" aria-label="Search">
+        <Icon name="search" />
+      </button>
+      <button type="button" data-theme-toggle class="icon-btn" aria-label="Toggle color theme">
+        <Icon name="moon" class="dark:hidden" />
+        <Icon name="sun" class="hidden dark:block" />
+      </button>
+      <a href={SITE.repo} class="icon-btn hidden sm:grid" aria-label="Source on GitHub" rel="noopener">
+        <Icon name="github" />
+      </a>
+      <button type="button" data-menu-toggle class="icon-btn md:hidden" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-nav">
+        <Icon name="menu" class="menu-open" />
+        <Icon name="x" class="menu-close hidden" />
+      </button>
+    </div>
+  </div>
+
+  <nav id="mobile-nav" data-menu class="mobile-menu md:hidden" aria-label="Primary mobile">
+    <ul class="container-page grid grid-cols-2 gap-1 border-t border-line py-3 text-sm">
+      {
+        NAV.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              class:list={['block rounded-md px-3 py-2', isActive(item.href) ? 'bg-hover text-fg' : 'text-muted']}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+      <li><a href="/methodology" class="block rounded-md px-3 py-2 text-muted">Methodology</a></li>
+      <li><a href="/submit" class="block rounded-md px-3 py-2 text-muted">Submit</a></li>
+    </ul>
+  </nav>
+</header>
+
+
+<script>
+  import { setTheme } from '~/scripts/motion';
+
+  const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const menu = document.querySelector<HTMLElement>('[data-menu]');
+  toggle?.addEventListener('click', () => {
+    const open = !menu?.hasAttribute('data-open');
+    menu?.toggleAttribute('data-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.querySelector('.menu-open')?.classList.toggle('hidden', open);
+    toggle.querySelector('.menu-close')?.classList.toggle('hidden', !open);
+  });
+
+  const themeButton = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  themeButton?.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    const r = themeButton.getBoundingClientRect();
+    setTheme(next, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+  });
+</script>

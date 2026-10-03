@@ -1,0 +1,6 @@
+counter:	13	13
+loop captures:	1	4	9
+shared upvalue:	85
+fib(40):	102334155
+varargs:	6	108
+compose:	11

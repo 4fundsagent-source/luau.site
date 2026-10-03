@@ -1,0 +1,173 @@
+---
+import PageHeader from '~/components/PageHeader.astro';
+import Base from '~/layouts/Base.astro';
+import { OSS_CAP, OSS_STATUS_FACTOR, PROVING_DAYS, PROVISIONAL_BELOW, TIERS, TRACK_FULL_DAYS, UNRATED_BELOW, WEIGHTS } from '~/lib/score';
+import { SITE } from '~/lib/site';
+import { CODEBASE_CRITERIA, CODEBASE_MAX, CODEBASE_META, TECHNIQUES, TECHNIQUE_META } from '~/lib/taxonomy';
+
+const toc = [
+  { id: 'principles', label: 'Principles' },
+  { id: 'status', label: 'How status is derived' },
+  { id: 'score', label: 'Security Score' },
+  { id: 'open-source', label: 'Open source' },
+  { id: 'proving', label: 'Proving period' },
+  { id: 'evidence', label: 'Evidence rules' },
+  { id: 'lab', label: 'The Lab' },
+  { id: 'outputs', label: 'What we host' },
+  { id: 'limits', label: 'Known limitations' },
+];
+---
+
+<Base title="Methodology" description="How luau.site derives break status, computes the Security Score, and decides what counts as evidence.">
+  <PageHeader
+    eyebrow="Project"
+    title="Methodology"
+    description="Every number on luau.site comes from code you can read and data you can audit. Here's exactly how it works."
+  />
+  <div class="container-page grid gap-12 py-12 lg:grid-cols-[13rem_minmax(0,1fr)]">
+    <nav aria-label="On this page" class="hidden lg:block">
+      <ul class="sticky top-24 space-y-2 text-sm">
+        {toc.map((t) => <li><a href={`#${t.id}`} class="text-muted hover:text-fg">{t.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <article class="prose-site max-w-[44rem]">
+      <h2 id="principles">Principles</h2>
+      <ul>
+        <li><strong>Computed, not typed.</strong> Status, time to break and score are pure functions of the dataset (<a href={`${SITE.repo}/blob/main/src/lib/status.ts`}><code>status.ts</code></a>, <a href={`${SITE.repo}/blob/main/src/lib/score.ts`}><code>score.ts</code></a>), covered by unit tests.</li>
+        <li><strong>Sourced or it doesn't ship.</strong> Every entry and every claim links to evidence. CI rejects data without it.</li>
+        <li><strong>Public history.</strong> The data lives as YAML in a public repository, so every change is a reviewable commit.</li>
+        <li><strong>No paid placement.</strong> Vendors can't buy a position or a removal. They can submit corrections and statements like anyone else.</li>
+      </ul>
+
+      <h2 id="status">How status is derived</h2>
+      <p>Each obfuscator <em>version</em> has one of three statuses, derived from the deobfuscators that target it:</p>
+      <table>
+        <thead><tr><th>Status</th><th>Rule</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Broken</strong></td><td>At least one tool has <em>full</em> support for this version and outputs readable (or near-original) source.</td></tr>
+          <tr><td><strong>Partial</strong></td><td>Tools exist, but they only recover constants, bytecode or traces, or their support is partial or experimental.</td></tr>
+          <tr><td><strong>Holding</strong></td><td>No public tool is tracked for this version. This means "none known", not "unbreakable".</td></tr>
+          <tr><td><strong>Open source</strong></td><td>Shown instead of Holding for open-source projects. When the source is public, it can never truly hold.</td></tr>
+        </tbody>
+      </table>
+      <p>
+        The <strong>break date</strong> is the earliest date one of the breaking tools became public, either its first-seen date or a per-version
+        <code>since</code> date. <strong>Time to break</strong> is the break date minus the release date. When either date is only month-precise or
+        marked approximate (<code>~</code>), the duration is shown with a <code>~</code> and rounded to coarser units.
+      </p>
+      <p>
+        A maintainer can override a derived status in rare cases, for example a break confirmed privately. An override must include a written note and
+        sources, and it is labelled on the page.
+      </p>
+
+      <h2 id="score">Security Score</h2>
+      <p>The score runs from 0 to 100 and has four components, all evaluated against the obfuscator's <em>current</em> version:</p>
+      <table>
+        <thead><tr><th>Component</th><th>Weight</th><th>Basis</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Resistance</strong></td><td>{WEIGHTS.resistance}</td>
+            <td>Holding 50 · broken only by private or paid tools 30 · partial 20 · broken by a free closed tool 5 · broken by an open-source tool 0. When several tools break it, the most widely available one counts.</td>
+          </tr>
+          <tr>
+            <td><strong>Track record</strong></td><td>{WEIGHTS.track}</td>
+            <td>Median <em>survival</em> across dated versions: time to break, or time since release if still unbroken. Full points at {TRACK_FULL_DAYS} days or more.</td>
+          </tr>
+          <tr>
+            <td><strong>Lab results</strong></td><td>{WEIGHTS.lab}</td>
+            <td>The share of our benchmark samples (for the current version) that <em>no</em> deobfuscator recovered with matching behavior.</td>
+          </tr>
+          <tr>
+            <td><strong>Technique depth</strong></td><td>{WEIGHTS.technique}</td>
+            <td>A capped checklist of documented techniques. VM virtualization counts most. Compression and watermarking count zero.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Missing data, provisional and unrated scores</h3>
+      <p>
+        If a component has no data (no dated versions, no Lab runs, no documented techniques), it gets <strong>neutral half credit</strong>. We
+        don't drop it and re-scale the rest, because missing evidence shouldn't push a score up or down. The share of the weight that is backed
+        by real data is shown as <em>data %</em>.
+      </p>
+      <ul>
+        <li>Below {Math.round(PROVISIONAL_BELOW * 100)}%, the score is <strong>provisional</strong> and its tier is drawn with a dashed border.</li>
+        <li>
+          Below {Math.round(UNRATED_BELOW * 100)}%, the project is <strong>unrated</strong>: no score or tier is shown, and it's listed after every rated
+          project. This keeps a brand-new entry we know almost nothing about from topping the rankings.
+        </li>
+      </ul>
+      <h3>Tiers</h3>
+      <p>{TIERS.map((t) => `${t.tier} ≥ ${t.min}`).join(' · ')}. Tiers are not shown for unrated projects.</p>
+      <h3>Technique points</h3>
+      <table>
+        <thead><tr><th>Technique</th><th>Points</th></tr></thead>
+        <tbody>{TECHNIQUES.map((t) => <tr><td><a href={`/learn#${t}`}>{TECHNIQUE_META[t].label}</a></td><td>{TECHNIQUE_META[t].points}</td></tr>)}</tbody>
+      </table>
+
+      <h2 id="open-source">Open source</h2>
+      <p>
+        An open-source obfuscator can never truly hold. Anyone can read exactly how it transforms code, so "no public deobfuscator yet" means
+        little. Open-source projects are scored differently:
+      </p>
+      <ul>
+        <li>Instead of Holding, they show the status <strong>Open source</strong>. Partial and Broken still apply when tools exist.</li>
+        <li>
+          <strong>Resistance and track record are replaced by a Codebase grade</strong> worth {WEIGHTS.codebase} points. A maintainer grades
+          five criteria from 0 to 4, for a total out of {CODEBASE_MAX}.
+        </li>
+        <li>
+          The grade is multiplied by {OSS_STATUS_FACTOR.partial} if the latest version is partially broken, or {OSS_STATUS_FACTOR.broken} if it is
+          broken.
+        </li>
+        <li><strong>No benefit of the doubt:</strong> missing Lab results or techniques earn nothing, instead of the usual neutral half credit.</li>
+        <li>The total is <strong>capped at {OSS_CAP}</strong>, so open source can reach a decent score but never A or S.</li>
+      </ul>
+      <p>
+        The effect: an average open-source project scores about the same as a broken closed-source one, and only a genuinely strong codebase
+        scores clearly higher.
+      </p>
+      <table>
+        <thead><tr><th>Criterion</th><th>What a 4 looks like</th></tr></thead>
+        <tbody>{CODEBASE_CRITERIA.map((c) => <tr><td><strong>{CODEBASE_META[c].label}</strong></td><td>{CODEBASE_META[c].description}</td></tr>)}</tbody>
+      </table>
+
+      <h2 id="proving">Proving period</h2>
+      <p>
+        A new release with no tracked break hasn't proven anything yet. For its first {PROVING_DAYS} days, its Resistance ramps linearly from the
+        previous version's Resistance up to the full 50. A first-ever release starts from 25. So when a broken obfuscator ships a fix, its score
+        rises a little on day one and keeps rising every day the new version holds. A break ends the proving period immediately.
+      </p>
+      <p>Versions still in their proving period are left out of the track-record median until they have a settled outcome.</p>
+
+      <h2 id="evidence">Evidence rules</h2>
+      <ul>
+        <li>Every obfuscator, deobfuscator, auth service and hand-written event needs at least one source with an access date. Archive links are encouraged.</li>
+        <li>Primary sources (repositories, official docs, vendor changelogs) beat screenshots and second-hand reports.</li>
+        <li>Entries carry a <code>verified</code> flag and a <code>lastVerified</code> date. After {SITE.staleAfterDays} days without re-verification, an entry is flagged as possibly outdated.</li>
+        <li>A deobfuscator only counts once it's publicly verifiable: a repository, a public release, or a reproducible demonstration. Rumors don't count.</li>
+      </ul>
+
+      <h2 id="lab">The Lab</h2>
+      <p>
+        The Lab is our own benchmark. We write small test scripts, obfuscate each one with every obfuscator, run every deobfuscator on the result, and
+        then execute all three stages with the official <code>luau</code> CLI. A deobfuscation counts as <em>recovered</em> only if its output prints
+        exactly what the original printed. See <a href="/lab">the Lab</a> for the corpus and how to contribute runs.
+      </p>
+
+      <h2 id="outputs">What we host, and what we don't</h2>
+      <ul>
+        <li>We host our own corpus scripts and the outputs produced from them.</li>
+        <li>We <strong>don't</strong> host third-party scripts, their deobfuscated output, or deobfuscator binaries. We link to the public source.</li>
+        <li>Nothing here is meant to help anyone bypass licensing on a specific script. The goal is transparency about how strong protection actually is.</li>
+      </ul>
+
+      <h2 id="limits">Known limitations</h2>
+      <ul>
+        <li>"Holding" reflects what we know. Private tools that stay private are invisible to us.</li>
+        <li>Release dates for many versions aren't publicly documented, so track record often rests on approximate dates.</li>
+        <li>Lab coverage depends on maintainers running paid obfuscators by hand, so it grows over time.</li>
+      </ul>
+    </article>
+  </div>
+</Base>

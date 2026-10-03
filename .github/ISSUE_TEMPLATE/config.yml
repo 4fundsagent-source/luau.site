@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: How luau.site scores and derives status
+    url: https://luau.site/methodology
+    about: Read the methodology before disputing a score — scores are computed, not assigned.

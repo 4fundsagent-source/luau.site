@@ -1,0 +1,5 @@
+1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz
+even-sum pairs:	9
+collatz(27) steps:	111
+repeat total:	56
+states:	idle -> running -> paused -> running -> idle

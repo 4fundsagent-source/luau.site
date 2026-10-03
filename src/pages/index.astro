@@ -1,0 +1,309 @@
+---
+import ArmsRaceChart from '~/components/ArmsRaceChart.astro';
+import EventList from '~/components/EventList.astro';
+import Icon, { type IconName } from '~/components/Icon.astro';
+import Monogram from '~/components/Monogram.astro';
+import ScoreBar from '~/components/ScoreBar.astro';
+import StatusBadge from '~/components/StatusBadge.astro';
+import StatusIcon from '~/components/StatusIcon.astro';
+import Base from '~/layouts/Base.astro';
+import { formatDuration, formatPlainDate } from '~/lib/dates';
+import { formatVersion, getSiteData } from '~/lib/data';
+import { issueUrl } from '~/lib/site';
+
+const data = await getSiteData();
+const { stats, obfuscators, events, samples, auth } = data;
+const top = obfuscators.filter((o) => !o.score.unrated).slice(0, 5);
+
+// Deterministic "obfuscated Luau" texture for the hero background.
+let seed = 1337;
+const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+const ident = () => Array.from({ length: 6 + Math.floor(rnd() * 5) }, () => 'Il1'[Math.floor(rnd() * 3)]).join('');
+const hex = () => `0x${Math.floor(rnd() * 255).toString(16).toUpperCase().padStart(2, '0')}`;
+const templates = [
+  () => `local ${ident()}=${ident()}[${hex()}]~${hex()};`,
+  () => `local ${ident()}={${Array.from({ length: 9 }, hex).join(',')}};`,
+  () => `${ident()}=(${ident()}+${Math.floor(rnd() * 999)})%${Math.floor(rnd() * 255) + 1};if ${ident()}==${hex()} then`,
+  () => `return ${ident()}(${ident()},${ident()}[${Math.floor(rnd() * 64)}],select("#",...))`,
+  () => `while ${ident()}<${Math.floor(rnd() * 512)} do ${ident()}=${ident()}[${ident()}+1] end`,
+  () => `local ${ident()}=string.char(${Array.from({ length: 6 }, () => Math.floor(rnd() * 90 + 33)).join(',')})`,
+];
+const line = () => Array.from({ length: 4 }, () => templates[Math.floor(rnd() * templates.length)]!()).join(' ');
+const texture = Array.from({ length: 44 }, line).join('\n');
+
+const tiles: { href: string; title: string; text: string; meta: string; icon: IconName }[] = [
+  { href: '/obfuscators', title: 'Obfuscators', text: 'Every protector we track, with live break status and links.', meta: `${stats.obfuscators} tracked`, icon: 'shield' },
+  { href: '/deobfuscators', title: 'Deobfuscators', text: 'Devirtualizers, dumpers and lifters, plus what they actually recover.', meta: `${stats.deobfuscators} tools`, icon: 'unlock' },
+  { href: '/rankings', title: 'Rankings', text: 'Security Scores computed from sourced data, never typed by hand.', meta: 'S → F tiers', icon: 'trophy' },
+  { href: '/timeline', title: 'Timeline', text: 'Every release and every break on one axis. How long does a version hold?', meta: `${events.length} events`, icon: 'history' },
+  { href: '/lab', title: 'The Lab', text: 'Our own test scripts: original → obfuscated → deobfuscated, side by side.', meta: `${samples.length} samples`, icon: 'flask' },
+  { href: '/auth', title: 'Auth services', text: 'Key systems and whitelists, plus whether they have been bypassed.', meta: `${auth.length} tracked`, icon: 'key' },
+];
+
+const statTiles = [
+  { label: 'Obfuscators tracked', value: String(stats.obfuscators), status: undefined },
+  { label: 'Holding', value: String(stats.holding), status: 'holding' as const },
+  { label: 'Broken or partial', value: String(stats.broken + stats.partial), status: 'broken' as const },
+  {
+    label: 'Median time to break',
+    value: stats.medianDaysToBreak !== undefined ? formatDuration(stats.medianDaysToBreak, stats.medianFuzzy) : '—',
+    status: undefined,
+  },
+];
+---
+
+<Base>
+  <!-- Hero -->
+  <section class="relative overflow-hidden border-b border-line">
+    <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+      <div class="absolute inset-0" style="background:var(--glow)"></div>
+      <pre class="hero-texture num absolute -top-10 left-1/2 w-[160rem] -translate-x-1/2 text-center text-[11px] leading-[1.7] text-subtle">{texture}{'\n'}{texture}</pre>
+    </div>
+
+    <div class="container-page relative pt-16 pb-14 text-center md:pt-24 md:pb-20">
+      <a href="/timeline" class="chip mx-auto h-7 gap-2 pr-3 pl-2 shadow-card hover:text-fg" data-enter style="--i:0">
+        <span class="relative flex size-2">
+          <span class="absolute inline-flex size-full animate-ping rounded-full opacity-60" style="background:var(--holding)"></span>
+          <span class="relative inline-flex size-2 rounded-full" style="background:var(--holding)"></span>
+        </span>
+        Updated {formatPlainDate(data.builtAt)}
+        <Icon name="arrow-right" size={13} />
+      </a>
+
+      <h1
+        class="mx-auto mt-6 max-w-4xl text-[2.6rem] leading-[1.05] font-semibold tracking-[-0.035em] text-fg sm:text-6xl md:text-7xl"
+        data-enter
+        style="--i:1"
+      >
+        The independent index of Lua &amp; Luau{' '}
+        <span class="relative inline-block">
+          <span class="sr-only">obfuscation.</span>
+          <span aria-hidden="true" data-scramble="obfuscation." class="hero-word">obfuscation.</span>
+        </span>
+      </h1>
+      <p class="mx-auto mt-6 max-w-2xl text-[1.0625rem] leading-relaxed text-muted md:text-lg" data-enter style="--i:2">
+        Who protects code, who breaks it, how fast, and with what result. Tracked with sources and scored in the open.
+      </p>
+
+      <div class="mx-auto mt-9 flex max-w-xl flex-col items-stretch gap-3 sm:flex-row sm:items-center" data-enter style="--i:3">
+        <button
+          type="button"
+          data-search-open
+          class="hero-search flex h-11 flex-1 items-center gap-3 rounded-xl border border-line bg-elev px-4 text-left text-[0.9375rem] text-subtle shadow-card transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-px hover:border-line-strong hover:shadow-lift"
+        >
+          <Icon name="search" />
+          <span class="flex-1">Search Luraph, MoonVeil, v15…</span>
+          <kbd class="num rounded border border-line bg-sunken px-1.5 py-px text-xs">⌘K</kbd>
+        </button>
+        <a href="/obfuscators" class="btn btn-primary h-11 rounded-xl px-5">
+          Browse obfuscators
+          <Icon name="arrow-right" size={15} />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="border-b border-line bg-elev/60">
+    <dl class="container-page grid grid-cols-2 md:grid-cols-4">
+      {
+        statTiles.map((s, i) => (
+          <div
+            data-enter
+            style={`--i:${i + 4}`}
+            class:list={[
+              'px-1 py-6 md:px-6',
+              i % 2 === 1 && 'border-l border-line pl-5',
+              i >= 2 && 'border-t border-line md:border-t-0',
+              i >= 1 && 'md:border-l md:pl-6',
+            ]}
+          >
+            <dt class="flex items-center gap-1.5 text-sm text-muted">
+              {s.status && <StatusIcon status={s.status} />}
+              {s.label}
+            </dt>
+            <dd class="mt-1 text-3xl font-semibold tracking-tight text-fg" data-countup={/^\d+$/.test(s.value) ? s.value : undefined}>
+              {s.value}
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+
+  <div class="container-page space-y-20 py-16">
+    <!-- Activity + leaderboard -->
+    <div class="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+      <section>
+        <div class="mb-4 flex items-end justify-between">
+          <div>
+            <p class="eyebrow">Latest</p>
+            <h2 class="mt-1 text-xl font-semibold tracking-tight">Activity</h2>
+          </div>
+          <a href="/timeline" class="text-sm text-muted hover:text-fg">All events →</a>
+        </div>
+        <EventList events={events.slice(0, 5)} />
+      </section>
+
+      <section>
+        <div class="mb-4 flex items-end justify-between">
+          <div>
+            <p class="eyebrow">Security Score</p>
+            <h2 class="mt-1 text-xl font-semibold tracking-tight">Leaderboard</h2>
+          </div>
+          <a href="/rankings" class="text-sm text-muted hover:text-fg">Full rankings →</a>
+        </div>
+        <ol class="surface divide-y divide-line">
+          {
+            top.map((o, i) => (
+              <li class="relative flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-hover" data-reveal style={`--reveal-i:${i}`}>
+                <span class="num w-4 text-sm text-subtle">{i + 1}</span>
+                <Monogram name={o.data.name} id={o.id} size="sm" />
+                <div class="min-w-0 flex-1">
+                  <a href={`/obfuscators/${o.id}`} class="card-link block truncate text-sm font-medium text-fg">
+                    {o.data.name}
+                  </a>
+                  <span class="num text-xs text-subtle">{formatVersion(o.latest.version)}</span>
+                </div>
+                <StatusBadge status={o.status} class="hidden sm:inline-flex" />
+                <ScoreBar class="w-32 sm:w-40" score={o.score.total} tier={o.score.tier} provisional={o.score.provisional} />
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+    </div>
+
+    <!-- Sections -->
+    <section>
+      <div class="mb-6">
+        <p class="eyebrow">Explore</p>
+        <h2 class="mt-1 text-xl font-semibold tracking-tight">Everything in one place</h2>
+      </div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          tiles.map((t, i) => (
+            <a href={t.href} class="surface card-hover group flex flex-col p-5" data-reveal style={`--reveal-i:${i}`}>
+              <span class="grid size-9 place-items-center rounded-lg border border-line bg-sunken text-fg">
+                <Icon name={t.icon} size={17} />
+              </span>
+              <h3 class="mt-4 flex items-center gap-1.5 font-semibold tracking-tight text-fg">
+                {t.title}
+                <Icon name="arrow-right" size={14} class="text-subtle transition-transform group-hover:translate-x-0.5" />
+              </h3>
+              <p class="mt-1.5 text-sm leading-relaxed text-muted">{t.text}</p>
+              <p class="num mt-4 text-xs text-subtle">{t.meta}</p>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- Arms race -->
+    <section>
+      <div class="mb-4 flex items-end justify-between">
+        <div>
+          <p class="eyebrow">Timeline</p>
+          <h2 class="mt-1 text-xl font-semibold tracking-tight">The arms race</h2>
+        </div>
+        <a href="/timeline" class="text-sm text-muted hover:text-fg">Open the timeline →</a>
+      </div>
+      <div class="surface p-4 sm:p-6">
+        <ArmsRaceChart data={data} compact />
+      </div>
+    </section>
+
+    <!-- Principles -->
+    <section class="grid gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-3">
+      {
+        [
+          {
+            icon: 'scale' as const,
+            title: 'Computed, not typed',
+            text: 'Statuses and scores are derived from the data by open-source code. Nobody hand-edits a ranking.',
+          },
+          {
+            icon: 'file' as const,
+            title: "Sourced, or it doesn't ship",
+            text: 'Every version, break and tool links to its evidence. CI rejects entries without sources.',
+          },
+          {
+            icon: 'flask' as const,
+            title: 'Our corpus only',
+            text: "We benchmark scripts we wrote ourselves. We never re-host other people's scripts or tools.",
+          },
+        ].map((p) => (
+          <div class="bg-elev p-6">
+            <Icon name={p.icon} size={18} class="text-muted" />
+            <h3 class="mt-3 font-semibold tracking-tight text-fg">{p.title}</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted">{p.text}</p>
+          </div>
+        ))
+      }
+    </section>
+
+    <section class="surface relative overflow-hidden px-6 py-10 text-center md:py-14">
+      <div class="hairline-grid pointer-events-none absolute inset-0 opacity-50 [mask-image:radial-gradient(60%_80%_at_50%_0%,black,transparent)]" aria-hidden="true"></div>
+      <div class="relative">
+        <h2 class="text-2xl font-semibold tracking-tight text-fg md:text-3xl">Know something we don't?</h2>
+        <p class="mx-auto mt-3 max-w-lg text-muted">
+          A new release, a fresh break, a tool we missed. Send it with a source and it lands as a public commit.
+        </p>
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <a href="/submit" class="btn btn-primary">Submit an update</a>
+          <a href={issueUrl('correction')} class="btn">Report a correction</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .hero-texture {
+    mask-image: radial-gradient(55% 55% at 50% 38%, black, transparent 78%);
+    -webkit-mask-image: radial-gradient(55% 55% at 50% 38%, black, transparent 78%);
+    opacity: 0.2;
+    white-space: pre;
+    overflow: hidden;
+    user-select: none;
+  }
+  :global([data-theme='dark']) .hero-texture {
+    opacity: 0.16;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-texture {
+      animation: drift 80s linear infinite;
+    }
+  }
+  @keyframes drift {
+    to {
+      transform: translateY(-50%);
+    }
+  }
+  .hero-word {
+    background: linear-gradient(180deg, var(--fg) 30%, color-mix(in oklab, var(--fg) 55%, var(--accent)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+</style>
+
+<script>
+  // Briefly "decrypt" the hero word. Purely decorative: the real text is in an sr-only span.
+  const el = document.querySelector<HTMLElement>('[data-scramble]');
+  if (el && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const target = el.dataset.scramble!;
+    const glyphs = 'Il1|!0O#$%&*';
+    const start = performance.now();
+    const duration = 900;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / duration);
+      const settled = Math.floor(p * target.length);
+      el.textContent = [...target]
+        .map((c, i) => (i < settled || c === '.' ? c : glyphs[Math.floor(Math.random() * glyphs.length)]))
+        .join('');
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+</script>

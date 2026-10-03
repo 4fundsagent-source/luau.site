@@ -1,0 +1,37 @@
+name: Correction
+description: Something on luau.site is wrong, missing or outdated.
+title: "Correction: "
+labels: [data, correction]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page
+      placeholder: https://luau.site/obfuscators/...
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What's wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: right
+    attributes:
+      label: What should it say?
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: Corrections need evidence just like additions. One URL per line.
+    validations:
+      required: true
+  - type: checkboxes
+    id: affiliation
+    attributes:
+      label: Disclosure
+      options:
+        - label: I'm affiliated with the project this correction is about.

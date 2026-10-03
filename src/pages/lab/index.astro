@@ -1,0 +1,163 @@
+---
+import Icon from '~/components/Icon.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import Section from '~/components/Section.astro';
+import Base from '~/layouts/Base.astro';
+import { formatVersion, getSiteData } from '~/lib/data';
+import { formatBytes } from '~/lib/highlight';
+import { recovered } from '~/lib/lab';
+import { SITE } from '~/lib/site';
+
+const { samples, obf } = await getSiteData();
+const runCols = [...new Set(samples.flatMap((s) => s.runs.map((r) => r.id)))].sort();
+const totalRuns = samples.reduce((a, s) => a + s.runs.length, 0);
+
+const steps = [
+  { icon: 'file' as const, title: 'Corpus script', text: 'Written by us, with a deterministic expected output.' },
+  { icon: 'shield' as const, title: 'Obfuscator', text: 'Run by a maintainer with documented settings.' },
+  { icon: 'unlock' as const, title: 'Deobfuscator', text: 'Every tool that claims support gets a try.' },
+  { icon: 'check' as const, title: 'luau CLI', text: 'All three stages run, and stdout must match exactly.' },
+];
+---
+
+<Base title="The Lab" description="Our own benchmark corpus: scripts we wrote, run through every obfuscator and deobfuscator, verified with the official Luau CLI.">
+  <PageHeader
+    eyebrow="Benchmark"
+    title="The Lab"
+    description="Scripts we wrote ourselves, run through each obfuscator and then each deobfuscator. A break only counts as a recovery here if the output behaves exactly like the original."
+  />
+
+  <div class="container-page space-y-14 py-10">
+    <ol class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4" aria-label="Pipeline">
+      {
+        steps.map((s, i) => (
+          <li class="relative bg-elev p-5">
+            <span class="num text-xs text-subtle">0{i + 1}</span>
+            <div class="mt-3 flex items-center gap-2">
+              <Icon name={s.icon} size={16} class="text-muted" />
+              <h2 class="font-semibold tracking-tight">{s.title}</h2>
+            </div>
+            <p class="mt-1.5 text-sm text-muted">{s.text}</p>
+            {i < steps.length - 1 && (
+              <Icon name="chevron-right" size={16} class="absolute top-1/2 -right-2 z-10 hidden -translate-y-1/2 rounded-full bg-elev text-subtle lg:block" />
+            )}
+          </li>
+        ))
+      }
+    </ol>
+
+    <Section id="corpus" title="Corpus" description={`${samples.length} scripts, each exercising a different weak spot.`}>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          samples.map((s, i) => (
+            <article class="surface card-hover relative flex flex-col p-5" data-reveal style={`--reveal-i:${i}`}>
+              <div class="flex items-center justify-between gap-3">
+                <h3 class="font-semibold tracking-tight">
+                  <a href={`/lab/${s.id}`} class="card-link">
+                    {s.meta.title}
+                  </a>
+                </h3>
+                {s.result && (
+                  <span class="chip" title={s.result.ok ? 'Original matches expected output' : s.result.error}>
+                    <Icon name={s.result.ok ? 'check' : 'x'} size={13} class={s.result.ok ? 'text-holding' : 'text-broken'} />
+                    {s.result.ok ? 'Verified' : 'Failing'}
+                  </span>
+                )}
+              </div>
+              <p class="mt-2 text-sm leading-relaxed text-muted">{s.meta.description}</p>
+              <div class="mt-4 flex flex-wrap gap-1.5">
+                {s.meta.exercises.slice(0, 4).map((e) => (
+                  <span class="chip">{e}</span>
+                ))}
+                {s.meta.exercises.length > 4 && <span class="chip">+{s.meta.exercises.length - 4}</span>}
+              </div>
+              <p class="num mt-auto pt-4 text-xs text-subtle">
+                {s.lines} lines · {formatBytes(s.bytes)} · {s.runs.length} run{s.runs.length === 1 ? '' : 's'}
+              </p>
+            </article>
+          ))
+        }
+      </div>
+    </Section>
+
+    <Section id="matrix" title="Results" description="Each cell shows one obfuscator build of one sample, and whether any deobfuscator recovered matching behavior.">
+      {
+        totalRuns ? (
+          <div class="surface overflow-x-auto">
+            <table class="w-full min-w-[36rem] text-left text-sm">
+              <thead class="border-b border-line bg-sunken text-xs text-subtle">
+                <tr>
+                  <th scope="col" class="px-4 py-2.5 font-medium">Sample</th>
+                  {runCols.map((c) => {
+                    const [o, v] = [c.slice(0, c.lastIndexOf('@')), c.slice(c.lastIndexOf('@') + 1)];
+                    return (
+                      <th scope="col" class="px-4 py-2.5 font-medium whitespace-nowrap">
+                        {obf.get(o)?.data.name ?? o} <span class="num">{formatVersion(v)}</span>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-line">
+                {samples.map((s) => (
+                  <tr>
+                    <th scope="row" class="px-4 py-3 font-medium text-fg">
+                      <a href={`/lab/${s.id}`} class="hover:underline">
+                        {s.meta.title}
+                      </a>
+                    </th>
+                    {runCols.map((c) => {
+                      const run = s.runs.find((r) => r.id === c);
+                      if (!run) return <td class="px-4 py-3 text-subtle">—</td>;
+                      const rec = recovered(run);
+                      return (
+                        <td class="px-4 py-3">
+                          <a href={`/lab/${s.id}/${run.id}`} class="inline-flex items-center gap-1.5 hover:underline">
+                            <Icon name={rec ? 'unlock' : 'shield'} size={14} class={rec ? 'text-broken' : 'text-holding'} />
+                            <span class="text-fg">{rec ? 'Recovered' : run.deob.length ? 'Held' : 'No tools run'}</span>
+                            <span class="num text-xs text-subtle">×{(run.bytes / s.bytes).toFixed(0)}</span>
+                          </a>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div class="surface flex items-start gap-3 p-6 text-sm text-muted">
+            <Icon name="flask" size={18} class="mt-0.5 shrink-0" />
+            <p>
+              No obfuscator runs have been committed yet. The corpus and the harness are ready; runs are added by maintainers as they obtain
+              builds. Until then, every obfuscator gets neutral half credit for the Lab part of its score.
+            </p>
+          </div>
+        )
+      }
+    </Section>
+
+    <Section id="contribute" title="Add a run">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <ol class="prose-site min-w-0 list-decimal pl-5 text-sm break-words">
+          <li>Obfuscate <code>lab/corpus/&lt;sample&gt;/source.luau</code> with the obfuscator's current version.</li>
+          <li>Save the result as <code>lab/runs/&lt;sample&gt;/&lt;obfuscator&gt;@&lt;version&gt;/obfuscated.luau</code>, plus a <code>meta.yaml</code> recording the settings, date and who ran it.</li>
+          <li>Run each deobfuscator that claims support. Save its output under <code>deob/&lt;tool&gt;@&lt;version&gt;/output.luau</code>, with its own <code>meta.yaml</code>.</li>
+          <li>Run <code>pnpm lab:verify</code> to execute every stage with the <code>luau</code> CLI and update <code>lab/results.json</code>.</li>
+          <li>Open a pull request. CI re-runs the check and rejects stale results.</li>
+        </ol>
+        <pre class="surface num overflow-x-auto p-4 text-xs leading-relaxed text-muted">{`lab/runs/control-flow/luraph@15/
+├── meta.yaml          # settings, date, by
+├── obfuscated.luau
+└── deob/
+    └── deobfuscator-luraph-v15@main/
+        ├── meta.yaml
+        └── output.luau`}</pre>
+      </div>
+      <p class="mt-4 text-sm text-muted">
+        The folder names must match slugs and versions in the dataset, and <code class="num text-fg">pnpm validate</code> checks that they do. See the{' '}
+        <a href={`${SITE.repo}/tree/main/lab`} class="link">lab folder</a> on GitHub.
+      </p>
+    </Section>
+  </div>
+</Base>

@@ -1,0 +1,27 @@
+name: ironbrew2-deobfuscator
+author: axomtools
+tagline: Detects and reverses IronBrew 2.7.0/2.7.1 and AztupBrew 2.7.2 back to readable Lua.
+description: >-
+  A Python pipeline that detects the IronBrew variant, flattens and transforms the VM, resolves
+  super-instructions (multi-opcode patterns), renames variables and formats the output. It also
+  handles the AztupBrew v2.7.2 fork. A small web interface was added later.
+repo: https://github.com/axomtools/ironbrew2-deobfuscator
+access: open-source
+techniques: [static-devirt, ast-cleanup]
+outputLevel: readable
+# First commit on August 19, 2026.
+firstSeen: 2026-08-19
+maintenance: active
+targets:
+  - obfuscator: ironbrew-2
+    versions: ["2.7.0", "2.7.1"]
+    support: full
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/axomtools/ironbrew2-deobfuscator
+    title: axomtools/ironbrew2-deobfuscator (README)
+    accessed: 2026-10-03
+  - url: https://github.com/axomtools/ironbrew2-deobfuscator/commits/main
+    title: Commit history — first commit August 19, 2026
+    accessed: 2026-10-03

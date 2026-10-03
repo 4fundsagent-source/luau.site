@@ -1,0 +1,86 @@
+---
+import { formatDate, formatDuration } from '~/lib/dates';
+import { formatVersion, type DeobfuscatorView, type VersionView } from '~/lib/data';
+import { PROVING_DAYS } from '~/lib/score';
+import StatusBadge from './StatusBadge.astro';
+
+interface Props {
+  versions: VersionView[];
+  deob: Map<string, DeobfuscatorView>;
+  /** Open-source projects can't hold: unbroken versions show as "Open source". */
+  openSource?: boolean;
+}
+const { versions, deob, openSource = false } = Astro.props;
+const rows = [...versions].reverse();
+const anchor = (v: string) => `v-${v.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
+const toolName = (id: string) => deob.get(id)?.data.name ?? id;
+---
+
+<div class="surface overflow-hidden" data-reveal>
+  <table class="w-full text-left text-sm">
+    <thead class="hidden border-b border-line bg-sunken text-xs text-subtle md:table-header-group">
+      <tr>
+        <th scope="col" class="px-4 py-2.5 font-medium whitespace-nowrap">Version</th>
+        <th scope="col" class="px-4 py-2.5 font-medium whitespace-nowrap">Released</th>
+        <th scope="col" class="px-4 py-2.5 font-medium whitespace-nowrap">Status</th>
+        <th scope="col" class="px-4 py-2.5 font-medium whitespace-nowrap">Time to break</th>
+        <th scope="col" class="px-4 py-2.5 font-medium whitespace-nowrap">Tools</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line">
+      {
+        rows.map((v) => (
+          <tr id={anchor(v.version)} class="grid scroll-mt-24 grid-cols-2 gap-x-4 gap-y-2 px-4 py-3 align-top md:table-row md:p-0">
+            <td class="md:px-4 md:py-3">
+              <span class="num font-medium text-fg">{formatVersion(v.version)}</span>
+              {v.isLatest && <span class="ml-2 rounded bg-accent-soft px-1.5 py-px text-[0.6875rem] font-medium text-accent">latest</span>}
+            </td>
+            <td class="text-right whitespace-nowrap text-muted md:px-4 md:py-3 md:text-left">
+              <span class="md:hidden text-subtle">Released </span>
+              {formatDate(v.s.released)}
+            </td>
+            <td class="md:px-4 md:py-3">
+              <StatusBadge status={openSource && v.s.status === 'holding' ? 'open' : v.s.status} />
+              {v.provingDay !== undefined && (
+                <p class="mt-1 text-xs text-subtle">
+                  Proving: day {v.provingDay} of {PROVING_DAYS}
+                </p>
+              )}
+              {v.s.overridden && <p class="mt-1 text-xs text-subtle">Manually set: {v.s.statusNote}</p>}
+            </td>
+            <td class="num text-right whitespace-nowrap text-muted md:px-4 md:py-3 md:text-left">
+              {v.s.daysToBreak !== undefined ? (
+                <span class="text-fg">{formatDuration(v.s.daysToBreak, v.s.fuzzy)}</span>
+              ) : v.s.status === 'broken' ? (
+                'Unknown'
+              ) : (
+                '—'
+              )}
+            </td>
+            <td class="col-span-2 text-muted md:px-4 md:py-3">
+              {v.s.hits.length === 0 ? (
+                <span class="text-subtle">None tracked</span>
+              ) : (
+                <ul class="space-y-0.5">
+                  {v.s.hits.map((h) => (
+                    <li>
+                      <a href={`/deobfuscators/${h.deobfuscator}`} class="link">
+                        {toolName(h.deobfuscator)}
+                      </a>
+                      <span class="text-subtle">
+                        {' '}
+                        · {h.effect === 'break' ? 'readable source' : h.support === 'full' ? 'partial output' : h.support}
+                        {h.date ? ` · ${formatDate(h.date)}` : ''}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {v.notes && <p class="mt-1 text-xs text-subtle">{v.notes}</p>}
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

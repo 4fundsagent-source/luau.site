@@ -1,0 +1,24 @@
+name: MoonVeil
+tagline: Luau-first obfuscator with a uniquely generated VM per script and fine-grained protection macros.
+description: >-
+  MoonVeil generates a hardened Luau interpreter for every script, with its own instruction set,
+  shuffled opcode encoding and hot-patched mnemonics. Authors choose what to protect with macros such
+  as MV_VM, MV_ENC_FUNC and MV_CFF, or skip blocks with MV_OMIT. Virtualization requires a paid plan;
+  on the free tier the macros are no-ops. In 2026 an open-source devirtualizer listed MoonVeil v1.4.5
+  as supported.
+docs: https://git.openpunk.com/CPunch/MoonVeil-Docs
+pricing: freemium
+targets: [luau]
+techniques: [vm, polymorphic-vm, function-encryption, cff, macros]
+versions:
+  - version: "1.4.5"
+    notes: Latest version known to luau.site, from a public deobfuscator's support list. Release date unknown.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://git.openpunk.com/CPunch/MoonVeil-Docs/src/branch/main/content/docs/options/virtualization.md
+    title: MoonVeil docs — Virtualization
+    accessed: 2026-10-03
+  - url: https://git.openpunk.com/CPunch/MoonVeil-Docs/raw/branch/main/content/docs/macros/MV_OBFUSCATED.md
+    title: MoonVeil docs — macros
+    accessed: 2026-10-03

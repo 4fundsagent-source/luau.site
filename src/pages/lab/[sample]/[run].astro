@@ -1,0 +1,142 @@
+---
+import CodePanel from '~/components/CodePanel.astro';
+import Icon from '~/components/Icon.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import Base from '~/layouts/Base.astro';
+import { formatVersion, getSiteData } from '~/lib/data';
+import { formatBytes } from '~/lib/highlight';
+import { loadLab, readLabFile, type ObfRun, type Sample } from '~/lib/lab';
+
+export function getStaticPaths() {
+  return loadLab().samples.flatMap((s) => s.runs.map((r) => ({ params: { sample: s.id, run: r.id }, props: { s, r } })));
+}
+
+interface Props {
+  s: Sample;
+  r: ObfRun;
+}
+const { s, r } = Astro.props;
+const { obf, deob } = await getSiteData();
+const obfName = obf.get(r.obfuscator)?.data.name ?? r.obfuscator;
+const source = readLabFile('corpus', s.id, 'source.luau');
+const obfuscated = readLabFile('runs', s.id, r.id, 'obfuscated.luau');
+const outputs = r.deob.map((d) => ({ d, code: readLabFile('runs', s.id, r.id, 'deob', d.id, 'output.luau') }));
+
+const overhead = (ms?: number) => (ms !== undefined && s.result?.ms ? `${(ms / Math.max(1, s.result.ms)).toFixed(1)}×` : '—');
+const metrics = [
+  { label: 'Obfuscated size', value: `${formatBytes(r.bytes)}`, note: `${(r.bytes / s.bytes).toFixed(1)}× original` },
+  { label: 'Runtime overhead', value: overhead(r.result?.ms), note: r.result?.ms !== undefined ? `${r.result.ms} ms vs ${s.result?.ms ?? '—'} ms` : 'not measured' },
+  { label: 'Obfuscated behavior', value: r.result ? (r.result.ok ? 'Matches' : 'Broken') : '—', note: 'stdout vs expected' },
+  {
+    label: 'Recovered by',
+    value: `${r.deob.filter((d) => d.result?.ok).length} of ${r.deob.length}`,
+    note: 'deobfuscators with matching output',
+  },
+];
+---
+
+<Base title={`${s.meta.title}: ${obfName} ${formatVersion(r.version)} · Lab`} description={`Original, ${obfName} output and deobfuscated output of the ${s.meta.title} sample, side by side.`}>
+  <PageHeader
+    eyebrow="Lab run"
+    title={`${s.meta.title} × ${obfName} ${formatVersion(r.version)}`}
+    crumbs={[
+      { href: '/lab', label: 'Lab' },
+      { href: `/lab/${s.id}`, label: s.meta.title },
+    ]}
+  >
+    <p class="mt-3 text-sm text-muted">
+      Obfuscated {r.date ? `on ${r.date}` : ''}{r.by ? ` by ${r.by}` : ''}{r.settings ? ` · settings: ${r.settings}` : ''}
+    </p>
+  </PageHeader>
+
+  <div class="container-page space-y-8 py-10">
+    <dl class="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-4">
+      {
+        metrics.map((m) => (
+          <div class="bg-elev p-4">
+            <dt class="text-xs text-muted">{m.label}</dt>
+            <dd class="mt-1 text-xl font-semibold tracking-tight">{m.value}</dd>
+            <dd class="mt-0.5 text-xs text-subtle">{m.note}</dd>
+          </div>
+        ))
+      }
+    </dl>
+
+    <div data-compare>
+      <div class="mb-3 flex gap-1 rounded-lg border border-line bg-sunken p-0.5 text-sm lg:hidden" role="tablist" aria-label="Stage">
+        {
+          ['Original', 'Obfuscated', 'Deobfuscated'].map((t, i) => (
+            <button type="button" role="tab" data-tab={i} aria-selected={i === 0 ? 'true' : 'false'} class="tab flex-1 rounded-md px-3 py-1.5">
+              {t}
+            </button>
+          ))
+        }
+      </div>
+      <div class="grid gap-4 lg:grid-cols-3">
+        <div data-panel="0" class="min-w-0">
+          <CodePanel compact title="Original" subtitle="source.luau" code={source} download={`/lab/files/corpus/${s.id}/source.luau`} result={s.result} />
+        </div>
+        <div data-panel="1" class="min-w-0">
+          <CodePanel
+            compact
+            title={`${obfName} ${formatVersion(r.version)}`}
+            subtitle="obfuscated.luau"
+            code={obfuscated}
+            download={`/lab/files/runs/${s.id}/${r.id}/obfuscated.luau`}
+            result={r.result}
+          />
+        </div>
+        <div data-panel="2" class="min-w-0 space-y-4">
+          {
+            outputs.length ? (
+              outputs.map(({ d, code }) => (
+                <CodePanel
+                  compact
+                  title={deob.get(d.deobfuscator)?.data.name ?? d.deobfuscator}
+                  subtitle={`${d.version} · output.luau`}
+                  code={code}
+                  download={`/lab/files/runs/${s.id}/${r.id}/deob/${d.id}/output.luau`}
+                  result={d.result}
+                />
+              ))
+            ) : (
+              <div class="surface flex h-full min-h-48 flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted">
+                <Icon name="shield" size={20} />
+                No deobfuscator has been run on this build yet.
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .tab {
+    color: var(--fg-muted);
+  }
+  .tab[aria-selected='true'] {
+    background: var(--bg-elev);
+    color: var(--fg);
+    box-shadow: var(--shadow-card);
+  }
+  @media (max-width: 1023px) {
+    [data-compare] [data-panel]:not([data-active]) {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-compare]')) {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-panel]')];
+    const select = (i: number) => {
+      tabs.forEach((t, j) => t.setAttribute('aria-selected', String(i === j)));
+      panels.forEach((p, j) => (i === j ? p.setAttribute('data-active', '') : p.removeAttribute('data-active')));
+    };
+    tabs.forEach((t, i) => t.addEventListener('click', () => select(i)));
+    select(0);
+  }
+</script>

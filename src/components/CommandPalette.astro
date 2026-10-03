@@ -1,0 +1,240 @@
+---
+import Icon from './Icon.astro';
+---
+
+<dialog
+  id="cmdk"
+  class="cmdk m-auto mt-[12vh] w-[min(40rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-line-strong bg-elev p-0 text-fg shadow-lift backdrop:bg-black/30 backdrop:backdrop-blur-[2px]"
+  aria-label="Search luau.site"
+>
+  <div class="flex items-center gap-3 border-b border-line px-4">
+    <Icon name="search" class="shrink-0 text-subtle" />
+    <input
+      type="text"
+      data-cmdk-input
+      class="h-12 min-w-0 flex-1 bg-transparent text-[0.9375rem] outline-none placeholder:text-subtle"
+      placeholder="Search obfuscators, deobfuscators, versions, terms…"
+      autocomplete="off"
+      spellcheck="false"
+      role="combobox"
+      aria-expanded="true"
+      aria-controls="cmdk-results"
+      aria-autocomplete="list"
+    />
+    <kbd class="num rounded border border-line bg-sunken px-1.5 py-px text-[0.6875rem] text-subtle">Esc</kbd>
+  </div>
+  <ul id="cmdk-results" role="listbox" class="max-h-[min(60vh,28rem)] overflow-y-auto p-2" aria-label="Results"></ul>
+  <div class="flex items-center gap-4 border-t border-line px-4 py-2 text-[0.6875rem] text-subtle">
+    <span><kbd class="num">↑↓</kbd> navigate</span>
+    <span><kbd class="num">↵</kbd> open</span>
+    <span class="ml-auto">Type <kbd class="num">/</kbd> or <kbd class="num">⌘K</kbd> anywhere</span>
+  </div>
+</dialog>
+
+<style>
+  .cmdk[open] {
+    animation: cmdk-in 240ms var(--ease-out);
+  }
+  .cmdk[open]::backdrop {
+    animation: cmdk-fade 240ms var(--ease-out);
+  }
+  .cmdk[data-closing] {
+    animation: cmdk-out 150ms ease-in forwards;
+  }
+  .cmdk[data-closing]::backdrop {
+    animation: cmdk-fade 150ms ease-in reverse forwards;
+  }
+  @keyframes cmdk-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.98);
+    }
+  }
+  @keyframes cmdk-out {
+    to {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.98);
+    }
+  }
+  @keyframes cmdk-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  :global(.cmdk-item) {
+    transition: background-color 140ms;
+  }
+  :global(.cmdk-item[aria-selected='true']) {
+    background: var(--bg-hover);
+  }
+</style>
+
+<script>
+  import type { IFuseOptions } from 'fuse.js';
+
+  interface Entry {
+    title: string;
+    subtitle: string;
+    href: string;
+    kind: string;
+    keywords?: string;
+  }
+
+  const dialog = document.getElementById('cmdk') as HTMLDialogElement;
+  const input = dialog.querySelector<HTMLInputElement>('[data-cmdk-input]')!;
+  const list = dialog.querySelector<HTMLUListElement>('#cmdk-results')!;
+
+  let entries: Entry[] | undefined;
+  let search: ((q: string) => Entry[]) | undefined;
+  let results: Entry[] = [];
+  let active = 0;
+
+  async function ensureIndex() {
+    if (search) return;
+    const [res, { default: Fuse }] = await Promise.all([fetch('/search-index.json'), import('fuse.js')]);
+    entries = (await res.json()) as Entry[];
+    const options: IFuseOptions<Entry> = {
+      keys: [
+        { name: 'title', weight: 3 },
+        { name: 'keywords', weight: 1.5 },
+        { name: 'subtitle', weight: 1 },
+      ],
+      threshold: 0.38,
+      ignoreLocation: true,
+      includeScore: true,
+    };
+    const fuse = new Fuse(entries, options);
+    // Prefer primary entities over versions and glossary terms when matches are close.
+    const boost: Record<string, number> = { Obfuscator: 0.55, Deobfuscator: 0.8, Auth: 0.8, Page: 0.85, Version: 0.9 };
+    search = (q) =>
+      fuse
+        .search(q, { limit: 24 })
+        .map((r) => ({ item: r.item, s: (r.score ?? 1) * (boost[r.item.kind] ?? 1) }))
+        .sort((a, b) => a.s - b.s)
+        .slice(0, 12)
+        .map((r) => r.item);
+  }
+
+  function render() {
+    list.replaceChildren();
+    if (!results.length) {
+      const li = document.createElement('li');
+      li.className = 'px-3 py-8 text-center text-sm text-subtle';
+      li.textContent = input.value ? 'No matches. Try a different spelling.' : 'Loading…';
+      list.append(li);
+      return;
+    }
+    results.forEach((r, i) => {
+      const li = document.createElement('li');
+      li.style.setProperty('--i', String(Math.min(i, 10)));
+      li.id = `cmdk-${i}`;
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', String(i === active));
+      li.className = 'cmdk-item';
+      li.style.borderRadius = '8px';
+      const a = document.createElement('a');
+      a.href = r.href;
+      a.className = 'flex items-center gap-3 px-3 py-2.5';
+      a.tabIndex = -1;
+      const kind = document.createElement('span');
+      kind.className = 'num w-24 shrink-0 text-[0.6875rem] uppercase tracking-wide text-subtle';
+      kind.textContent = r.kind;
+      const body = document.createElement('span');
+      body.className = 'min-w-0 flex-1';
+      const t = document.createElement('span');
+      t.className = 'block truncate text-sm text-fg';
+      t.textContent = r.title;
+      const s = document.createElement('span');
+      s.className = 'block truncate text-xs text-muted';
+      s.textContent = r.subtitle;
+      body.append(t, s);
+      a.append(kind, body);
+      li.append(a);
+      li.addEventListener('mousemove', () => select(i));
+      list.append(li);
+    });
+    input.setAttribute('aria-activedescendant', `cmdk-${active}`);
+  }
+
+  function select(i: number) {
+    if (i === active) return;
+    active = i;
+    list.querySelectorAll('[role=option]').forEach((el, j) => el.setAttribute('aria-selected', String(j === active)));
+    input.setAttribute('aria-activedescendant', `cmdk-${active}`);
+    list.querySelector(`#cmdk-${active}`)?.scrollIntoView({ block: 'nearest' });
+  }
+
+  function update() {
+    const q = input.value.trim();
+    active = 0;
+    results = !entries ? [] : q ? (search?.(q) ?? []) : entries.filter((e) => e.kind === 'Page' || e.kind === 'Obfuscator').slice(0, 10);
+    render();
+  }
+
+  async function open() {
+    if (dialog.open) return;
+    input.value = '';
+    results = [];
+    render();
+    dialog.showModal();
+    input.focus();
+    list.classList.add('stagger-in');
+    window.setTimeout(() => list.classList.remove('stagger-in'), 600);
+    try {
+      await ensureIndex();
+    } catch {
+      list.replaceChildren();
+      const li = document.createElement('li');
+      li.className = 'px-3 py-8 text-center text-sm text-subtle';
+      li.textContent = 'Search is unavailable right now.';
+      list.append(li);
+      return;
+    }
+    update();
+  }
+
+  input.addEventListener('input', update);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      select(Math.min(results.length - 1, active + 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      select(Math.max(0, active - 1));
+    } else if (e.key === 'Enter' && results[active]) {
+      e.preventDefault();
+      window.location.href = results[active].href;
+    }
+  });
+  function close() {
+    if (!dialog.open || dialog.hasAttribute('data-closing')) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return dialog.close();
+    dialog.setAttribute('data-closing', '');
+    dialog.addEventListener(
+      'animationend',
+      () => {
+        dialog.removeAttribute('data-closing');
+        dialog.close();
+      },
+      { once: true },
+    );
+  }
+
+  dialog.addEventListener('cancel', (e) => {
+    e.preventDefault();
+    close();
+  });
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog) close();
+  });
+
+  document.querySelectorAll('[data-search-open]').forEach((b) => b.addEventListener('click', open));
+  document.addEventListener('keydown', (e) => {
+    const target = e.target as HTMLElement;
+    const typing = target.closest('input, textarea, select, [contenteditable=true]');
+    if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) {
+      e.preventDefault();
+      open();
+    }
+  });
+</script>

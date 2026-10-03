@@ -1,0 +1,29 @@
+name: luraph-v15-v14.x-deobfuscator
+author: KryptIT
+tagline: Tracing and VM-lifting framework that recovers readable code from Luraph v14.7–v14.9 and v15.
+description: >-
+  Version detection feeds an instrumented runtime harness that records behavior and VM state; the
+  framework then lifts the VM symbolically, rebuilds control flow, cleans up probes, recovers
+  variables and writes readable Lua/Luau, with an optional string and constant dump. The v14 front
+  end has a dedicated engine per version; v15 uses a plugin-based pipeline. The README warns that very
+  complex samples can leave unresolved VM states or partially rebuilt functions. No license file.
+repo: https://github.com/KryptIT/luraph-v15-v14.x-deobfuscator
+access: open-source
+techniques: [dynamic-trace, emulation, static-devirt, constant-dump]
+outputLevel: readable
+# First commit ("lph deobf") on September 26, 2026.
+firstSeen: 2026-09-26
+maintenance: active
+targets:
+  - obfuscator: luraph
+    versions: ["14.7", "14.8", "14.9", "15"]
+    support: full
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/KryptIT/luraph-v15-v14.x-deobfuscator
+    title: KryptIT/luraph-v15-v14.x-deobfuscator (README — "Currently targets v14.7, v14.8, v14.9, v15")
+    accessed: 2026-10-03
+  - url: https://github.com/KryptIT/luraph-v15-v14.x-deobfuscator/commits/main
+    title: Commit history — first commit September 26, 2026
+    accessed: 2026-10-03

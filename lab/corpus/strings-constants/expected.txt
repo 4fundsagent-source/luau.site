@@ -1,0 +1,10 @@
+tab:	quote:"\ newline-escape:\n bell-free
+30	line one|  line two, indented|
+ 3.14|pad   |007|ff|"q\"uote"
+bytes:	76,117,97,117	Luau
+THE_QUICK_BROWN_FOX_JUMPS
+reverse:	noitacsufbo	abcabcabc
+2147483647	1000	9007199254740992	-0.5	3	2	3.5
+inf	-inf	false
+-4	-3	12	9
+nil	true	16	125

@@ -1,0 +1,44 @@
+name: luau-vmp-deobf
+author: binxgtl
+tagline: Devirtualizer for Luau VM protections; the first public Luraph v14.7 devirtualization, plus MoonVeil v1.4.5.
+description: >-
+  Static and sandbox-assisted analysis of custom Luau bytecode VMs and staged loaders: loader
+  unpacking, strict prototype-tree capture, Luraph bootstrap detection, sandboxed decoder execution,
+  dispatcher recovery and instruction-level pseudo-Luau generation, with an optional lua.expert
+  readability pass. It supports Luraph v14.x loaders (v14.7 is covered by its regression corpus) and
+  lists MoonVeil v1.4.5 as supported. Luraph v15 is explicitly rejected as unsupported.
+repo: https://github.com/binxgtl/luau-vmp-deobf
+access: open-source
+license: MIT
+techniques: [static-devirt, emulation, constant-dump]
+outputLevel: readable
+# First PR ("Add Luraph v14.x loader unpacker") merged July 31, 2026.
+firstSeen: 2026-07-31
+maintenance: active
+targets:
+  - obfuscator: luraph
+    versions: ["14.7"]
+    support: full
+    since: 2026-08-08
+    notes: '"Safe public Luraph v14.7 devirtualization" committed August 8, 2026.'
+  - obfuscator: luraph
+    versions: ["14.8", "14.9"]
+    support: partial
+    notes: README claims v14.x loader support; only v14.7 is covered by its regression corpus.
+  - obfuscator: moonveil
+    versions: ["1.4.5"]
+    support: full
+    since: unknown
+    notes: Listed as supported in the README (seen by luau.site on October 3, 2026); the date support was added is unknown.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/binxgtl/luau-vmp-deobf
+    title: binxgtl/luau-vmp-deobf (README — "SUPPORT MoonVeil v1.4.5, Luraph v14.7")
+    accessed: 2026-10-03
+  - url: https://github.com/binxgtl/luau-vmp-deobf/pull/1
+    title: PR #1, merged July 31, 2026
+    accessed: 2026-10-03
+  - url: https://github.com/binxgtl/luau-vmp-deobf/commits/main
+    title: Commit history — v14.7 devirtualization August 8, 2026
+    accessed: 2026-10-03

@@ -1,0 +1,49 @@
+---
+interface Props {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  crumbs?: { href: string; label: string }[];
+}
+const { eyebrow, title, description, crumbs } = Astro.props;
+---
+
+<section class="relative overflow-hidden border-b border-line">
+  <div class="pointer-events-none absolute inset-0" style="background:var(--glow)" aria-hidden="true"></div>
+  <div class="container-page relative py-12 md:py-16">
+    {
+      crumbs && (
+        <nav aria-label="Breadcrumb" class="mb-4 text-sm text-subtle" data-enter style="--i:0">
+          <ol class="flex flex-wrap items-center gap-1.5">
+            {crumbs.map((c, i) => (
+              <li class="flex items-center gap-1.5">
+                {i > 0 && <span aria-hidden="true">/</span>}
+                <a href={c.href} class="hover:text-fg">
+                  {c.label}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+    {
+      eyebrow && (
+        <p class="eyebrow" data-enter style="--i:1">
+          {eyebrow}
+        </p>
+      )
+    }
+    <h1 class="mt-2 text-3xl font-semibold tracking-tight text-fg md:text-[2.75rem] md:leading-[1.1]" data-enter style="--i:2">{title}</h1>
+    {
+      description && (
+        <p class="mt-4 max-w-2xl text-[1.0625rem] leading-relaxed text-muted" data-enter style="--i:3">
+          {description}
+        </p>
+      )
+    }
+    <div data-enter style="--i:4">
+      <slot />
+    </div>
+  </div>
+</section>

@@ -1,0 +1,24 @@
+name: moonsec-v3-deobfuscator
+author: tr4ash
+tagline: Closed deobfuscation service for MoonSec v3 and v2, offered through Discord.
+description: >-
+  The repository is a showcase for a deobfuscation service rather than the tool itself; the author
+  says they "discovered a method to decrypt Moonsec" and also lists MoonSec v2 and FXAP (FiveM)
+  support. The code is not public, so the claims are unverified.
+repo: https://github.com/tr4ash/moonsec-v3-deobfuscator
+access: private
+techniques: [constant-dump]
+outputLevel: readable
+# Last repository update; the service is at least this old.
+firstSeen: "~2024-01"
+maintenance: stale
+targets:
+  - obfuscator: moonsec
+    versions: ["2", "3"]
+    support: full
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/tr4ash/moonsec-v3-deobfuscator
+    title: tr4ash/moonsec-v3-deobfuscator
+    accessed: 2026-10-03

@@ -1,0 +1,69 @@
+---
+import { formatDate } from '~/lib/dates';
+import type { TimelineEvent } from '~/lib/data';
+import { EVENT_LABEL, type EventKind } from '~/lib/taxonomy';
+import Icon, { type IconName } from './Icon.astro';
+import StatusIcon from './StatusIcon.astro';
+
+interface Props {
+  events: TimelineEvent[];
+  /** Group by month with headings (timeline page) or a flat list (home). */
+  grouped?: boolean;
+}
+const { events, grouped = false } = Astro.props;
+
+const ICON: Partial<Record<EventKind, IconName>> = {
+  release: 'layers',
+  deobfuscator: 'code',
+  patch: 'shield',
+  leak: 'unlock',
+  shutdown: 'x',
+  note: 'info',
+};
+
+const groups = new Map<string, TimelineEvent[]>();
+for (const e of events) {
+  const key = grouped ? e.date.date.toLocaleString('en', { month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
+  groups.set(key, [...(groups.get(key) ?? []), e]);
+}
+---
+
+<div class="space-y-8">
+  {
+    [...groups].map(([month, items]) => (
+      <section>
+        {month && <h3 class="eyebrow mb-3">{month}</h3>}
+        <ol class="surface divide-y divide-line">
+          {items.map((e, i) => (
+            <li class="flex gap-4 px-4 py-3.5" data-reveal style={`--reveal-i:${Math.min(i, 6)}`}>
+              <span class="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border border-line bg-sunken text-muted">
+                {e.kind === 'break' ? <StatusIcon status="broken" size={13} /> : <Icon name={ICON[e.kind] ?? 'info'} size={14} />}
+              </span>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  {e.href ? (
+                    <a href={e.href} class="font-medium text-fg hover:underline">
+                      {e.title}
+                    </a>
+                  ) : (
+                    <span class="font-medium text-fg">{e.title}</span>
+                  )}
+                  <span class="text-xs text-subtle">{EVENT_LABEL[e.kind]}</span>
+                </div>
+                {e.summary && <p class="mt-0.5 text-sm break-words text-muted">{e.summary}</p>}
+                {e.sources[0] && (
+                  <a href={e.sources[0].url} rel="noopener nofollow" target="_blank" class="mt-1 inline-block text-xs text-subtle hover:text-fg">
+                    Source: {new URL(e.sources[0].url).hostname.replace(/^www\./, '')} ↗
+                  </a>
+                )}
+              </div>
+              <time datetime={e.date.raw.replace('~', '')} class="num shrink-0 text-xs whitespace-nowrap text-subtle">
+                {formatDate(e.date)}
+              </time>
+            </li>
+          ))}
+        </ol>
+      </section>
+    ))
+  }
+</div>
