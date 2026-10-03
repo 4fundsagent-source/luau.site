@@ -1,0 +1,33 @@
+# Luraph — https://lura.ph
+name: Luraph
+vendor: Luraph
+since: 2017
+tagline: Long-running commercial VM obfuscator for Lua and Luau, with API bindings and a macro SDK.
+description: >-
+  Luraph describes itself as the longest-standing Lua obfuscation service, active since 2017.
+  It compiles scripts to a per-build virtual machine, and offers macros, a VS Code extension and
+  API bindings for .NET and Node.js. In 2026 the v14.7–v14.9 line was publicly deobfuscated, and
+  an open-source deobfuscator for v15 appeared within weeks of its release.
+website: https://lura.ph
+discord: https://discord.lura.ph
+repo: https://github.com/Luraph
+pricing: paid
+targets: [luau, lua51]
+techniques: [vm, polymorphic-vm, const-encryption, string-encryption, cff, anti-tamper, macros]
+versions:
+  # TODO(verify): exact release dates for the 14.x line.
+  - version: "14.7"
+  - version: "14.8"
+  - version: "14.9"
+  - version: "15"
+    # TODO(verify): approximate — "released, then broken within a few weeks".
+    released: "~2026-08"
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/Luraph
+    title: Luraph on GitHub — "committed to Lua obfuscation since 2017"
+    accessed: 2026-10-03
+  - url: https://github.com/Luraph/macrosdk
+    title: Luraph macro SDK
+    accessed: 2026-10-03

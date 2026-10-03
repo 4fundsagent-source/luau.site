@@ -1,0 +1,21 @@
+name: IronBrew2-Deobfuscator
+author: Gork3m
+tagline: Experimental deobfuscator for IronBrew 2 output.
+description: >-
+  Described by its author as "an experimental ib2 deobfuscator" that is still being worked on.
+  It targets scripts protected with IronBrew 2 and aims to recover readable code.
+repo: https://github.com/Gork3m/IronBrew2-Deobfuscator
+access: open-source
+techniques: [static-devirt]
+outputLevel: readable
+maintenance: stale
+targets:
+  - obfuscator: ironbrew-2
+    versions: ["2"]
+    support: experimental
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/Gork3m/IronBrew2-Deobfuscator
+    title: Gork3m/IronBrew2-Deobfuscator
+    accessed: 2026-10-03

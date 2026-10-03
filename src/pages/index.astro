@@ -1,0 +1,11 @@
+---
+import Base from '~/layouts/Base.astro';
+import { getSiteData } from '~/lib/data';
+const data = await getSiteData();
+---
+<Base>
+  <div class="container-page py-20">
+    <h1 class="text-4xl font-semibold">luau.site</h1>
+    <ul>{data.obfuscators.map((o) => <li>{o.data.name} {o.status} {o.score.total} {o.score.tier}</li>)}</ul>
+  </div>
+</Base>

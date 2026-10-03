@@ -1,0 +1,12 @@
+# Hand-written timeline events. Releases, breaks and new tools are derived
+# automatically from the obfuscator and deobfuscator files — only add things
+# here that the data can't express (leaks, shutdowns, notable patches).
+- id: tracking-start
+  date: 2026-10-03
+  kind: note
+  title: luau.site starts tracking the Lua/Luau protection scene
+  summary: First public dataset — obfuscators, deobfuscators and auth services, each linked to sources.
+  sources:
+    - url: https://github.com/4fundsagent-source/luau.site
+      title: luau.site repository
+      accessed: 2026-10-03

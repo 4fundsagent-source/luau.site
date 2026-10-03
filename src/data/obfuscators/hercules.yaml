@@ -1,0 +1,22 @@
+name: Hercules
+tagline: Open-source, modular Lua obfuscator with a VM layer, string encoding and anti-tamper checks.
+description: >-
+  Hercules stacks many independent modules — string encoding, renaming, control-flow obfuscation,
+  garbage code, opaque predicates, bytecode encoding, a virtual machine layer and runtime anti-tamper
+  checks. It targets Lua 5.4 and supports Luau with most (12 of 14) modules. A hosted version and a
+  Discord bot are also available.
+website: https://hercules-obfuscator.xyz
+repo: https://github.com/zeusssz/hercules-obfuscator
+pricing: open-source
+license: Apache-2.0
+targets: [lua54, luau]
+techniques: [vm, string-encryption, renaming, cff, junk-code, opaque-predicates, anti-tamper, compression, watermarking]
+versions:
+  - version: main
+    notes: Rolling releases from the main branch.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/zeusssz/hercules-obfuscator
+    title: zeusssz/hercules-obfuscator
+    accessed: 2026-10-03

@@ -1,0 +1,30 @@
+---
+import type { Status } from '~/lib/taxonomy';
+
+interface Props {
+  status: Status;
+  size?: number;
+}
+const { status, size = 12 } = Astro.props;
+const color = `var(--${status})`;
+---
+
+<svg width={size} height={size} viewBox="0 0 12 12" class="status-icon shrink-0" aria-hidden="true" style={`color:${color}`}>
+  {status === 'holding' && <circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6" />}
+  {
+    status === 'partial' && (
+      <>
+        <circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6" />
+        <path d="M6 1.4a4.6 4.6 0 0 0 0 9.2Z" fill="currentColor" />
+      </>
+    )
+  }
+  {
+    status === 'broken' && (
+      <>
+        <circle cx="6" cy="6" r="5.4" fill="currentColor" />
+        <path d="M4 4l4 4M8 4l-4 4" stroke="var(--bg-elev)" stroke-width="1.5" stroke-linecap="round" />
+      </>
+    )
+  }
+</svg>

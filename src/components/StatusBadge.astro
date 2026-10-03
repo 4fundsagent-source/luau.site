@@ -1,0 +1,29 @@
+---
+import { STATUS_META, type Status } from '~/lib/taxonomy';
+import StatusIcon from './StatusIcon.astro';
+
+interface Props {
+  status: Status;
+  /** Optional trailing detail, e.g. "since Sep 2026". */
+  detail?: string;
+  label?: string;
+  size?: 'sm' | 'md';
+  class?: string;
+}
+const { status, detail, label, size = 'sm', class: className } = Astro.props;
+const meta = STATUS_META[status];
+---
+
+<span
+  class:list={[
+    'inline-flex items-center gap-1.5 rounded-full border font-medium whitespace-nowrap text-fg',
+    size === 'sm' ? 'h-6 px-2 text-xs' : 'h-7 px-2.5 text-[0.8125rem]',
+    className,
+  ]}
+  style={`background:color-mix(in oklab, var(--${status}) 7%, var(--bg-elev));border-color:color-mix(in oklab, var(--${status}) 28%, var(--line))`}
+  title={meta.description}
+>
+  <StatusIcon status={status} size={size === 'sm' ? 12 : 13} />
+  <span>{label ?? meta.label}</span>
+  {detail && <span class="font-normal text-muted">· {detail}</span>}
+</span>

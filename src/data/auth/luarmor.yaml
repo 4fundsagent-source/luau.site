@@ -1,0 +1,18 @@
+name: Luarmor
+tagline: Licensing and protection service for Lua scripts, aimed at the Roblox scripting scene.
+description: >-
+  Luarmor combines script licensing — keys and whitelisting — with obfuscation, so authors can
+  control who runs their scripts and make redistribution harder. Feature details on this page
+  have not yet been checked against Luarmor's own documentation.
+website: https://luarmor.net
+pricing: paid
+features: [key-system, whitelist, obfuscation, loader]
+bypass:
+  status: none-known
+  note: No public bypass is tracked yet.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://luarmor.net
+    title: Luarmor
+    accessed: 2026-10-03
