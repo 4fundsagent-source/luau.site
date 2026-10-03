@@ -1,0 +1,9 @@
+total value: 230
+1. sword (weapon) costs 120 gold
+2. potion (consumable) costs 15 gold
+3. bow (weapon) costs 95 gold
+discounted: 180 / 150
+frozen:	true	write allowed:	false
+find/clone:	3	30	15
+buffer: DEADBEEF 1.5
+split:	4	a|b||c

@@ -1,0 +1,4 @@
+title: Closures & upvalues
+description: Counters, shared upvalues, recursion, varargs and higher-order functions. VMs that model upvalues incorrectly fail here.
+exercises: [closures, shared upvalues, recursion, varargs, select, higher-order functions]
+order: 3

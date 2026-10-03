@@ -33,5 +33,12 @@ jobs:
         run: pnpm check
       - name: Unit tests
         run: pnpm test
+      - name: Install Luau CLI
+        run: |
+          mkdir -p lab/.bin
+          curl -fsSL -o /tmp/luau.zip https://github.com/luau-lang/luau/releases/latest/download/luau-ubuntu.zip
+          unzip -o /tmp/luau.zip luau -d lab/.bin
+      - name: Lab — verify corpus and committed results
+        run: pnpm lab:verify --check
       - name: Build
         run: pnpm build

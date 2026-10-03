@@ -1,0 +1,4 @@
+title: Control flow
+description: Nested loops, early exits, continue, repeat-until and a small state machine. Tests whether a lifter rebuilds structured control flow.
+exercises: [numeric for, while, repeat-until, continue, break, nested ifs, state machine]
+order: 2

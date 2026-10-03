@@ -1,0 +1,4 @@
+title: Strings & constants
+description: Escapes, long strings, string library calls and numeric edge cases. The first thing constant encryption has to get right.
+exercises: [escape sequences, long strings, string.format, gsub, byte/char, numeric edge cases]
+order: 4

@@ -15,12 +15,12 @@ const { eyebrow, title, description, crumbs } = Astro.props;
       crumbs && (
         <nav aria-label="Breadcrumb" class="mb-4 text-sm text-subtle">
           <ol class="flex flex-wrap items-center gap-1.5">
-            {crumbs.map((c) => (
+            {crumbs.map((c, i) => (
               <li class="flex items-center gap-1.5">
+                {i > 0 && <span aria-hidden="true">/</span>}
                 <a href={c.href} class="hover:text-fg">
                   {c.label}
                 </a>
-                <span aria-hidden="true">/</span>
               </li>
             ))}
           </ol>

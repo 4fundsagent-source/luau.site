@@ -1,0 +1,96 @@
+---
+import { DISPLAY_LIMIT, formatBytes, highlight } from '~/lib/highlight';
+import type { ExecResult } from '~/lib/lab';
+import Icon from './Icon.astro';
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  code: string;
+  download?: string;
+  result?: ExecResult;
+  lang?: 'luau' | 'text';
+  /** Tailwind max-height class for the scroll area. */
+  height?: string;
+  id?: string;
+  /** Icon-only result chip, for narrow side-by-side panes. */
+  compact?: boolean;
+}
+const { title, subtitle, code, download, result, lang = 'luau', height = 'max-h-[70vh]', id, compact = false } = Astro.props;
+const truncated = code.length > DISPLAY_LIMIT;
+const shown = truncated ? code.slice(0, DISPLAY_LIMIT) : code;
+const longLines = shown.split('\n').some((l) => l.length > 400);
+const html = await highlight(shown, lang);
+const bytes = Buffer.byteLength(code);
+const lines = code.split('\n').length;
+---
+
+<section id={id} class="surface flex min-w-0 flex-col overflow-hidden" data-pane>
+  <header class="flex items-center gap-3 border-b border-line bg-sunken px-4 py-2.5">
+    <div class="min-w-0 flex-1">
+      <h3 class="truncate text-sm font-medium text-fg">{title}</h3>
+      <p class="num truncate text-[0.6875rem] text-subtle">
+        {subtitle && `${subtitle} · `}{lines.toLocaleString()} lines · {formatBytes(bytes)}
+      </p>
+    </div>
+    {
+      result && (
+        <span class:list={['chip shrink-0', compact && 'w-6 justify-center px-0']} title={result.error ?? 'Output matches the original'}>
+          <Icon name={result.ok ? 'check' : 'x'} size={13} class={result.ok ? 'text-holding' : 'text-broken'} />
+          <span class:list={[compact && 'sr-only']}>{result.ok ? 'Matches' : 'Mismatch'}</span>
+        </span>
+      )
+    }
+    <button type="button" class="icon-btn size-7 shrink-0" data-copy data-src-url={download} aria-label={`Copy ${title}`} title="Copy">
+      <Icon name="copy" size={14} />
+    </button>
+    {
+      download && (
+        <a href={download} download class="icon-btn size-7 shrink-0" aria-label={`Download ${title}`} title="Download">
+          <Icon name="download" size={14} />
+        </a>
+      )
+    }
+  </header>
+  {
+    result && !result.ok && result.error && (
+      <p class="num border-b border-line px-4 py-2 text-xs break-words text-broken">{result.error}</p>
+    )
+  }
+  <div class:list={['code-block overflow-auto', height, longLines && 'wrap']} set:html={html} />
+  {!download && <textarea hidden data-source>{code}</textarea>}
+  {
+    truncated && (
+      <p class="border-t border-line px-4 py-2 text-xs text-muted">
+        Showing the first {formatBytes(DISPLAY_LIMIT)} of {formatBytes(bytes)}.{' '}
+        {download && (
+          <a href={download} download class="link">
+            Download the full file
+          </a>
+        )}
+      </p>
+    )
+  }
+</section>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        const url = btn.dataset.srcUrl;
+        const src = url
+          ? await (await fetch(url)).text()
+          : (btn.closest('[data-pane]')?.querySelector<HTMLTextAreaElement>('[data-source]')?.value ?? '');
+        await navigator.clipboard.writeText(src);
+        btn.title = 'Copied';
+        btn.classList.add('text-holding');
+        setTimeout(() => {
+          btn.title = 'Copy';
+          btn.classList.remove('text-holding');
+        }, 1200);
+      } catch {
+        btn.title = 'Copy failed';
+      }
+    });
+  });
+</script>

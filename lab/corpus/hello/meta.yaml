@@ -1,0 +1,4 @@
+title: Hello
+description: The smallest possible script. A baseline for output size and startup overhead.
+exercises: [print, string concatenation]
+order: 1

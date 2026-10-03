@@ -1,0 +1,4 @@
+title: Luau syntax
+description: Type annotations, compound assignment, if-expressions, string interpolation, generalized iteration and table library helpers. Lua 5.1-only obfuscators usually reject this file.
+exercises: [type annotations, compound assignment, if-expressions, string interpolation, generalized iteration, table.freeze, buffer]
+order: 5
