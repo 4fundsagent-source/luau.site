@@ -1,0 +1,243 @@
+---
+/**
+ * Progressive filter/sort/search bar. Works on pre-rendered items:
+ *   [data-item]                     — each filterable card or row
+ *   data-f-<key>="a b"              — space-separated values for filter <key>
+ *   data-search="text"              — lowercased haystack for the search box
+ *   data-s-<key>="value"            — sort key (numeric or string)
+ * Without JS every item stays visible in its server-rendered order.
+ */
+import Icon from './Icon.astro';
+
+export interface FilterOption {
+  value: string;
+  label: string;
+  count?: number;
+}
+export interface FilterDef {
+  key: string;
+  label: string;
+  kind: 'segmented' | 'select';
+  options: FilterOption[];
+}
+export interface SortDef {
+  value: string;
+  label: string;
+  dir: 'asc' | 'desc';
+  type: 'number' | 'string';
+}
+
+interface Props {
+  filters: FilterDef[];
+  sorts: SortDef[];
+  total: number;
+  noun: [singular: string, plural: string];
+  placeholder?: string;
+}
+const { filters, sorts, total, noun, placeholder = 'Filter by name…' } = Astro.props;
+---
+
+<div data-filterbar data-noun-one={noun[0]} data-noun-many={noun[1]} class="mb-6 space-y-3">
+  <div class="flex flex-wrap items-center gap-2">
+    <label class="relative flex h-9 min-w-48 flex-1 items-center sm:max-w-xs">
+      <span class="sr-only">Search</span>
+      <Icon name="search" size={15} class="pointer-events-none absolute left-3 text-subtle" />
+      <input
+        type="search"
+        data-filter-q
+        placeholder={placeholder}
+        class="h-full w-full rounded-lg border border-line bg-elev pr-3 pl-9 text-sm shadow-card outline-none placeholder:text-subtle focus:border-line-strong"
+      />
+    </label>
+
+    {
+      filters.map((f) =>
+        f.kind === 'segmented' ? (
+          <div role="group" aria-label={f.label} class="seg flex h-9 items-center rounded-lg border border-line bg-sunken p-0.5">
+            <button type="button" data-filter={f.key} data-value="" aria-pressed="true" class="seg-btn">
+              All
+            </button>
+            {f.options.map((o) => (
+              <button type="button" data-filter={f.key} data-value={o.value} aria-pressed="false" class="seg-btn">
+                {o.label}
+                {o.count !== undefined && <span class="num text-subtle">{o.count}</span>}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <label class="select-wrap">
+            <span class="sr-only">{f.label}</span>
+            <select data-filter={f.key} class="select">
+              <option value="">{f.label}: all</option>
+              {f.options.map((o) => (
+                <option value={o.value}>
+                  {o.label}
+                  {o.count !== undefined ? ` (${o.count})` : ''}
+                </option>
+              ))}
+            </select>
+            <Icon name="chevron-down" size={14} class="pointer-events-none absolute right-2.5 text-subtle" />
+          </label>
+        ),
+      )
+    }
+
+    <label class="select-wrap sm:ml-auto">
+      <span class="sr-only">Sort by</span>
+      <select data-sort class="select">
+        {
+          sorts.map((s) => (
+            <option value={s.value} data-dir={s.dir} data-type={s.type}>
+              Sort: {s.label}
+            </option>
+          ))
+        }
+      </select>
+      <Icon name="chevron-down" size={14} class="pointer-events-none absolute right-2.5 text-subtle" />
+    </label>
+  </div>
+
+  <p class="flex items-center gap-3 text-sm text-muted" aria-live="polite">
+    <span><span data-count class="num text-fg">{total}</span> <span data-noun>{total === 1 ? noun[0] : noun[1]}</span></span>
+    <button type="button" data-reset class="link hidden text-sm">Clear filters</button>
+  </p>
+</div>
+
+<style>
+  .seg-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: 100%;
+    padding-inline: 0.625rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    color: var(--fg-muted);
+    transition:
+      background-color 150ms,
+      color 150ms;
+  }
+  .seg-btn:hover {
+    color: var(--fg);
+  }
+  .seg-btn[aria-pressed='true'] {
+    background: var(--bg-elev);
+    color: var(--fg);
+    box-shadow: var(--shadow-card);
+  }
+  .select-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 2.25rem;
+  }
+  .select {
+    appearance: none;
+    height: 100%;
+    padding: 0 2rem 0 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg-elev);
+    color: var(--fg);
+    font-size: 0.8125rem;
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+  }
+  .select:hover {
+    border-color: var(--line-strong);
+  }
+</style>
+
+<script>
+  for (const bar of document.querySelectorAll<HTMLElement>('[data-filterbar]')) {
+    const scope = bar.parentElement!;
+    const items = [...scope.querySelectorAll<HTMLElement>('[data-item]')];
+    const original = new Map(items.map((el, i) => [el, i]));
+    const empty = scope.querySelector<HTMLElement>('[data-empty]');
+    const q = bar.querySelector<HTMLInputElement>('[data-filter-q]')!;
+    const sort = bar.querySelector<HTMLSelectElement>('[data-sort]')!;
+    const count = bar.querySelector<HTMLElement>('[data-count]')!;
+    const noun = bar.querySelector<HTMLElement>('[data-noun]')!;
+    const reset = bar.querySelector<HTMLButtonElement>('[data-reset]')!;
+    const segButtons = [...bar.querySelectorAll<HTMLButtonElement>('button[data-filter]')];
+    const selects = [...bar.querySelectorAll<HTMLSelectElement>('select[data-filter]')];
+    const keys = [...new Set([...segButtons, ...selects].map((el) => el.dataset.filter!))];
+    const defaultSort = sort.options[0]?.value ?? '';
+
+    const state: Record<string, string> = {};
+
+    function readUrl() {
+      const p = new URLSearchParams(location.search);
+      for (const k of keys) state[k] = p.get(k) ?? '';
+      q.value = p.get('q') ?? '';
+      const s = p.get('sort');
+      if (s && [...sort.options].some((o) => o.value === s)) sort.value = s;
+    }
+
+    function writeUrl() {
+      const p = new URLSearchParams(location.search);
+      for (const k of keys) (state[k] ? p.set(k, state[k]) : p.delete(k));
+      q.value.trim() ? p.set('q', q.value.trim()) : p.delete('q');
+      sort.value !== defaultSort ? p.set('sort', sort.value) : p.delete('sort');
+      const qs = p.toString();
+      history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+    }
+
+    function apply() {
+      for (const b of segButtons) b.setAttribute('aria-pressed', String((state[b.dataset.filter!] ?? '') === b.dataset.value));
+      for (const s of selects) s.value = state[s.dataset.filter!] ?? '';
+
+      const needle = q.value.trim().toLowerCase();
+      let shown = 0;
+      for (const el of items) {
+        const ok =
+          keys.every((k) => !state[k] || (el.dataset[`f${k[0]!.toUpperCase()}${k.slice(1)}`] ?? '').split(' ').includes(state[k]!)) &&
+          (!needle || (el.dataset.search ?? '').includes(needle));
+        el.hidden = !ok;
+        if (ok) shown++;
+      }
+
+      const opt = sort.selectedOptions[0];
+      const key = `s${sort.value[0]!.toUpperCase()}${sort.value.slice(1)}`;
+      const dir = opt?.dataset.dir === 'asc' ? 1 : -1;
+      const numeric = opt?.dataset.type === 'number';
+      const sorted = [...items].sort((a, b) => {
+        const av = a.dataset[key] ?? '';
+        const bv = b.dataset[key] ?? '';
+        const c = numeric ? Number(av) - Number(bv) : av.localeCompare(bv);
+        return c * dir || original.get(a)! - original.get(b)!;
+      });
+      sorted.forEach((el, i) => (el.style.order = String(i)));
+
+      count.textContent = String(shown);
+      noun.textContent = shown === 1 ? bar.dataset.nounOne! : bar.dataset.nounMany!;
+      if (empty) empty.hidden = shown > 0;
+      reset.classList.toggle('hidden', !keys.some((k) => state[k]) && !needle);
+      writeUrl();
+    }
+
+    segButtons.forEach((b) =>
+      b.addEventListener('click', () => {
+        state[b.dataset.filter!] = b.dataset.value ?? '';
+        apply();
+      }),
+    );
+    selects.forEach((s) =>
+      s.addEventListener('change', () => {
+        state[s.dataset.filter!] = s.value;
+        apply();
+      }),
+    );
+    q.addEventListener('input', apply);
+    sort.addEventListener('change', apply);
+    reset.addEventListener('click', () => {
+      keys.forEach((k) => (state[k] = ''));
+      q.value = '';
+      apply();
+      q.focus();
+    });
+
+    readUrl();
+    apply();
+  }
+</script>

@@ -1,0 +1,48 @@
+---
+import Icon, { type IconName } from './Icon.astro';
+
+interface Props {
+  website?: string;
+  discord?: string;
+  docs?: string;
+  repo?: string;
+  variant?: 'icons' | 'buttons';
+  name: string;
+}
+const { website, discord, docs, repo, variant = 'icons', name } = Astro.props;
+const links = [
+  { href: website, label: 'Website', icon: 'globe' },
+  { href: repo, label: 'Source', icon: 'github' },
+  { href: docs, label: 'Docs', icon: 'book' },
+  { href: discord, label: 'Discord', icon: 'chat' },
+].filter((l): l is { href: string; label: string; icon: IconName } => Boolean(l.href));
+---
+
+{
+  variant === 'icons' ? (
+    <span class="flex items-center gap-0.5">
+      {links.map((l) => (
+        <a
+          href={l.href}
+          rel="noopener nofollow"
+          target="_blank"
+          class="grid size-7 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg"
+          aria-label={`${name} ${l.label} (opens in new tab)`}
+          title={l.label}
+        >
+          <Icon name={l.icon} size={15} />
+        </a>
+      ))}
+    </span>
+  ) : (
+    <span class="flex flex-wrap gap-2">
+      {links.map((l) => (
+        <a href={l.href} rel="noopener nofollow" target="_blank" class="btn">
+          <Icon name={l.icon} size={15} />
+          {l.label}
+          <Icon name="arrow-up-right" size={13} class="text-subtle" />
+        </a>
+      ))}
+    </span>
+  )
+}

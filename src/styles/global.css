@@ -196,6 +196,22 @@
     border-color: color-mix(in oklab, var(--fg) 88%, var(--bg));
   }
 
+  .icon-btn {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    color: var(--fg-muted);
+    transition:
+      background-color 150ms,
+      color 150ms;
+  }
+  .icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--fg);
+  }
+
   .link {
     color: var(--fg);
     text-decoration: underline;

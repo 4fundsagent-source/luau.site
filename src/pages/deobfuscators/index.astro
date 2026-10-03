@@ -1,0 +1,84 @@
+---
+import DeobfuscatorCard from '~/components/DeobfuscatorCard.astro';
+import FilterBar, { type FilterDef, type SortDef } from '~/components/FilterBar.astro';
+import Icon from '~/components/Icon.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import Base from '~/layouts/Base.astro';
+import { getSiteData } from '~/lib/data';
+import { issueUrl } from '~/lib/site';
+import { ACCESS, ACCESS_LABEL, MAINTENANCE, MAINTENANCE_LABEL, OUTPUT_LEVELS, OUTPUT_META } from '~/lib/taxonomy';
+
+const { deobfuscators, obfuscators } = await getSiteData();
+const countBy = (pred: (d: (typeof deobfuscators)[number]) => boolean) => deobfuscators.filter(pred).length;
+
+const filters: FilterDef[] = [
+  {
+    key: 'target',
+    label: 'Target',
+    kind: 'select',
+    options: obfuscators
+      .filter((o) => o.deobfuscators.length)
+      .map((o) => ({ value: o.id, label: o.data.name, count: o.deobfuscators.length })),
+  },
+  {
+    key: 'access',
+    label: 'Access',
+    kind: 'select',
+    options: ACCESS.filter((a) => countBy((d) => d.data.access === a)).map((a) => ({
+      value: a,
+      label: ACCESS_LABEL[a],
+      count: countBy((d) => d.data.access === a),
+    })),
+  },
+  {
+    key: 'output',
+    label: 'Output',
+    kind: 'select',
+    options: OUTPUT_LEVELS.filter((l) => countBy((d) => d.data.outputLevel === l)).map((l) => ({
+      value: l,
+      label: OUTPUT_META[l].label,
+      count: countBy((d) => d.data.outputLevel === l),
+    })),
+  },
+  {
+    key: 'maintenance',
+    label: 'Maintenance',
+    kind: 'select',
+    options: MAINTENANCE.filter((m) => countBy((d) => d.data.maintenance === m)).map((m) => ({
+      value: m,
+      label: MAINTENANCE_LABEL[m],
+      count: countBy((d) => d.data.maintenance === m),
+    })),
+  },
+];
+const sorts: SortDef[] = [
+  { value: 'first', label: 'Newest', dir: 'desc', type: 'number' },
+  { value: 'coverage', label: 'Coverage', dir: 'desc', type: 'number' },
+  { value: 'name', label: 'Name', dir: 'asc', type: 'string' },
+];
+---
+
+<Base
+  title="Deobfuscators"
+  description="Public deobfuscators, devirtualizers and dumpers for Lua and Luau obfuscators: what they target, what they recover, and where to find them."
+>
+  <PageHeader
+    eyebrow="Directory"
+    title="Deobfuscators"
+    description="Devirtualizers, dumpers and lifters, along with what they target, how much they recover, and whether they still work. We link to these tools but never host them."
+  />
+  <div class="container-page py-10">
+    <FilterBar filters={filters} sorts={sorts} total={deobfuscators.length} noun={['tool', 'tools']} />
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {deobfuscators.map((d, i) => <DeobfuscatorCard d={d} index={i} />)}
+    </div>
+    <div data-empty hidden class="surface mt-4 p-10 text-center">
+      <p class="text-fg">No tools match these filters.</p>
+    </div>
+    <p class="mt-8 flex items-center gap-2 text-sm text-muted">
+      <Icon name="plus" size={15} />
+      Found a new deobfuscator?
+      <a href={issueUrl('new-deobfuscator')} class="link">Submit it with a source</a>
+    </p>
+  </div>
+</Base>

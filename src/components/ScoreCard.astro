@@ -1,0 +1,60 @@
+---
+import { PROVISIONAL_BELOW, type Score } from '~/lib/score';
+
+interface Props {
+  score: Score;
+  class?: string;
+}
+const { score, class: className } = Astro.props;
+---
+
+<div class:list={['surface p-5', className]} data-reveal>
+  <div class="flex items-center justify-between">
+    <p class="eyebrow">Security Score</p>
+    <a href="/methodology#score" class="text-xs text-subtle hover:text-fg">How it works</a>
+  </div>
+  <div class="mt-3 flex items-end gap-3">
+    <span class="text-5xl leading-none font-semibold tracking-tight text-fg">{score.total}</span>
+    <span class="pb-1 text-sm text-subtle">/ 100</span>
+    <span
+      class:list={[
+        'num ml-auto grid size-10 place-items-center rounded-lg border text-lg font-semibold',
+        score.provisional ? 'border-dashed border-line-strong' : 'border-line',
+      ]}
+      aria-label={`Tier ${score.tier}`}>{score.tier}</span
+    >
+  </div>
+  <p class="mt-2 text-xs text-muted">
+    {Math.round(score.confidence * 100)}% backed by data{
+      score.provisional && (
+        <>
+          {' '}
+          · <span class="text-fg">provisional</span> (needs {Math.round(PROVISIONAL_BELOW * 100)}%)
+        </>
+      )
+    }
+  </p>
+
+  <ul class="mt-5 space-y-4">
+    {
+      score.components.map((c) => (
+        <li>
+          <div class="flex items-baseline justify-between text-sm">
+            <span class="text-fg">{c.label}</span>
+            <span class="num text-xs text-muted">
+              {c.points}
+              <span class="text-subtle">/{c.weight}</span>
+            </span>
+          </div>
+          <div class="mt-1.5 h-1 overflow-hidden rounded-full bg-sunken">
+            <div
+              class:list={['score-fill h-full rounded-full', c.imputed && 'opacity-35']}
+              style={`width:${(c.points / c.weight) * 100}%;background:var(--fg)`}
+            />
+          </div>
+          <p class="mt-1.5 text-xs leading-relaxed text-subtle">{c.detail}</p>
+        </li>
+      ))
+    }
+  </ul>
+</div>
