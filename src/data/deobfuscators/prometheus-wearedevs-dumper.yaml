@@ -1,0 +1,28 @@
+name: Prometheus-WeAre-Devs-Dumper
+author: hutaoshusband
+tagline: Trace-based deobfuscator that rebuilds readable Lua from WeAreDevs-obfuscated scripts.
+description: >-
+  Runs the script in a mock Roblox environment on a bundled Lua 5.1 interpreter, hooks every
+  environment call and translates the recorded trace back into readable Lua, along with the string
+  constants. Later updates added Linux support, broader Roblox API coverage and a fallback to static
+  constant extraction when a script fails to compile.
+repo: https://github.com/hutaoshusband/Prometheus-WeAre-Devs-Dumper
+access: open-source
+techniques: [emulation, dynamic-trace, constant-dump]
+outputLevel: readable
+# First commit on December 1, 2025.
+firstSeen: 2025-12-01
+maintenance: active
+targets:
+  - obfuscator: wearedevs
+    versions: [current]
+    support: full
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/hutaoshusband/Prometheus-WeAre-Devs-Dumper
+    title: hutaoshusband/Prometheus-WeAre-Devs-Dumper (README)
+    accessed: 2026-10-03
+  - url: https://github.com/hutaoshusband/Prometheus-WeAre-Devs-Dumper/commits/main
+    title: Commit history — first commit December 1, 2025
+    accessed: 2026-10-03

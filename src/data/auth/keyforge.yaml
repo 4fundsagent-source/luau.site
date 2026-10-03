@@ -1,0 +1,23 @@
+name: KeyForge
+tagline: Roblox and Luau licensing platform with HWID-bound keys, protected delivery and hosted Wynfuscate obfuscation.
+description: >-
+  KeyForge issues and revokes licence keys, binds them to devices (HWID), delivers protected script
+  payloads through a loader, and offers a customizable key-system UI, Discord integration and
+  reward-link monetization. Scripts saved to the dashboard can be obfuscated server-side with
+  Wynfuscate, with allowances set by plan. It is unrelated to the KeyForge card game.
+website: https://keyforge.win
+pricing: freemium
+features: [key-system, hwid-lock, loader, obfuscation, api]
+bundledObfuscator: wynfuscate
+bypass:
+  status: none-known
+  note: No public bypass of the key system is tracked.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://keyforge.win
+    title: KeyForge
+    accessed: 2026-10-03
+  - url: https://github.com/timmytim12354-png/free-luau-obfuscator
+    title: KeyForge integration examples and SDK docs — plans, HWID binding, hosted wYnFuscate
+    accessed: 2026-10-03

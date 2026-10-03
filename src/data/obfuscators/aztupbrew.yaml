@@ -1,0 +1,22 @@
+name: AztupBrew
+tagline: Fork of IronBrew 2 that kept its Lua 5.1 VM design; public tools reverse it alongside IronBrew.
+description: >-
+  AztupBrew is a fork of IronBrew 2 published as version 2.7.2, continuing IronBrew's 2.7.x
+  numbering. It keeps the IronBrew-style Lua 5.1 VM, so tools built for IronBrew handle it with small
+  changes: one open-source deobfuscator recovers readable source from it, and an older one lifts it
+  back to Lua bytecode. Pricing and distribution are not documented yet.
+pricing: unknown
+basedOn: ironbrew-2
+targets: [lua51]
+techniques: [vm]
+versions:
+  - version: "2.7.2"
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/axomtools/ironbrew2-deobfuscator
+    title: axomtools/ironbrew2-deobfuscator — handles the AztupBrew v2.7.2 fork
+    accessed: 2026-10-03
+  - url: https://github.com/SixZensED/Lua-Deobfuscator
+    title: SixZensED/Lua-Deobfuscator — "Only for (MoonSec V2, IronBrew, AztupBrew)"
+    accessed: 2026-10-03

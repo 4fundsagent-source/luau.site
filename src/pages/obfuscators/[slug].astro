@@ -43,7 +43,8 @@ const rated = obfuscators.filter((x) => !x.score.unrated);
 const rank = rated.indexOf(o) + 1;
 
 const phrase = versionPhrase(o.latest.version);
-const Phrase = phrase[0]!.toUpperCase() + phrase.slice(1);
+// "v2.7.2 is broken" keeps its lowercase v; "the current version" gets a capital.
+const Phrase = /^v\d/.test(phrase) ? phrase : phrase[0]!.toUpperCase() + phrase.slice(1);
 const breaker = s.decisive[0] ? deob.get(s.decisive[0].deobfuscator) : undefined;
 const headline =
   s.status === 'broken'
@@ -67,6 +68,8 @@ const explainer =
           : "That means none we know of, not that it's unbreakable.";
 
 const tools = o.deobfuscators.map((id) => deob.get(id)!);
+const parent = o.basedOn ? obfuscators.find((x) => x.id === o.basedOn) : undefined;
+const derivatives = o.derivatives.map((id) => obfuscators.find((x) => x.id === id)!);
 const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id).map((r) => ({ sample: sm, run: r })));
 ---
 
@@ -237,6 +240,36 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
 
       <Section id="about" title="About">
         <p class="max-w-prose leading-relaxed text-muted">{d.description}</p>
+        {
+          (parent || derivatives.length > 0) && (
+            <div class="mt-5 flex flex-wrap items-center gap-2 text-sm">
+              <Icon name="layers" size={15} class="text-subtle" />
+              {parent && (
+                <span class="text-muted">
+                  Based on{' '}
+                  <a href={`/obfuscators/${parent.id}`} class="link text-fg">
+                    {parent.data.name}
+                  </a>
+                  {derivatives.length > 0 && '. '}
+                </span>
+              )}
+              {derivatives.length > 0 && (
+                <span class="text-muted">
+                  Tracked forks and services built on it:{' '}
+                  {derivatives.map((x, i) => (
+                    <>
+                      {i > 0 && ', '}
+                      <a href={`/obfuscators/${x.id}`} class="link text-fg">
+                        {x.data.name}
+                      </a>
+                    </>
+                  ))}
+                </span>
+              )}
+              <span class="w-full text-xs text-subtle">Lineage is informational and does not change scores.</span>
+            </div>
+          )
+        }
       </Section>
 
       <Section id="sources" title="Sources & verification">
@@ -257,6 +290,7 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
         items={[
           { label: 'Rank', value: rank ? `#${rank} of ${rated.length}` : 'Unrated', href: '/rankings' },
           { label: 'Vendor', value: d.vendor },
+          { label: 'Based on', value: parent?.data.name, href: parent && `/obfuscators/${parent.id}` },
           { label: 'Since', value: d.since },
           { label: 'Pricing', value: PRICING_LABEL[d.pricing] },
           { label: 'License', value: d.license },

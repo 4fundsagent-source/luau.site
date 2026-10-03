@@ -16,6 +16,9 @@ targets:
   - obfuscator: ironbrew-2
     versions: ["2.7.0", "2.7.1"]
     support: full
+  - obfuscator: aztupbrew
+    versions: ["2.7.2"]
+    support: full
 verified: false
 lastVerified: 2026-10-03
 sources:

@@ -17,11 +17,19 @@ codebase:
   antiTamper: 2
   luau: 2
   maintenance: 1
-  notes: Preliminary grade. Many stacked modules including a VM layer and runtime anti-tamper; 12 of 14 modules work on Luau; last push mid-2025.
+  notes: Preliminary grade. Many stacked modules including a VM layer and runtime anti-tamper; 12 of 14 modules work on Luau; v2.0.1 shipped June 2026, then quiet.
   assessedOn: 2026-10-03
 versions:
-  - version: main
-    notes: Rolling releases from the main branch.
+  - version: "1.6.x"
+    notes: Watermarked "Hercules v1.6.2" in obfuscated output.
+  - version: "2.0.0"
+  - version: "2.0.1"
+    released: 2026-06-17
+    notes: Version bump in the README and VM generator on June 17, 2026.
+    sources:
+      - url: https://github.com/zeusssz/hercules-obfuscator/commits/main
+        title: "Commit history — \"chore: update version to 2.0.1\", June 17, 2026"
+        accessed: 2026-10-03
 verified: false
 lastVerified: 2026-10-03
 sources:

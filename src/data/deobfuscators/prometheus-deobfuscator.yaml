@@ -1,0 +1,33 @@
+name: Prometheus-Deobfuscator
+author: "0x251"
+tagline: Python toolkit for Prometheus that also claims MoonSec v2 and v3; superseded by the author's V2.
+description: >-
+  The first version of 0x251's Prometheus deobfuscator: polymorphism reversal, VM structure analysis,
+  control-flow reconstruction and literal and string decryption. The README also lists MoonSec v2 and
+  v3, but shows no MoonSec samples, so that support is tracked as experimental. The author now points
+  to Prometheus-DeobfuscatorV2.
+repo: https://github.com/0x251/Prometheus-Deobfuscator
+access: open-source
+license: MIT
+techniques: [ast-cleanup, constant-dump, static-devirt]
+outputLevel: readable
+# First commit on April 22, 2025.
+firstSeen: 2025-04-22
+maintenance: stale
+targets:
+  - obfuscator: prometheus
+    versions: [main]
+    support: full
+  - obfuscator: moonsec
+    versions: ["2", "3"]
+    support: experimental
+    notes: Claimed in the README ("Prometheus Obfuscator / MoonsecV3 / MoonsecV2") without MoonSec samples.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/0x251/Prometheus-Deobfuscator
+    title: 0x251/Prometheus-Deobfuscator (README)
+    accessed: 2026-10-03
+  - url: https://github.com/0x251/Prometheus-Deobfuscator/commits/main
+    title: Commit history — first commit April 22, 2025
+    accessed: 2026-10-03

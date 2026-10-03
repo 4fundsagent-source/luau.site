@@ -1,0 +1,24 @@
+name: PSU
+tagline: Long-standing Lua 5.1 VM obfuscator from the Roblox scene, known for packed VMs and super-instructions.
+description: >-
+  PSU compiles Lua 5.1 code to a packed custom VM whose handlers are merged into super-instructions.
+  Versions 4.0 and 4.5 (sometimes written 4.5.A) were widely used in Roblox scripts. In September
+  2026 a public static devirtualizer appeared that recovers the VM, expands the super-instructions,
+  lowers the program back to Lua 5.1 bytecode and decompiles it to readable Lua. The vendor's
+  current status, pricing and website are not documented yet.
+pricing: unknown
+targets: [lua51]
+techniques: [vm]
+versions:
+  - version: "4.0"
+  - version: "4.5"
+    notes: Also seen as "4.5.A".
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/memcpython/PSU-Deobfuscator
+    title: memcpython/PSU-Deobfuscator — "Deobfuscator for the PSU 4.0 / 4.5 Obfuscator"
+    accessed: 2026-10-03
+  - url: https://github.com/Federal9999/Luarmor
+    title: Federal9999/Luarmor — references PSU v4.5A
+    accessed: 2026-10-03

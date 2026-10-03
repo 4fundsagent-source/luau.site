@@ -1,13 +1,19 @@
 ---
 /**
- * The Arms Race: one lane per obfuscator, one bar per dated version running
- * from release until it was broken, superseded, or today. Rendered as static
- * SVG at build time; a small script adds hover/focus tooltips. The event log
- * on /timeline is the accessible table view of the same data.
+ * The Arms Race over a recent window (the last few months up to today).
+ * One lane per obfuscator with activity in the window:
+ *   - solid bars:  dated versions, from release until broken, superseded or today
+ *   - dashed bars: undated versions still standing, from an open public
+ *                  challenge (or the start of observation) until today
+ *   - crosses:     undated versions broken in the window
+ * Lanes still standing come first, longest-standing on top; the rest follow by
+ * their latest break. Diamonds below are newly published deobfuscators.
+ * Static SVG at build time; a small script adds tooltips. The event log on
+ * /timeline is the accessible list view of the same data.
  */
 import { formatDate, formatDuration, formatPlainDate } from '~/lib/dates';
 import { formatVersion, type SiteData } from '~/lib/data';
-import { STATUS_META, type Status } from '~/lib/taxonomy';
+import { STATUS_META, type DisplayStatus, type Status } from '~/lib/taxonomy';
 import StatusIcon from './StatusIcon.astro';
 
 interface Props {
@@ -17,142 +23,270 @@ interface Props {
   only?: string[];
 }
 const { data, compact = false, only } = Astro.props;
-const now = data.builtAt;
+const now = data.builtAt.getTime();
 const DAY = 86_400_000;
 
-interface Bar {
-  version: string;
+// ---- window: from the first of the month a few months back, to just past today
+const today = new Date(now);
+const t0 = Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - (compact ? 3 : 4), 1);
+const t1 = now + (compact ? 12 : 14) * DAY;
+
+const W = 1000;
+const LEFT = compact ? 132 : 160;
+const RIGHT = 14;
+const TOP = 30;
+const ROW_H = 27;
+const BAR_H = 10;
+const CHAR = 6.3;
+const x = (t: number) => LEFT + ((Math.min(Math.max(t, t0), t1) - t0) / (t1 - t0)) * (W - LEFT - RIGHT);
+
+interface Item {
+  kind: 'bar' | 'watch' | 'cross';
+  label: string;
   start: number;
   end: number;
   status: Status;
   endKind: 'broken' | 'superseded' | 'ongoing';
+  clipped: boolean;
+  trophy: boolean;
   row: number;
   tip: string[];
+  href: string;
+  /** Horizontal space the item and its label occupy, in px. */
+  from: number;
+  to: number;
 }
 interface Lane {
   id: string;
   name: string;
-  bars: Bar[];
+  status: DisplayStatus;
+  items: Item[];
   rows: number;
+  standing: number;
+  last: number;
 }
 
+const anchor = (id: string, version: string) => `/obfuscators/${id}#v-${version.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
+const rank = new Map(data.standing.map((s, i) => [s.obfuscator, i]));
 const lanes: Lane[] = [];
-let undated = 0;
+
 for (const o of data.obfuscators) {
   if (only && !only.includes(o.id)) continue;
+  const items: Item[] = [];
   const dated = o.versions.filter((v) => v.s.released);
-  undated += o.versions.length - dated.length;
-  if (!dated.length) continue;
 
-  const bars: Bar[] = dated.map((v, i) => {
+  dated.forEach((v, i) => {
     const start = v.s.released!.date.getTime();
     const next = dated[i + 1]?.s.released?.date.getTime();
     const broken = v.s.status === 'broken' && v.s.brokenOn ? v.s.brokenOn.date.getTime() : undefined;
-    const end = broken ?? next ?? now.getTime();
+    const end = Math.max(broken ?? next ?? now, start + DAY);
+    if (end < t0) return;
     const endKind = broken ? 'broken' : next ? 'superseded' : 'ongoing';
-    const tip = [
-      `${o.data.name} ${formatVersion(v.version)}`,
-      `${STATUS_META[v.s.status].label}`,
-      `Released ${formatDate(v.s.released)}`,
-      broken
-        ? `Broken ${formatDate(v.s.brokenOn)}${v.s.daysToBreak !== undefined ? ` · ${formatDuration(v.s.daysToBreak, v.s.fuzzy)}` : ''}`
-        : endKind === 'superseded'
-          ? `Superseded ${formatDate(dated[i + 1]!.s.released)}`
-          : 'Still current',
-    ];
-    return { version: v.version, start, end: Math.max(end, start + DAY), status: v.s.status, endKind, row: 0, tip };
+    items.push({
+      kind: 'bar',
+      label: formatVersion(v.version),
+      start,
+      end,
+      status: v.s.status,
+      endKind,
+      clipped: start < t0,
+      trophy: false,
+      row: 0,
+      href: anchor(o.id, v.version),
+      tip: [
+        `${o.data.name} ${formatVersion(v.version)}`,
+        STATUS_META[v.s.status].label,
+        `Released ${formatDate(v.s.released)}`,
+        broken
+          ? `Broken ${formatDate(v.s.brokenOn)}${v.s.daysToBreak !== undefined ? ` · ${formatDuration(v.s.daysToBreak, v.s.fuzzy)}` : ''}`
+          : endKind === 'superseded'
+            ? `Superseded ${formatDate(dated[i + 1]!.s.released)}`
+            : 'Still current',
+      ],
+      from: 0,
+      to: 0,
+    });
   });
 
-  // Interval partitioning so overlapping versions never draw on top of each other.
-  const rowEnds: number[] = [];
-  for (const b of bars) {
-    let r = rowEnds.findIndex((e) => e <= b.start);
-    if (r === -1) r = rowEnds.length;
-    rowEnds[r] = b.end;
-    b.row = r;
+  // An undated version still standing: from its open challenge (or observation start) to today.
+  const st = data.standing.find((s) => s.obfuscator === o.id && s.reason !== 'release');
+  if (st && st.days >= 7) {
+    const c = st.challenge;
+    items.push({
+      kind: 'watch',
+      label: c ? `${/crackme/i.test(c.platform) ? 'crackme' : 'challenge'}${c.bounty ? ` · ${c.bounty} bounty` : ''} · unsolved` : 'watching',
+      start: st.since.date.getTime(),
+      end: now,
+      status: 'holding',
+      endKind: 'ongoing',
+      clipped: st.since.date.getTime() < t0,
+      trophy: Boolean(c),
+      row: 0,
+      href: c ? `/obfuscators/${o.id}#challenges` : `/obfuscators/${o.id}`,
+      tip: [
+        `${o.data.name} ${formatVersion(st.version)}`,
+        `Unbroken for ${st.days} days`,
+        c ? `Public ${c.platform} challenge posted ${formatDate(st.since)}` : `Watched since ${formatDate(st.since)}`,
+        ...(c ? [`Still unsolved${c.bounty ? ` · ${c.bounty} bounty` : ''}`] : []),
+      ],
+      from: 0,
+      to: 0,
+    });
   }
-  lanes.push({ id: o.id, name: o.data.name, bars, rows: rowEnds.length });
-}
 
+  // Undated versions broken inside the window, grouped by day.
+  const crosses = new Map<string, typeof o.versions>();
+  for (const v of o.versions) {
+    if (v.s.released || v.s.status !== 'broken' || !v.s.brokenOn) continue;
+    if (v.s.brokenOn.date.getTime() < t0) continue;
+    crosses.set(v.s.brokenOn.raw, [...(crosses.get(v.s.brokenOn.raw) ?? []), v]);
+  }
+  for (const group of crosses.values()) {
+    const when = group[0]!.s.brokenOn!;
+    const tool = data.deob.get(group[0]!.s.decisive[0]!.deobfuscator);
+    items.push({
+      kind: 'cross',
+      label: group.map((v) => formatVersion(v.version)).join(', '),
+      start: when.date.getTime(),
+      end: when.date.getTime(),
+      status: 'broken',
+      endKind: 'broken',
+      clipped: false,
+      trophy: false,
+      row: 0,
+      href: anchor(o.id, group[0]!.version),
+      tip: [
+        `${o.data.name} ${group.map((v) => formatVersion(v.version)).join(', ')}`,
+        'Broken',
+        `${formatDate(when)}${tool ? ` · ${tool.data.name}` : ''}`,
+        'Release date unknown',
+      ],
+      from: 0,
+      to: 0,
+    });
+  }
+  if (!items.length) continue;
+
+  // Pack items into rows so neither bars nor their labels ever overlap.
+  for (const it of items) {
+    const x0 = x(it.start);
+    const lw = it.label.length * CHAR + (it.trophy ? 16 : 0);
+    if (it.kind === 'cross') {
+      it.from = x0 - 8;
+      it.to = Math.max(x0 + 8, x0 - 6 + lw) + 10;
+    } else {
+      it.from = x0 - 2;
+      it.to = Math.max(x(it.end) + (it.endKind === 'broken' ? 8 : 4), x0 + lw) + 10;
+    }
+  }
+  items.sort((a, b) => a.from - b.from);
+  const rowEnds: number[] = [];
+  for (const it of items) {
+    let r = rowEnds.findIndex((e) => e <= it.from);
+    if (r === -1) r = rowEnds.length;
+    rowEnds[r] = it.to;
+    it.row = r;
+  }
+
+  const ongoing = items.some((it) => it.endKind === 'ongoing' && it.status === 'holding');
+  lanes.push({
+    id: o.id,
+    name: o.data.name,
+    status: o.status,
+    items,
+    rows: rowEnds.length,
+    standing: ongoing ? (rank.get(o.id) ?? 999) : Infinity,
+    last: Math.max(...items.map((it) => (it.endKind === 'ongoing' ? 0 : it.end))),
+  });
+}
+// Still standing first (longest-standing on top), then by most recent break.
+lanes.sort((a, b) => a.standing - b.standing || b.last - a.last || a.name.localeCompare(b.name));
+
+// ---- tools published inside the window
 const tools = data.deobfuscators
   .filter((d) => d.firstSeen && (!only || d.coverage.some((c) => only.includes(c.obfuscator))))
-  .map((d) => ({ id: d.id, name: d.data.name, t: d.firstSeen!.date.getTime(), label: formatDate(d.firstSeen) }));
+  .map((d) => ({ id: d.id, name: d.data.name, t: d.firstSeen!.date.getTime(), label: formatDate(d.firstSeen) }))
+  .sort((a, b) => a.t - b.t);
+const earlierTools = tools.filter((t) => t.t < t0).length;
+const shownTools = tools
+  .filter((t) => t.t >= t0)
+  .map((t) => ({ ...t, row: 0 }));
+const toolRowEnds: number[] = [];
+for (const t of shownTools) {
+  let r = toolRowEnds.findIndex((e) => e <= x(t.t) - 8);
+  if (r === -1) r = toolRowEnds.length;
+  toolRowEnds[r] = x(t.t) + 8;
+  t.row = r;
+}
 
-// ---- scales
-const allTimes = [...lanes.flatMap((l) => l.bars.flatMap((b) => [b.start, b.end])), ...tools.map((t) => t.t)];
-const minSpan = (compact ? 270 : 365) * DAY;
-const t1 = now.getTime() + 20 * DAY;
-const t0 = Math.min(...allTimes, t1 - minSpan) - 20 * DAY;
-
-const W = 1000;
-const LEFT = compact ? 120 : 150;
-const RIGHT = 24;
-const TOP = 30;
-const ROW_H = 22;
-const LANE_PAD = 14;
-const BAR_H = 12;
-const x = (t: number) => LEFT + ((t - t0) / (t1 - t0)) * (W - LEFT - RIGHT);
-
+// ---- vertical layout
 let y = TOP;
 const laneLayout = lanes.map((l) => {
-  const h = l.rows * ROW_H + LANE_PAD;
+  const h = 10 + l.rows * ROW_H + 6;
   const top = y;
   y += h;
   return { ...l, top, h };
 });
-const toolLaneTop = y;
-const toolLaneH = tools.length ? 36 : 0;
-const H = y + toolLaneH + 8;
+const rowTop = (laneTop: number, row: number) => laneTop + 10 + row * ROW_H + 13;
+const toolTop = y;
+const toolH = tools.length ? 18 + Math.max(toolRowEnds.length, 1) * 15 + (earlierTools ? 12 : 0) : 0;
+const H = y + toolH + 6;
 
-// Month ticks; quarterly when the span is long.
-const spanMonths = (t1 - t0) / (30.44 * DAY);
-const step = spanMonths > 20 ? 3 : spanMonths > 10 ? 2 : 1;
-const ticks: { t: number; label: string; year: boolean }[] = [];
-const first = new Date(t0);
-let m = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 1));
-while (m.getTime() < t1) {
-  if (m.getUTCMonth() % step === 0) {
-    const year = m.getUTCMonth() === 0 || ticks.length === 0;
-    ticks.push({
-      t: m.getTime(),
-      label: m.toLocaleString('en', { month: 'short', timeZone: 'UTC' }) + (year ? ` ${m.getUTCFullYear()}` : ''),
-      year,
-    });
-  }
-  m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1));
+// ---- month ticks
+const ticks: { t: number; label: string }[] = [];
+for (let m = new Date(t0); m.getTime() < t1; m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1))) {
+  const first = ticks.length === 0 || m.getUTCMonth() === 0;
+  ticks.push({
+    t: m.getTime(),
+    label: m.toLocaleString('en', { month: 'short', timeZone: 'UTC' }) + (first ? ` ${m.getUTCFullYear()}` : ''),
+  });
 }
-
-const nowXPos = x(now.getTime());
-const visibleTicks = ticks.filter((tk) => Math.abs(x(tk.t) - nowXPos) > 58);
+const nowX = x(now);
+const visibleTicks = ticks.filter((tk) => nowX - x(tk.t) > 52 || x(tk.t) > nowX + 8);
+const windowLabel = new Date(t0).toLocaleString('en', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+const earlierEvents = data.events.filter((e) => e.date.date.getTime() < t0).length;
 
 const R = 4;
-function barPath(x0: number, x1: number, yTop: number, rounded: boolean) {
-  const w = Math.max(x1 - x0, 2);
-  const r = rounded ? Math.min(R, w / 2, BAR_H / 2) : 0;
+function barPath(x0: number, x1: number, yTop: number, roundLeft: boolean, roundRight: boolean) {
+  const w = Math.max(x1 - x0, 3);
+  const rl = roundLeft ? Math.min(R, w / 2, BAR_H / 2) : 0;
+  const rr = roundRight ? Math.min(R, w / 2, BAR_H / 2) : 0;
   const xe = x0 + w;
-  return `M${x0},${yTop}H${xe - r}Q${xe},${yTop} ${xe},${yTop + r}V${yTop + BAR_H - r}Q${xe},${yTop + BAR_H} ${xe - r},${yTop + BAR_H}H${x0}Z`;
+  const yb = yTop + BAR_H;
+  return (
+    `M${x0 + rl},${yTop}H${xe - rr}Q${xe},${yTop} ${xe},${yTop + rr}V${yb - rr}Q${xe},${yb} ${xe - rr},${yb}` +
+    `H${x0 + rl}Q${x0},${yb} ${x0},${yb - rl}V${yTop + rl}Q${x0},${yTop} ${x0 + rl},${yTop}Z`
+  );
 }
-const CHAR = 6.6;
 const uid = `arc${compact ? 'c' : 'f'}`;
-const nowX = x(now.getTime());
+const STATUS_DOT: Record<DisplayStatus, string> = {
+  holding: 'var(--holding)',
+  open: 'var(--open)',
+  partial: 'var(--partial)',
+  broken: 'var(--broken)',
+};
 ---
 
 <figure class="arms-race relative" data-chart data-reveal>
-  <div class="overflow-x-auto">
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      class="block w-full min-w-[720px]"
-      aria-labelledby={`${uid}-title`}
-    >
+  <div class="relative">
+  <div class="overflow-x-auto" data-chart-scroll>
+    <svg viewBox={`0 0 ${W} ${H}`} class="block w-full min-w-[720px]" aria-labelledby={`${uid}-title`}>
       <title id={`${uid}-title`}>
-        Timeline of {lanes.length} obfuscators: each version runs from its release until it was broken, superseded, or today.
+        Timeline since {formatPlainDate(new Date(t0))} of {lanes.length} obfuscators: which versions are still standing, which were broken, and when new deobfuscators appeared.
       </title>
+      <defs>
+        <linearGradient id={`${uid}-fade`} x1="0" x2="1">
+          <stop offset="0" style="stop-color:var(--bg-elev);stop-opacity:1"></stop>
+          <stop offset="1" style="stop-color:var(--bg-elev);stop-opacity:0"></stop>
+        </linearGradient>
+      </defs>
+
       <!-- grid -->
       {
         visibleTicks.map((tk) => (
           <g>
-            <line x1={x(tk.t)} x2={x(tk.t)} y1={TOP - 6} y2={H - 8} stroke="var(--line)" stroke-width="1" />
-            <text x={x(tk.t) + 4} y={TOP - 12} class="tick">
+            <line x1={x(tk.t)} x2={x(tk.t)} y1={TOP - 8} y2={H - 4} stroke="var(--line)" stroke-width="1" />
+            <text x={x(tk.t) + 5} y={TOP - 14} class="tick">
               {tk.label}
             </text>
           </g>
@@ -161,100 +295,149 @@ const nowX = x(now.getTime());
 
       <!-- lanes -->
       {
-        laneLayout.map((l, li) => (
-          <g>
-            {li > 0 && <line x1="0" x2={W} y1={l.top} y2={l.top} stroke="var(--line)" stroke-width="1" />}
-            <a href={`/obfuscators/${l.id}`}>
-              <text x="0" y={l.top + LANE_PAD / 2 + ROW_H / 2 + 4} class="lane">
-                {l.name}
-              </text>
-            </a>
-            {l.bars.map((b, bi) => {
-              const delay = `--d:${li * 110 + bi * 70}ms`;
-              const x0 = x(b.start);
-              const x1 = x(b.end);
-              const yTop = l.top + LANE_PAD / 2 + b.row * ROW_H + (ROW_H - BAR_H) / 2;
-              const label = formatVersion(b.version);
-              const lw = label.length * CHAR;
-              const markerSpace = b.endKind === 'broken' ? 10 : 0;
-              const rightOk = x1 + markerSpace + 6 + lw < W - RIGHT;
-              const lx = rightOk ? x1 + markerSpace + 6 : x0 - 6;
-              return (
-                <a href={`/obfuscators/${l.id}#v-${b.version.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`} class="bar" data-tip={b.tip.join('\n')} data-status={b.status} aria-label={b.tip.join(', ')}>
-                  <rect x={x0 - 2} y={yTop - 5} width={Math.max(x1 - x0, 2) + 4 + markerSpace} height={BAR_H + 10} fill="transparent" />
-                  <path d={barPath(x0, x1, yTop, b.endKind !== 'superseded')} fill={`var(--${b.status})`} class="bar-fill" style={delay} />
-                  {b.endKind === 'broken' && (
-                    <g class="marker" style={delay}>
-                      <circle cx={x1} cy={yTop + BAR_H / 2} r="6.5" fill="var(--broken)" stroke="var(--bg-elev)" stroke-width="2" />
-                      <path
-                        d={`M${x1 - 2.4},${yTop + BAR_H / 2 - 2.4}l4.8,4.8M${x1 + 2.4},${yTop + BAR_H / 2 - 2.4}l-4.8,4.8`}
-                        stroke="var(--bg-elev)"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                      />
-                    </g>
-                  )}
-                  <text x={lx} y={yTop + BAR_H - 2} class="vlabel" text-anchor={rightOk ? 'start' : 'end'}>
-                    {label}
-                  </text>
-                </a>
-              );
-            })}
-          </g>
-        ))
+        laneLayout.map((l, li) => {
+          const nameY = rowTop(l.top, 0) + BAR_H / 2 + 4.5;
+          return (
+            <g>
+              {li > 0 && <line x1="0" x2={W} y1={l.top} y2={l.top} stroke="var(--line)" stroke-width="1" />}
+              <a href={`/obfuscators/${l.id}`} class="lane-link">
+                <circle cx="4" cy={nameY - 4.5} r="3.5" fill={STATUS_DOT[l.status]} />
+                <text x="14" y={nameY} class="lane">
+                  {l.name}
+                </text>
+              </a>
+              {l.items.map((it, ii) => {
+                const delay = `--d:${li * 90 + ii * 60}ms`;
+                const yTop = rowTop(l.top, it.row);
+                const x0 = x(it.start);
+                const x1 = x(it.end);
+                const cy = yTop + BAR_H / 2;
+                if (it.kind === 'cross') {
+                  return (
+                    <a href={it.href} class="bar" data-tip={it.tip.join('\n')} aria-label={it.tip.join(', ')}>
+                      <rect x={x0 - 9} y={yTop - 14} width={Math.max(18, it.to - it.from - 10)} height={BAR_H + 20} fill="transparent" />
+                      <g class="marker" style={delay}>
+                        <circle cx={x0} cy={cy} r="6.5" fill="var(--broken)" stroke="var(--bg-elev)" stroke-width="2" />
+                        <path d={`M${x0 - 2.4},${cy - 2.4}l4.8,4.8M${x0 + 2.4},${cy - 2.4}l-4.8,4.8`} stroke="var(--bg-elev)" stroke-width="1.5" stroke-linecap="round" />
+                      </g>
+                      <text x={x0 - 6} y={yTop - 5} class="vlabel">
+                        {it.label}
+                      </text>
+                    </a>
+                  );
+                }
+                const watch = it.kind === 'watch';
+                return (
+                  <a href={it.href} class="bar" data-tip={it.tip.join('\n')} data-status={it.status} aria-label={it.tip.join(', ')}>
+                    <rect x={x0 - 2} y={yTop - 14} width={Math.max(x1 - x0, 3) + 12} height={BAR_H + 20} fill="transparent" />
+                    <path
+                      d={barPath(x0, x1, yTop, !it.clipped, it.endKind !== 'superseded')}
+                      fill={watch ? 'color-mix(in oklab, var(--holding) 20%, transparent)' : `var(--${it.status})`}
+                      stroke={watch ? 'var(--holding)' : 'none'}
+                      stroke-width={watch ? 1.25 : 0}
+                      stroke-dasharray={watch ? '4 3' : undefined}
+                      class="bar-fill"
+                      style={delay}
+                    />
+                    {it.clipped && <rect x={x0} y={yTop - 1} width="22" height={BAR_H + 2} fill={`url(#${uid}-fade)`} />}
+                    {it.endKind === 'broken' && (
+                      <g class="marker" style={delay}>
+                        <circle cx={x1} cy={cy} r="6.5" fill="var(--broken)" stroke="var(--bg-elev)" stroke-width="2" />
+                        <path d={`M${x1 - 2.4},${cy - 2.4}l4.8,4.8M${x1 + 2.4},${cy - 2.4}l-4.8,4.8`} stroke="var(--bg-elev)" stroke-width="1.5" stroke-linecap="round" />
+                      </g>
+                    )}
+                    {it.endKind === 'ongoing' && it.status === 'holding' && (
+                      <g class="marker" style={delay}>
+                        <circle cx={x1} cy={cy} r="7" fill="var(--holding)" class="live-ring" />
+                        <circle cx={x1} cy={cy} r="4" fill="var(--holding)" stroke="var(--bg-elev)" stroke-width="1.5" />
+                      </g>
+                    )}
+                    {it.trophy && (
+                      <g transform={`translate(${x0 + 1} ${yTop - 15}) scale(0.5)`} fill="none" stroke="var(--fg)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                      </g>
+                    )}
+                    <text x={x0 + (it.trophy ? 16 : 1)} y={yTop - 5} class:list={['vlabel', watch && 'strong']}>
+                      {it.label}
+                    </text>
+                  </a>
+                );
+              })}
+            </g>
+          );
+        })
       }
 
       <!-- deobfuscator releases -->
       {
         tools.length > 0 && (
           <g>
-            <line x1="0" x2={W} y1={toolLaneTop} y2={toolLaneTop} stroke="var(--line)" stroke-width="1" />
-            <text x="0" y={toolLaneTop + 22} class="lane muted">
+            <line x1="0" x2={W} y1={toolTop} y2={toolTop} stroke="var(--line)" stroke-width="1" />
+            <text x="14" y={toolTop + 22} class="lane muted">
               New tools
             </text>
-            {tools.map((t) => (
-              <a href={`/deobfuscators/${t.id}`} class="bar" data-tip={`${t.name}\nPublished ${t.label}`} aria-label={`${t.name}, published ${t.label}`}>
-                <rect x={x(t.t) - 12} y={toolLaneTop + 6} width="24" height="24" fill="transparent" />
-                <path
-                  d={`M${x(t.t)},${toolLaneTop + 11}l6,7l-6,7l-6,-7Z`}
-                  fill="var(--fg)"
-                  stroke="var(--bg-elev)"
-                  stroke-width="2"
-                  class="marker"
-                  style={`--d:${laneLayout.length * 110}ms`}
-                />
-              </a>
-            ))}
+            {earlierTools > 0 && (
+              <text x="14" y={toolTop + 36} class="vlabel">
+                +{earlierTools} before {windowLabel}
+              </text>
+            )}
+            {shownTools.map((t) => {
+              const ty = toolTop + 12 + t.row * 15;
+              return (
+                <a href={`/deobfuscators/${t.id}`} class="bar" data-tip={`${t.name}\nPublished ${t.label}`} aria-label={`${t.name}, published ${t.label}`}>
+                  <rect x={x(t.t) - 8} y={ty - 1} width="16" height="16" fill="transparent" />
+                  <path d={`M${x(t.t)},${ty}l6,7l-6,7l-6,-7Z`} fill="var(--fg)" stroke="var(--bg-elev)" stroke-width="2" class="marker" style={`--d:${laneLayout.length * 90}ms`} />
+                </a>
+              );
+            })}
           </g>
         )
       }
 
-      <!-- now -->
-      <line
-        x1={nowX}
-        x2={nowX}
-        y1={TOP - 6}
-        y2={H - 8}
-        stroke="var(--fg)"
-        stroke-width="1"
-        stroke-opacity="0.55"
-        class="now-line"
-        style={`--len:${H}`}
-      />
-      <text x={nowX - 4} y={TOP - 12} class="tick now" text-anchor="end">Today</text>
+      <!-- today -->
+      <line x1={nowX} x2={nowX} y1={TOP - 8} y2={H - 4} stroke="var(--fg)" stroke-width="1" stroke-opacity="0.5" class="now-line" style={`--len:${H}`} />
+      <g>
+        <rect x={nowX - 22} y={TOP - 27} width="44" height="17" rx="8.5" fill="var(--fg)" />
+        <text x={nowX} y={TOP - 15} class="tick today" text-anchor="middle">
+          Today
+        </text>
+      </g>
     </svg>
+  </div>
+  <!-- Lane names stay visible while a narrow screen scrolls the chart sideways. -->
+  <div class="lane-names pointer-events-none absolute inset-y-0 left-0 w-24" aria-hidden="true">
+    {
+      laneLayout.map((l) => (
+        <span class="absolute left-0 flex -translate-y-1/2 items-center gap-1.5 text-xs font-medium text-fg" style={`top:${((rowTop(l.top, 0) + BAR_H / 2) / H) * 100}%`}>
+          <span class="size-1.5 shrink-0 rounded-full" style={`background:${STATUS_DOT[l.status]}`} />
+          <span class="truncate">{l.name}</span>
+        </span>
+      ))
+    }
+  </div>
   </div>
 
   <figcaption class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted">
     {
       (['holding', 'partial', 'broken'] as const).map((s) => (
         <span class="inline-flex items-center gap-1.5">
-          <span class="inline-block h-2.5 w-4 rounded-r-[3px]" style={`background:var(--${s})`} />
+          <span class="inline-block h-2.5 w-4 rounded-[3px]" style={`background:var(--${s})`} />
           <StatusIcon status={s} />
           {STATUS_META[s].label}
         </span>
       ))
     }
+    <span class="inline-flex items-center gap-1.5">
+      <span class="inline-block h-2.5 w-4 rounded-[3px] border border-dashed" style="border-color:var(--holding);background:color-mix(in oklab, var(--holding) 20%, transparent)"></span>
+      Unbroken since a public challenge
+    </span>
+    <span class="inline-flex items-center gap-1.5">
+      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+        <circle cx="6" cy="6" r="6" fill="var(--broken)" />
+        <path d="M3.8,3.8l4.4,4.4M8.2,3.8l-4.4,4.4" stroke="var(--bg-elev)" stroke-width="1.4" stroke-linecap="round" />
+      </svg>
+      Undated version broken
+    </span>
     {
       tools.length > 0 && (
         <span class="inline-flex items-center gap-1.5">
@@ -265,8 +448,9 @@ const nowX = x(now.getTime());
         </span>
       )
     }
-    {undated > 0 && <span class="text-subtle">{undated} version{undated === 1 ? '' : 's'} without a release date not shown</span>}
-    <span class="text-subtle sm:ml-auto">Built {formatPlainDate(now)}</span>
+    <span class="text-subtle sm:ml-auto">
+      {earlierEvents > 0 && !compact ? `${earlierEvents} earlier events in the log · ` : ''}Built {formatPlainDate(data.builtAt)}
+    </span>
   </figcaption>
 
   <div data-tooltip aria-hidden="true" class="pointer-events-none absolute z-10 rounded-lg border border-line-strong bg-elev px-3 py-2 text-xs shadow-lift"></div>
@@ -277,8 +461,9 @@ const nowX = x(now.getTime());
     font: 500 11px var(--font-mono);
     fill: var(--fg-subtle);
   }
-  .arms-race :global(.tick.now) {
-    fill: var(--fg-muted);
+  .arms-race :global(.tick.today) {
+    fill: var(--bg);
+    font-weight: 600;
   }
   .arms-race :global(.lane) {
     font: 500 13px var(--font-sans);
@@ -287,12 +472,16 @@ const nowX = x(now.getTime());
   .arms-race :global(.lane.muted) {
     fill: var(--fg-subtle);
   }
-  .arms-race :global(a:hover .lane) {
+  .arms-race :global(.lane-link:hover .lane),
+  .arms-race :global(.lane-link:focus-visible .lane) {
     text-decoration: underline;
   }
   .arms-race :global(.vlabel) {
-    font: 500 11px var(--font-mono);
+    font: 500 10.5px var(--font-mono);
     fill: var(--fg-muted);
+  }
+  .arms-race :global(.vlabel.strong) {
+    fill: var(--fg);
   }
   .arms-race :global(.bar) {
     cursor: pointer;
@@ -305,14 +494,35 @@ const nowX = x(now.getTime());
   .arms-race :global(.bar:focus-visible .bar-fill) {
     opacity: 0.8;
   }
+  .arms-race :global(.bar:hover .vlabel),
   .arms-race :global(.bar:focus-visible .vlabel) {
     fill: var(--fg);
     text-decoration: underline;
+  }
+  .arms-race :global(.live-ring) {
+    opacity: 0;
+  }
+  .lane-names {
+    opacity: 0;
+    background: linear-gradient(to right, var(--bg-elev) 62%, transparent);
+    transition: opacity 200ms;
+  }
+  [data-scrolled] > .lane-names {
+    opacity: 1;
   }
 </style>
 
 <script>
   for (const fig of document.querySelectorAll<HTMLElement>('[data-chart]')) {
+    // On narrow screens the chart scrolls sideways: start at today, where the action is.
+    const scroller = fig.querySelector<HTMLElement>('[data-chart-scroll]');
+    if (scroller) {
+      const sync = () => scroller.parentElement!.toggleAttribute('data-scrolled', scroller.scrollLeft > 24);
+      scroller.addEventListener('scroll', sync, { passive: true });
+      scroller.scrollLeft = scroller.scrollWidth;
+      sync();
+    }
+
     const tip = fig.querySelector<HTMLElement>('[data-tooltip]')!;
     const show = (el: Element, cx: number, cy: number) => {
       const lines = (el.getAttribute('data-tip') ?? '').split('\n');

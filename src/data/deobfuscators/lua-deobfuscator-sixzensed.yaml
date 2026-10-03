@@ -1,0 +1,35 @@
+name: Lua-Deobfuscator
+author: SixZensED
+tagline: Node.js devirtualizer for MoonSec V2, IronBrew and AztupBrew that outputs Lua bytecode.
+description: >-
+  Parses and beautifies the obfuscated script, detects which obfuscator produced it, then finds the
+  VM data, deserializes it and devirtualizes it into a standard `output.luac` bytecode file. Each
+  supported obfuscator has its own analyze, deserialize and devirtualize stages. Output stops at
+  bytecode, so it counts as partial coverage here.
+repo: https://github.com/SixZensED/Lua-Deobfuscator
+access: open-source
+techniques: [static-devirt, ast-cleanup]
+outputLevel: bytecode
+# All commits on November 1, 2023.
+firstSeen: 2023-11-01
+maintenance: stale
+targets:
+  - obfuscator: moonsec
+    versions: ["2"]
+    support: full
+  - obfuscator: ironbrew-2
+    versions: ["2.7.0", "2.7.1"]
+    support: partial
+    notes: Detects IronBrew-style VMs; the exact IronBrew versions are not stated.
+  - obfuscator: aztupbrew
+    versions: ["2.7.2"]
+    support: full
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/SixZensED/Lua-Deobfuscator
+    title: SixZensED/Lua-Deobfuscator — "Only for (MoonSec V2, IronBrew, AztupBrew)"
+    accessed: 2026-10-03
+  - url: https://github.com/SixZensED/Lua-Deobfuscator/commits/main
+    title: Commit history — November 1, 2023
+    accessed: 2026-10-03

@@ -28,4 +28,22 @@ describe('checkIntegrity', () => {
     expect(errors.join('\n')).toMatch(/unknown obfuscator "nope"/);
     expect(errors.join('\n')).toMatch(/unknown deobfuscator "ghost"/);
   });
+
+  it('reports unknown and cyclic lineage', () => {
+    const errors = checkIntegrity({
+      obfuscators: [
+        { id: 'base', versions: [{ version: '1' }] },
+        { id: 'fork', versions: [{ version: '1' }], basedOn: 'base' },
+        { id: 'orphan', versions: [{ version: '1' }], basedOn: 'ghost' },
+        { id: 'self', versions: [{ version: '1' }], basedOn: 'self' },
+        { id: 'a', versions: [{ version: '1' }], basedOn: 'b' },
+        { id: 'b', versions: [{ version: '1' }], basedOn: 'a' },
+      ],
+      deobfuscators: [],
+    });
+    expect(errors.join('\n')).toMatch(/orphan: basedOn unknown obfuscator "ghost"/);
+    expect(errors.join('\n')).toMatch(/self: basedOn forms a cycle \(self → self\)/);
+    expect(errors.join('\n')).toMatch(/a: basedOn forms a cycle \(a → b → a\)/);
+    expect(errors.join('\n')).not.toMatch(/fork/);
+  });
 });

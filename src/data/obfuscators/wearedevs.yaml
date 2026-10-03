@@ -1,0 +1,26 @@
+name: WeAreDevs Obfuscator
+tagline: Free hosted Lua obfuscator from the WeAreDevs exploit community, built on Prometheus.
+description: >-
+  WeAreDevs offers a free web obfuscator for Roblox scripts. Public deobfuscators describe its output
+  as a Prometheus fork ("supports wearedevs fork + latest version"), and several of them handle both.
+  An open-source trace-based tool has recovered readable Lua and string constants from WeAreDevs
+  scripts since December 2025. Versions are not published, so it is tracked as a single current version.
+website: https://wearedevs.net/obfuscator
+pricing: free
+basedOn: prometheus
+targets: [luau]
+techniques: []
+versions:
+  - version: current
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://wearedevs.net/obfuscator
+    title: WeAreDevs Obfuscator
+    accessed: 2026-10-03
+  - url: https://github.com/hutaoshusband/Prometheus-WeAre-Devs-Dumper
+    title: hutaoshusband/Prometheus-WeAre-Devs-Dumper — deobfuscator for WeAreDevs-obfuscated scripts
+    accessed: 2026-10-03
+  - url: https://github.com/prostone4/Prometheus-Deobfuscator
+    title: prostone4/Prometheus-Deobfuscator — "supports wearedevs fork + latest version"
+    accessed: 2026-10-03

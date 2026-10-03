@@ -80,7 +80,7 @@ const toc = [
         <tbody>
           <tr>
             <td><strong>Resistance</strong></td><td>{WEIGHTS.resistance}</td>
-            <td>Holding 50 · broken only by private or paid tools 30 · partial 20 · broken by a free closed tool 5 · broken by an open-source tool 0. When several tools break it, the most widely available one counts. A broken version keeps a small bonus if even its easiest break was hard (see <a href="#transparency">difficulty</a>).</td>
+            <td>Holding 50 · broken only by private or paid tools 30 · partial 20 · broken by a free closed tool 5 · broken by an open-source tool 0. When several tools break it, the most widely available one counts, including a tool that lifts a broken version to standard bytecode, since any decompiler takes that the rest of the way. A broken version keeps a small bonus if even its easiest break was hard (see <a href="#transparency">difficulty</a>).</td>
           </tr>
           <tr>
             <td><strong>Track record</strong></td><td>{WEIGHTS.track}</td>
@@ -190,6 +190,27 @@ const toc = [
         <li>Primary sources (repositories, official docs, vendor changelogs) beat screenshots and second-hand reports.</li>
         <li>Entries carry a <code>verified</code> flag and a <code>lastVerified</code> date. After {SITE.staleAfterDays} days without re-verification, an entry is flagged as possibly outdated.</li>
         <li>A deobfuscator only counts once it's publicly verifiable: a repository, a public release, or a reproducible demonstration. Rumors don't count.</li>
+      </ul>
+
+      <h3 id="inclusion">What gets listed</h3>
+      <ul>
+        <li>
+          <strong>Deobfuscators</strong> are listed when they have real source code, or a documented service, that names a tracked obfuscator. Star
+          counts don't matter: a break is a break.
+        </li>
+        <li>
+          Coverage comes from the tool's README, code and samples. A claim with no code or samples behind it is recorded as <em>experimental</em>, and a
+          tool that stops at bytecode or constants is <em>partial</em>; neither breaks a version on its own.
+        </li>
+        <li><strong>Obfuscators</strong> are listed when a reachable source documents them: their own site or repository, or a public tool that targets them.</li>
+        <li>
+          We never list repositories that ship only binaries, password-protected archives or "antivirus false positive" warnings in place of source.
+          That is the usual shape of malware bait. Pure rebuilds and forks that add no coverage are left out too.
+        </li>
+        <li>
+          Forks and services built on a tracked obfuscator link back to it (for example AztupBrew to IronBrew 2). Lineage is informational and never
+          moves a score.
+        </li>
       </ul>
 
       <h2 id="lab">The Lab</h2>

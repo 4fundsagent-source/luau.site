@@ -1,0 +1,32 @@
+name: Prometheus-Deobfuscator (LeakD)
+author: prostone4
+tagline: Node.js deobfuscator for the latest Prometheus and its WeAreDevs fork, with anti-tamper guard removal.
+description: >-
+  A command-line tool (`pdeobf`) published by LeakD that rewrites Prometheus output back to Lua,
+  including detection of Prometheus's anti-tamper guards. The README says it supports both the
+  WeAreDevs fork and the latest Prometheus version.
+repo: https://github.com/prostone4/Prometheus-Deobfuscator
+website: https://leakd.vercel.app
+access: open-source
+license: MIT
+techniques: [ast-cleanup, constant-dump]
+outputLevel: readable
+# First commit on August 30, 2026.
+firstSeen: 2026-08-30
+maintenance: active
+targets:
+  - obfuscator: prometheus
+    versions: [main]
+    support: full
+  - obfuscator: wearedevs
+    versions: [current]
+    support: full
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/prostone4/Prometheus-Deobfuscator
+    title: prostone4/Prometheus-Deobfuscator — "supports wearedevs fork + latest version"
+    accessed: 2026-10-03
+  - url: https://github.com/prostone4/Prometheus-Deobfuscator/commits/main
+    title: Commit history — first commit August 30, 2026
+    accessed: 2026-10-03
