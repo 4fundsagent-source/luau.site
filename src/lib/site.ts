@@ -20,7 +20,13 @@ export const NAV = [
   { href: '/auth', label: 'Auth' },
 ] as const;
 
-type IssueTemplate = 'new-obfuscator' | 'new-deobfuscator' | 'version-release' | 'correction' | 'vendor-statement';
+type IssueTemplate =
+  | 'new-obfuscator'
+  | 'new-deobfuscator'
+  | 'new-auth-service'
+  | 'version-release'
+  | 'correction'
+  | 'vendor-statement';
 
 export function issueUrl(template: IssueTemplate, params: Record<string, string> = {}): string {
   const q = new URLSearchParams({ template: `${template}.yml`, ...params });

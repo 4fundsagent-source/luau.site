@@ -1,0 +1,41 @@
+name: New auth service
+description: Add a key system, whitelist or licensing service for Lua scripts.
+title: "New auth service: "
+labels: [data, new-entry]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Name
+    validations:
+      required: true
+  - type: input
+    id: website
+    attributes:
+      label: Website
+      placeholder: https://
+    validations:
+      required: true
+  - type: checkboxes
+    id: features
+    attributes:
+      label: Features
+      options:
+        - label: Key system
+        - label: HWID lock
+        - label: Whitelist
+        - label: Obfuscation
+        - label: Remote loader
+        - label: Developer API
+  - type: textarea
+    id: bypass
+    attributes:
+      label: Known bypasses
+      description: Link to public evidence, or leave empty if none are known.
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: One URL per line.
+    validations:
+      required: true

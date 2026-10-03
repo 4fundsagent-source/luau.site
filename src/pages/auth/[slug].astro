@@ -1,0 +1,100 @@
+---
+import ExternalLinks from '~/components/ExternalLinks.astro';
+import Facts from '~/components/Facts.astro';
+import Monogram from '~/components/Monogram.astro';
+import Section from '~/components/Section.astro';
+import SourcesList from '~/components/SourcesList.astro';
+import StatusBadge from '~/components/StatusBadge.astro';
+import Base from '~/layouts/Base.astro';
+import { getSiteData, type AuthView } from '~/lib/data';
+import { AUTH_FEATURE_LABEL, BYPASS_LABEL, PRICING_LABEL } from '~/lib/taxonomy';
+
+export async function getStaticPaths() {
+  const { auth } = await getSiteData();
+  return auth.map((a) => ({ params: { slug: a.id }, props: { a } }));
+}
+
+interface Props {
+  a: AuthView;
+}
+const { a } = Astro.props;
+const { obf } = await getSiteData();
+const x = a.data;
+const bundled = x.bundledObfuscator ? obf.get(x.bundledObfuscator.id) : undefined;
+---
+
+<Base title={x.name} image={`/og/auth/${a.id}.png`} description={`${x.name}: ${x.tagline}`}>
+  <section class="relative overflow-hidden border-b border-line">
+    <div class="pointer-events-none absolute inset-0" style="background:var(--glow)" aria-hidden="true"></div>
+    <div class="container-page relative py-10 md:py-14">
+      <nav aria-label="Breadcrumb" class="mb-6 text-sm text-subtle">
+        <a href="/auth" class="hover:text-fg">Auth services</a>
+        <span aria-hidden="true"> / </span>
+        <span class="text-muted">{x.name}</span>
+      </nav>
+      <div class="flex flex-col gap-6 sm:flex-row sm:items-start">
+        <Monogram name={x.name} id={a.id} size="lg" transitionName={`mono-${a.id}`} />
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h1 class="text-3xl font-semibold tracking-tight md:text-4xl">{x.name}</h1>
+            <StatusBadge status={a.status} label={BYPASS_LABEL[x.bypass.status]} size="md" />
+          </div>
+          <p class="mt-3 max-w-2xl text-[1.0625rem] leading-relaxed text-muted">{x.tagline}</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="chip">{PRICING_LABEL[x.pricing]}</span>
+            {x.features.map((f) => <span class="chip">{AUTH_FEATURE_LABEL[f]}</span>)}
+          </div>
+          <div class="mt-6">
+            <ExternalLinks variant="buttons" name={x.name} website={x.website} repo={x.repo} docs={x.docs} discord={x.discord} />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container-page grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="min-w-0 space-y-12">
+      <Section title="Bypass status">
+        <div class="surface p-5 text-sm">
+          <StatusBadge status={a.status} label={BYPASS_LABEL[x.bypass.status]} />
+          {x.bypass.note && <p class="mt-3 text-muted">{x.bypass.note}</p>}
+          {
+            x.bypass.sources.length > 0 && (
+              <ul class="mt-3 space-y-1">
+                {x.bypass.sources.map((s) => (
+                  <li>
+                    <a href={s.url} class="link" rel="noopener nofollow" target="_blank">
+                      {s.title ?? s.url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        </div>
+      </Section>
+      <Section title="About">
+        <p class="max-w-prose leading-relaxed text-muted">{x.description}</p>
+      </Section>
+      <Section title="Sources & verification">
+        <SourcesList
+          sources={x.sources}
+          verified={x.verified}
+          lastVerified={x.lastVerified}
+          stale={a.stale}
+          file={`src/data/auth/${a.id}.yaml`}
+          name={x.name}
+        />
+      </Section>
+    </div>
+    <aside class="space-y-4 lg:sticky lg:top-20 lg:self-start">
+      <Facts
+        items={[
+          { label: 'Pricing', value: PRICING_LABEL[x.pricing] },
+          { label: 'Features', value: x.features.length },
+          { label: 'Bundled obfuscator', value: bundled?.data.name, href: bundled ? `/obfuscators/${bundled.id}` : undefined },
+        ]}
+      />
+    </aside>
+  </div>
+</Base>

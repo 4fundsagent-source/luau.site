@@ -7,6 +7,7 @@ import { issueUrl, SITE } from '~/lib/site';
 const forms: { template: Parameters<typeof issueUrl>[0]; title: string; text: string; icon: IconName }[] = [
   { template: 'new-obfuscator', title: 'New obfuscator', text: 'An obfuscator we don\'t track yet, with a link to its site or repository.', icon: 'shield' },
   { template: 'new-deobfuscator', title: 'New deobfuscator', text: 'A public tool that breaks or partially breaks a tracked version.', icon: 'unlock' },
+  { template: 'new-auth-service', title: 'New auth service', text: 'A key system, whitelist or licensing service for Lua scripts.', icon: 'key' },
   { template: 'version-release', title: 'Version release', text: 'A new version of a tracked obfuscator, ideally with a changelog link.', icon: 'layers' },
   { template: 'correction', title: 'Correction', text: 'Something on the site is wrong or outdated.', icon: 'pencil' },
   { template: 'vendor-statement', title: 'Vendor statement', text: 'Maintainers can respond to a listed break or status.', icon: 'chat' },

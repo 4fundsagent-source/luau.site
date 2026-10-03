@@ -1,0 +1,33 @@
+name: Vendor statement
+description: Maintainers of a listed project can respond to a break or status.
+title: "Vendor statement: "
+labels: [data, vendor-statement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Statements are published as written (short, factual, no marketing) next to the entry. They don't change a derived status by themselves — a fix does, once a new version ships and the tracked tools no longer work on it.
+  - type: input
+    id: project
+    attributes:
+      label: Project
+    validations:
+      required: true
+  - type: input
+    id: role
+    attributes:
+      label: Your role
+      description: How can we verify you speak for the project? (e.g. post from the official Discord or domain)
+    validations:
+      required: true
+  - type: textarea
+    id: statement
+    attributes:
+      label: Statement
+      description: Up to ~80 words.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Supporting links

@@ -40,7 +40,7 @@ const tools = o.deobfuscators.map((id) => deob.get(id)!);
 const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id).map((r) => ({ sample: sm, run: r })));
 ---
 
-<Base title={d.name} description={`${d.name}: ${d.tagline} ${headline}`}>
+<Base title={d.name} image={`/og/obfuscators/${o.id}.png`} description={`${d.name}: ${d.tagline} ${headline}`}>
   <section class="relative overflow-hidden border-b border-line">
     <div class="pointer-events-none absolute inset-0" style="background:var(--glow)" aria-hidden="true"></div>
     <div class="container-page relative py-10 md:py-14">

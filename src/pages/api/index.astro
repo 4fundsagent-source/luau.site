@@ -1,0 +1,54 @@
+---
+import CodePanel from '~/components/CodePanel.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import Base from '~/layouts/Base.astro';
+import { API_COLLECTIONS, apiCollections } from '~/lib/api';
+import { getSiteData } from '~/lib/data';
+import { SITE } from '~/lib/site';
+
+const data = await getSiteData();
+const all = apiCollections(data);
+const descriptions: Record<(typeof API_COLLECTIONS)[number], string> = {
+  obfuscators: 'Every obfuscator, with derived status per version, time to break and Security Score breakdown.',
+  deobfuscators: 'Every deobfuscator, with coverage per obfuscator version.',
+  auth: 'Auth, key and whitelist services, with bypass status.',
+  events: 'The timeline: releases, breaks, new tools and hand-written events, newest first.',
+  lab: 'Corpus samples and committed runs, with behavior-match results.',
+};
+const example = JSON.stringify(all.obfuscators[0] ?? {}, null, 2);
+---
+
+<Base title="Open data API" description="luau.site data as static JSON: obfuscators, deobfuscators, auth services, events and Lab results.">
+  <PageHeader
+    eyebrow="Open data"
+    title="JSON API"
+    description="Everything on luau.site is available as static JSON, regenerated on every deploy. No keys, no rate limits. Please credit luau.site when you reuse it."
+  />
+  <div class="container-page grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+    <ul class="surface divide-y divide-line self-start">
+      {
+        API_COLLECTIONS.map((c) => (
+          <li class="px-5 py-4">
+            <div class="flex items-center justify-between gap-3">
+              <a href={`/api/${c}.json`} class="num text-sm font-medium text-fg hover:underline">
+                GET /api/{c}.json
+              </a>
+              <span class="num text-xs text-subtle">{all[c].length} items</span>
+            </div>
+            <p class="mt-1 text-sm text-muted">{descriptions[c]}</p>
+          </li>
+        ))
+      }
+      <li class="px-5 py-4">
+        <a href="/feed.xml" class="num text-sm font-medium text-fg hover:underline">GET /feed.xml</a>
+        <p class="mt-1 text-sm text-muted">RSS 2.0 feed of the event log.</p>
+      </li>
+      <li class="px-5 py-4 text-sm text-muted">
+        Every response is shaped <code class="num text-fg">{'{ generatedAt, count, data }'}</code>. Dates use <code class="num text-fg">YYYY-MM-DD</code> or
+        <code class="num text-fg">YYYY-MM</code>, and a leading <code class="num text-fg">~</code> marks an approximate date. The raw YAML lives in the{' '}
+        <a href={`${SITE.repo}/tree/main/src/data`} class="link">repository</a>.
+      </li>
+    </ul>
+    <CodePanel title="Example: one obfuscator" subtitle="/api/obfuscators.json → data[0]" code={example} lang="text" height="max-h-[36rem]" />
+  </div>
+</Base>
