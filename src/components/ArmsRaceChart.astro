@@ -1,0 +1,330 @@
+---
+/**
+ * The Arms Race: one lane per obfuscator, one bar per dated version running
+ * from release until it was broken, superseded, or today. Rendered as static
+ * SVG at build time; a small script adds hover/focus tooltips. The event log
+ * on /timeline is the accessible table view of the same data.
+ */
+import { formatDate, formatDuration, formatPlainDate } from '~/lib/dates';
+import { formatVersion, type SiteData } from '~/lib/data';
+import { STATUS_META, type Status } from '~/lib/taxonomy';
+import StatusIcon from './StatusIcon.astro';
+
+interface Props {
+  data: SiteData;
+  compact?: boolean;
+  /** Only show these obfuscators (ids). */
+  only?: string[];
+}
+const { data, compact = false, only } = Astro.props;
+const now = data.builtAt;
+const DAY = 86_400_000;
+
+interface Bar {
+  version: string;
+  start: number;
+  end: number;
+  status: Status;
+  endKind: 'broken' | 'superseded' | 'ongoing';
+  row: number;
+  tip: string[];
+}
+interface Lane {
+  id: string;
+  name: string;
+  bars: Bar[];
+  rows: number;
+}
+
+const lanes: Lane[] = [];
+let undated = 0;
+for (const o of data.obfuscators) {
+  if (only && !only.includes(o.id)) continue;
+  const dated = o.versions.filter((v) => v.s.released);
+  undated += o.versions.length - dated.length;
+  if (!dated.length) continue;
+
+  const bars: Bar[] = dated.map((v, i) => {
+    const start = v.s.released!.date.getTime();
+    const next = dated[i + 1]?.s.released?.date.getTime();
+    const broken = v.s.status === 'broken' && v.s.brokenOn ? v.s.brokenOn.date.getTime() : undefined;
+    const end = broken ?? next ?? now.getTime();
+    const endKind = broken ? 'broken' : next ? 'superseded' : 'ongoing';
+    const tip = [
+      `${o.data.name} ${formatVersion(v.version)}`,
+      `${STATUS_META[v.s.status].label}`,
+      `Released ${formatDate(v.s.released)}`,
+      broken
+        ? `Broken ${formatDate(v.s.brokenOn)}${v.s.daysToBreak !== undefined ? ` · ${formatDuration(v.s.daysToBreak, v.s.fuzzy)}` : ''}`
+        : endKind === 'superseded'
+          ? `Superseded ${formatDate(dated[i + 1]!.s.released)}`
+          : 'Still current',
+    ];
+    return { version: v.version, start, end: Math.max(end, start + DAY), status: v.s.status, endKind, row: 0, tip };
+  });
+
+  // Interval partitioning so overlapping versions never draw on top of each other.
+  const rowEnds: number[] = [];
+  for (const b of bars) {
+    let r = rowEnds.findIndex((e) => e <= b.start);
+    if (r === -1) r = rowEnds.length;
+    rowEnds[r] = b.end;
+    b.row = r;
+  }
+  lanes.push({ id: o.id, name: o.data.name, bars, rows: rowEnds.length });
+}
+
+const tools = data.deobfuscators
+  .filter((d) => d.firstSeen && (!only || d.coverage.some((c) => only.includes(c.obfuscator))))
+  .map((d) => ({ id: d.id, name: d.data.name, t: d.firstSeen!.date.getTime(), label: formatDate(d.firstSeen) }));
+
+// ---- scales
+const allTimes = [...lanes.flatMap((l) => l.bars.flatMap((b) => [b.start, b.end])), ...tools.map((t) => t.t)];
+const minSpan = (compact ? 270 : 365) * DAY;
+const t1 = now.getTime() + 20 * DAY;
+const t0 = Math.min(...allTimes, t1 - minSpan) - 20 * DAY;
+
+const W = 1000;
+const LEFT = compact ? 120 : 150;
+const RIGHT = 24;
+const TOP = 30;
+const ROW_H = 22;
+const LANE_PAD = 14;
+const BAR_H = 12;
+const x = (t: number) => LEFT + ((t - t0) / (t1 - t0)) * (W - LEFT - RIGHT);
+
+let y = TOP;
+const laneLayout = lanes.map((l) => {
+  const h = l.rows * ROW_H + LANE_PAD;
+  const top = y;
+  y += h;
+  return { ...l, top, h };
+});
+const toolLaneTop = y;
+const toolLaneH = tools.length ? 36 : 0;
+const H = y + toolLaneH + 8;
+
+// Month ticks; quarterly when the span is long.
+const spanMonths = (t1 - t0) / (30.44 * DAY);
+const step = spanMonths > 20 ? 3 : spanMonths > 10 ? 2 : 1;
+const ticks: { t: number; label: string; year: boolean }[] = [];
+const first = new Date(t0);
+let m = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 1));
+while (m.getTime() < t1) {
+  if (m.getUTCMonth() % step === 0) {
+    const year = m.getUTCMonth() === 0 || ticks.length === 0;
+    ticks.push({
+      t: m.getTime(),
+      label: m.toLocaleString('en', { month: 'short', timeZone: 'UTC' }) + (year ? ` ${m.getUTCFullYear()}` : ''),
+      year,
+    });
+  }
+  m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1));
+}
+
+const nowXPos = x(now.getTime());
+const visibleTicks = ticks.filter((tk) => Math.abs(x(tk.t) - nowXPos) > 58);
+
+const R = 4;
+function barPath(x0: number, x1: number, yTop: number, rounded: boolean) {
+  const w = Math.max(x1 - x0, 2);
+  const r = rounded ? Math.min(R, w / 2, BAR_H / 2) : 0;
+  const xe = x0 + w;
+  return `M${x0},${yTop}H${xe - r}Q${xe},${yTop} ${xe},${yTop + r}V${yTop + BAR_H - r}Q${xe},${yTop + BAR_H} ${xe - r},${yTop + BAR_H}H${x0}Z`;
+}
+const CHAR = 6.6;
+const nowX = x(now.getTime());
+---
+
+<figure class="arms-race relative" data-chart>
+  <div class="overflow-x-auto">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      class="block w-full min-w-[720px]"
+      role="img"
+      aria-label={`Timeline of ${lanes.length} obfuscators: each version runs from its release until it was broken, superseded, or today.`}
+    >
+      <!-- grid -->
+      {
+        visibleTicks.map((tk) => (
+          <g>
+            <line x1={x(tk.t)} x2={x(tk.t)} y1={TOP - 6} y2={H - 8} stroke="var(--line)" stroke-width="1" />
+            <text x={x(tk.t) + 4} y={TOP - 12} class="tick">
+              {tk.label}
+            </text>
+          </g>
+        ))
+      }
+
+      <!-- lanes -->
+      {
+        laneLayout.map((l, li) => (
+          <g>
+            {li > 0 && <line x1="0" x2={W} y1={l.top} y2={l.top} stroke="var(--line)" stroke-width="1" />}
+            <a href={`/obfuscators/${l.id}`}>
+              <text x="0" y={l.top + LANE_PAD / 2 + ROW_H / 2 + 4} class="lane">
+                {l.name}
+              </text>
+            </a>
+            {l.bars.map((b) => {
+              const x0 = x(b.start);
+              const x1 = x(b.end);
+              const yTop = l.top + LANE_PAD / 2 + b.row * ROW_H + (ROW_H - BAR_H) / 2;
+              const label = formatVersion(b.version);
+              const lw = label.length * CHAR;
+              const markerSpace = b.endKind === 'broken' ? 10 : 0;
+              const rightOk = x1 + markerSpace + 6 + lw < W - RIGHT;
+              const lx = rightOk ? x1 + markerSpace + 6 : x0 - 6;
+              return (
+                <g class="bar" tabindex="0" data-tip={b.tip.join('\n')} data-status={b.status} aria-label={b.tip.join(', ')}>
+                  <rect x={x0 - 2} y={yTop - 5} width={Math.max(x1 - x0, 2) + 4 + markerSpace} height={BAR_H + 10} fill="transparent" />
+                  <path d={barPath(x0, x1, yTop, b.endKind !== 'superseded')} fill={`var(--${b.status})`} class="bar-fill" />
+                  {b.endKind === 'broken' && (
+                    <g>
+                      <circle cx={x1} cy={yTop + BAR_H / 2} r="6.5" fill="var(--broken)" stroke="var(--bg-elev)" stroke-width="2" />
+                      <path
+                        d={`M${x1 - 2.4},${yTop + BAR_H / 2 - 2.4}l4.8,4.8M${x1 + 2.4},${yTop + BAR_H / 2 - 2.4}l-4.8,4.8`}
+                        stroke="var(--bg-elev)"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                      />
+                    </g>
+                  )}
+                  <text x={lx} y={yTop + BAR_H - 2} class="vlabel" text-anchor={rightOk ? 'start' : 'end'}>
+                    {label}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        ))
+      }
+
+      <!-- deobfuscator releases -->
+      {
+        tools.length > 0 && (
+          <g>
+            <line x1="0" x2={W} y1={toolLaneTop} y2={toolLaneTop} stroke="var(--line)" stroke-width="1" />
+            <text x="0" y={toolLaneTop + 22} class="lane muted">
+              New tools
+            </text>
+            {tools.map((t) => (
+              <a href={`/deobfuscators/${t.id}`} class="bar" data-tip={`${t.name}\nPublished ${t.label}`} aria-label={`${t.name}, published ${t.label}`}>
+                <rect x={x(t.t) - 12} y={toolLaneTop + 6} width="24" height="24" fill="transparent" />
+                <path
+                  d={`M${x(t.t)},${toolLaneTop + 11}l6,7l-6,7l-6,-7Z`}
+                  fill="var(--fg)"
+                  stroke="var(--bg-elev)"
+                  stroke-width="2"
+                  class="bar-fill"
+                />
+              </a>
+            ))}
+          </g>
+        )
+      }
+
+      <!-- now -->
+      <line x1={nowX} x2={nowX} y1={TOP - 6} y2={H - 8} stroke="var(--fg)" stroke-width="1" stroke-opacity="0.55" />
+      <text x={nowX - 4} y={TOP - 12} class="tick now" text-anchor="end">Today</text>
+    </svg>
+  </div>
+
+  <figcaption class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted">
+    {
+      (['holding', 'partial', 'broken'] as const).map((s) => (
+        <span class="inline-flex items-center gap-1.5">
+          <span class="inline-block h-2.5 w-4 rounded-r-[3px]" style={`background:var(--${s})`} />
+          <StatusIcon status={s} />
+          {STATUS_META[s].label}
+        </span>
+      ))
+    }
+    {
+      tools.length > 0 && (
+        <span class="inline-flex items-center gap-1.5">
+          <svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true">
+            <path d="M5,0l5,6l-5,6l-5,-6Z" fill="var(--fg)" />
+          </svg>
+          Deobfuscator published
+        </span>
+      )
+    }
+    {undated > 0 && <span class="text-subtle">{undated} version{undated === 1 ? '' : 's'} without a release date not shown</span>}
+    <span class="text-subtle sm:ml-auto">Built {formatPlainDate(now)}</span>
+  </figcaption>
+
+  <div data-tooltip role="tooltip" class="pointer-events-none absolute z-10 hidden rounded-lg border border-line-strong bg-elev px-3 py-2 text-xs shadow-lift"></div>
+</figure>
+
+<style>
+  .arms-race :global(.tick) {
+    font: 500 11px var(--font-mono);
+    fill: var(--fg-subtle);
+  }
+  .arms-race :global(.tick.now) {
+    fill: var(--fg-muted);
+  }
+  .arms-race :global(.lane) {
+    font: 500 13px var(--font-sans);
+    fill: var(--fg);
+  }
+  .arms-race :global(.lane.muted) {
+    fill: var(--fg-subtle);
+  }
+  .arms-race :global(a:hover .lane) {
+    text-decoration: underline;
+  }
+  .arms-race :global(.vlabel) {
+    font: 500 11px var(--font-mono);
+    fill: var(--fg-muted);
+  }
+  .arms-race :global(.bar) {
+    cursor: pointer;
+    outline: none;
+  }
+  .arms-race :global(.bar .bar-fill) {
+    transition: opacity 150ms;
+  }
+  .arms-race :global(.bar:hover .bar-fill),
+  .arms-race :global(.bar:focus-visible .bar-fill) {
+    opacity: 0.8;
+  }
+  .arms-race :global(.bar:focus-visible .vlabel) {
+    fill: var(--fg);
+    text-decoration: underline;
+  }
+</style>
+
+<script>
+  for (const fig of document.querySelectorAll<HTMLElement>('[data-chart]')) {
+    const tip = fig.querySelector<HTMLElement>('[data-tooltip]')!;
+    const show = (el: Element, cx: number, cy: number) => {
+      const lines = (el.getAttribute('data-tip') ?? '').split('\n');
+      tip.replaceChildren(
+        ...lines.map((line, i) => {
+          const p = document.createElement('p');
+          p.textContent = line;
+          p.className = i === 0 ? 'font-medium text-fg' : i === 1 ? 'text-fg' : 'text-muted';
+          return p;
+        }),
+      );
+      tip.classList.remove('hidden');
+      const box = fig.getBoundingClientRect();
+      const w = tip.offsetWidth;
+      const left = Math.min(Math.max(8, cx - box.left + 12), box.width - w - 8);
+      tip.style.left = `${left}px`;
+      tip.style.top = `${cy - box.top + 14}px`;
+    };
+    const hide = () => tip.classList.add('hidden');
+    fig.querySelectorAll('[data-tip]').forEach((el) => {
+      el.addEventListener('pointermove', (e) => show(el, (e as PointerEvent).clientX, (e as PointerEvent).clientY));
+      el.addEventListener('pointerleave', hide);
+      el.addEventListener('focus', () => {
+        const r = el.getBoundingClientRect();
+        show(el, r.left + r.width / 2, r.bottom - 8);
+      });
+      el.addEventListener('blur', hide);
+    });
+  }
+</script>

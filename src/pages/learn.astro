@@ -1,0 +1,37 @@
+---
+import PageHeader from '~/components/PageHeader.astro';
+import Base from '~/layouts/Base.astro';
+import { DEOB_TECHNIQUES, DEOB_TECHNIQUE_META, OUTPUT_LEVELS, OUTPUT_META, STATUSES, STATUS_META, TECHNIQUES, TECHNIQUE_META } from '~/lib/taxonomy';
+
+const groups = [
+  { title: 'Protection techniques', items: TECHNIQUES.map((t) => ({ id: t, ...TECHNIQUE_META[t] })) },
+  { title: 'Deobfuscation techniques', items: DEOB_TECHNIQUES.map((t) => ({ id: t, ...DEOB_TECHNIQUE_META[t] })) },
+  { title: 'Output levels', items: OUTPUT_LEVELS.map((t) => ({ id: `output-${t}`, ...OUTPUT_META[t] })) },
+  { title: 'Statuses', items: STATUSES.map((t) => ({ id: `status-${t}`, ...STATUS_META[t] })) },
+];
+---
+
+<Base title="Glossary" description="Plain-language definitions of Lua obfuscation and deobfuscation terms: VM virtualization, devirtualization, constant dumping, anti-tamper and more.">
+  <PageHeader
+    eyebrow="Learn"
+    title="Glossary"
+    description="The vocabulary of the Lua protection scene in plain language. Every technique tag on the site links here."
+  />
+  <div class="container-page space-y-14 py-12">
+    {
+      groups.map((g) => (
+        <section>
+          <h2 class="mb-4 text-lg font-semibold tracking-tight">{g.title}</h2>
+          <dl class="surface divide-y divide-line">
+            {g.items.map((i) => (
+              <div id={i.id} class="scroll-mt-24 px-5 py-4 target:bg-accent-soft sm:flex sm:gap-6">
+                <dt class="shrink-0 font-medium text-fg sm:w-56">{i.label}</dt>
+                <dd class="mt-1 text-sm leading-relaxed text-muted sm:mt-0">{i.description}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))
+    }
+  </div>
+</Base>

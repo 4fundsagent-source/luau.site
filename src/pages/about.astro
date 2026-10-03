@@ -1,0 +1,41 @@
+---
+import PageHeader from '~/components/PageHeader.astro';
+import Base from '~/layouts/Base.astro';
+import { issueUrl, SITE } from '~/lib/site';
+---
+
+<Base title="About" description="luau.site is an independent transparency index of Lua and Luau obfuscators, deobfuscators and auth services.">
+  <PageHeader eyebrow="Project" title="About luau.site" description="An independent place to see the state of Lua and Luau protection, all in one spot." />
+  <div class="container-page py-12">
+    <article class="prose-site max-w-[44rem]">
+      <p>
+        Lua and Luau obfuscation has sped up. New obfuscators and auth services keep appearing, and so do deobfuscators: helped by AI tooling,
+        Luraph v14.7–v14.9 was publicly deobfuscated in 2026, and an open-source deobfuscator for v15 appeared within weeks of its release.
+        All of this was spread across Discord servers, GitHub repositories and forum threads.
+      </p>
+      <p>
+        <strong>luau.site</strong> gathers it in one place: who protects code, who breaks it, how quickly, and with what result. Every claim links to a
+        source, every status is computed, and every change is a public commit.
+      </p>
+
+      <h2>Independence</h2>
+      <ul>
+        <li>No paid placement, sponsored rankings or affiliate links.</li>
+        <li>We're not affiliated with any obfuscator, deobfuscator or auth service listed here.</li>
+        <li>Vendors and authors get the same correction process as everyone else, plus the option to publish a short statement.</li>
+      </ul>
+
+      <h2>For vendors and tool authors</h2>
+      <p>
+        If something about your project is wrong or outdated, <a href={issueUrl('correction')}>open a correction</a> with a source. To respond to a
+        listed break, <a href={issueUrl('vendor-statement')}>submit a vendor statement</a>. We review corrections in public.
+      </p>
+
+      <h2>Open data</h2>
+      <p>
+        Everything is available as JSON under <a href="/api">/api</a> and as an <a href="/feed.xml">RSS feed</a> of events. The source and the data
+        live at <a href={SITE.repo}>GitHub</a>.
+      </p>
+    </article>
+  </div>
+</Base>

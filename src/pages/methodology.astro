@@ -1,0 +1,128 @@
+---
+import PageHeader from '~/components/PageHeader.astro';
+import Base from '~/layouts/Base.astro';
+import { PROVISIONAL_BELOW, TIERS, TRACK_FULL_DAYS, WEIGHTS } from '~/lib/score';
+import { SITE } from '~/lib/site';
+import { TECHNIQUES, TECHNIQUE_META } from '~/lib/taxonomy';
+
+const toc = [
+  { id: 'principles', label: 'Principles' },
+  { id: 'status', label: 'How status is derived' },
+  { id: 'score', label: 'Security Score' },
+  { id: 'evidence', label: 'Evidence rules' },
+  { id: 'lab', label: 'The Lab' },
+  { id: 'outputs', label: 'What we host' },
+  { id: 'limits', label: 'Known limitations' },
+];
+---
+
+<Base title="Methodology" description="How luau.site derives break status, computes the Security Score, and decides what counts as evidence.">
+  <PageHeader
+    eyebrow="Project"
+    title="Methodology"
+    description="Every number on luau.site comes from code you can read and data you can audit. Here's exactly how it works."
+  />
+  <div class="container-page grid gap-12 py-12 lg:grid-cols-[13rem_minmax(0,1fr)]">
+    <nav aria-label="On this page" class="hidden lg:block">
+      <ul class="sticky top-24 space-y-2 text-sm">
+        {toc.map((t) => <li><a href={`#${t.id}`} class="text-muted hover:text-fg">{t.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <article class="prose-site max-w-[44rem]">
+      <h2 id="principles">Principles</h2>
+      <ul>
+        <li><strong>Computed, not typed.</strong> Status, time to break and score are pure functions of the dataset (<a href={`${SITE.repo}/blob/main/src/lib/status.ts`}><code>status.ts</code></a>, <a href={`${SITE.repo}/blob/main/src/lib/score.ts`}><code>score.ts</code></a>), covered by unit tests.</li>
+        <li><strong>Sourced or it doesn't ship.</strong> Every entry and every claim links to evidence. CI rejects data without it.</li>
+        <li><strong>Public history.</strong> The data lives as YAML in a public repository, so every change is a reviewable commit.</li>
+        <li><strong>No paid placement.</strong> Vendors can't buy a position or a removal. They can submit corrections and statements like anyone else.</li>
+      </ul>
+
+      <h2 id="status">How status is derived</h2>
+      <p>Each obfuscator <em>version</em> has one of three statuses, derived from the deobfuscators that target it:</p>
+      <table>
+        <thead><tr><th>Status</th><th>Rule</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Broken</strong></td><td>At least one tool has <em>full</em> support for this version and outputs readable (or near-original) source.</td></tr>
+          <tr><td><strong>Partial</strong></td><td>Tools exist, but they only recover constants, bytecode or traces, or their support is partial or experimental.</td></tr>
+          <tr><td><strong>Holding</strong></td><td>No public tool is tracked for this version. This means "none known", not "unbreakable".</td></tr>
+        </tbody>
+      </table>
+      <p>
+        The <strong>break date</strong> is the earliest date one of the breaking tools became public, either its first-seen date or a per-version
+        <code>since</code> date. <strong>Time to break</strong> is the break date minus the release date. When either date is only month-precise or
+        marked approximate (<code>~</code>), the duration is shown with a <code>~</code> and rounded to coarser units.
+      </p>
+      <p>
+        A maintainer can override a derived status in rare cases, for example a break confirmed privately. An override must include a written note and
+        sources, and it is labelled on the page.
+      </p>
+
+      <h2 id="score">Security Score</h2>
+      <p>The score runs from 0 to 100 and has four components, all evaluated against the obfuscator's <em>current</em> version:</p>
+      <table>
+        <thead><tr><th>Component</th><th>Weight</th><th>Basis</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Resistance</strong></td><td>{WEIGHTS.resistance}</td>
+            <td>Holding 50 · broken only by private or paid tools 30 · partial 20 · broken by a free closed tool 5 · broken by an open-source tool 0. When several tools break it, the most widely available one counts.</td>
+          </tr>
+          <tr>
+            <td><strong>Track record</strong></td><td>{WEIGHTS.track}</td>
+            <td>Median <em>survival</em> across dated versions: time to break, or time since release if still unbroken. Full points at {TRACK_FULL_DAYS} days or more.</td>
+          </tr>
+          <tr>
+            <td><strong>Lab results</strong></td><td>{WEIGHTS.lab}</td>
+            <td>The share of our benchmark samples (for the current version) that <em>no</em> deobfuscator recovered with matching behavior.</td>
+          </tr>
+          <tr>
+            <td><strong>Technique depth</strong></td><td>{WEIGHTS.technique}</td>
+            <td>A capped checklist of documented techniques. VM virtualization counts most. Compression and watermarking count zero.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Missing data and provisional scores</h3>
+      <p>
+        If a component has no data (no dated versions, no Lab runs), it gets <strong>neutral half credit</strong>. We don't drop it and re-scale the
+        rest, because missing evidence shouldn't push a score up or down. The share of the weight that is backed by real data is shown as
+        <em>data %</em>. Below {Math.round(PROVISIONAL_BELOW * 100)}%, the score is <strong>provisional</strong> and its tier is drawn with a dashed border.
+      </p>
+      <h3>Tiers</h3>
+      <p>{TIERS.map((t) => `${t.tier} ≥ ${t.min}`).join(' · ')}.</p>
+      <h3>Technique points</h3>
+      <table>
+        <thead><tr><th>Technique</th><th>Points</th></tr></thead>
+        <tbody>{TECHNIQUES.map((t) => <tr><td><a href={`/learn#${t}`}>{TECHNIQUE_META[t].label}</a></td><td>{TECHNIQUE_META[t].points}</td></tr>)}</tbody>
+      </table>
+
+      <h2 id="evidence">Evidence rules</h2>
+      <ul>
+        <li>Every obfuscator, deobfuscator, auth service and hand-written event needs at least one source with an access date. Archive links are encouraged.</li>
+        <li>Primary sources (repositories, official docs, vendor changelogs) beat screenshots and second-hand reports.</li>
+        <li>Entries carry a <code>verified</code> flag and a <code>lastVerified</code> date. After {SITE.staleAfterDays} days without re-verification, an entry is flagged as possibly outdated.</li>
+        <li>A deobfuscator only counts once it's publicly verifiable: a repository, a public release, or a reproducible demonstration. Rumors don't count.</li>
+      </ul>
+
+      <h2 id="lab">The Lab</h2>
+      <p>
+        The Lab is our own benchmark. We write small test scripts, obfuscate each one with every obfuscator, run every deobfuscator on the result, and
+        then execute all three stages with the official <code>luau</code> CLI. A deobfuscation counts as <em>recovered</em> only if its output prints
+        exactly what the original printed. See <a href="/lab">the Lab</a> for the corpus and how to contribute runs.
+      </p>
+
+      <h2 id="outputs">What we host, and what we don't</h2>
+      <ul>
+        <li>We host our own corpus scripts and the outputs produced from them.</li>
+        <li>We <strong>don't</strong> host third-party scripts, their deobfuscated output, or deobfuscator binaries. We link to the public source.</li>
+        <li>Nothing here is meant to help anyone bypass licensing on a specific script. The goal is transparency about how strong protection actually is.</li>
+      </ul>
+
+      <h2 id="limits">Known limitations</h2>
+      <ul>
+        <li>"Holding" reflects what we know. Private tools that stay private are invisible to us.</li>
+        <li>Release dates for many versions aren't publicly documented, so track record often rests on approximate dates.</li>
+        <li>Lab coverage depends on maintainers running paid obfuscators by hand, so it grows over time.</li>
+      </ul>
+    </article>
+  </div>
+</Base>

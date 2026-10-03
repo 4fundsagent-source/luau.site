@@ -1,0 +1,61 @@
+---
+import Icon, { type IconName } from '~/components/Icon.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import Base from '~/layouts/Base.astro';
+import { issueUrl, SITE } from '~/lib/site';
+
+const forms: { template: Parameters<typeof issueUrl>[0]; title: string; text: string; icon: IconName }[] = [
+  { template: 'new-obfuscator', title: 'New obfuscator', text: 'An obfuscator we don\'t track yet, with a link to its site or repository.', icon: 'shield' },
+  { template: 'new-deobfuscator', title: 'New deobfuscator', text: 'A public tool that breaks or partially breaks a tracked version.', icon: 'unlock' },
+  { template: 'version-release', title: 'Version release', text: 'A new version of a tracked obfuscator, ideally with a changelog link.', icon: 'layers' },
+  { template: 'correction', title: 'Correction', text: 'Something on the site is wrong or outdated.', icon: 'pencil' },
+  { template: 'vendor-statement', title: 'Vendor statement', text: 'Maintainers can respond to a listed break or status.', icon: 'chat' },
+];
+---
+
+<Base title="Submit" description="Submit a new obfuscator, deobfuscator, version release or correction to luau.site.">
+  <PageHeader
+    eyebrow="Contribute"
+    title="Submit & correct"
+    description="Everything goes through public GitHub issues and pull requests. Bring a source, because we can't add a claim we can't verify."
+  />
+  <div class="container-page grid gap-12 py-12 lg:grid-cols-[minmax(0,1fr)_22rem]">
+    <div class="grid gap-4 sm:grid-cols-2">
+      {
+        forms.map((f) => (
+          <a href={issueUrl(f.template)} class="surface card-hover group flex flex-col p-5">
+            <span class="grid size-9 place-items-center rounded-lg border border-line bg-sunken text-fg">
+              <Icon name={f.icon} size={17} />
+            </span>
+            <h2 class="mt-4 flex items-center gap-1.5 font-semibold tracking-tight">
+              {f.title}
+              <Icon name="arrow-up-right" size={14} class="text-subtle" />
+            </h2>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted">{f.text}</p>
+          </a>
+        ))
+      }
+    </div>
+    <aside class="space-y-4">
+      <div class="surface p-5 text-sm">
+        <h2 class="font-semibold">Prefer a pull request?</h2>
+        <p class="mt-2 leading-relaxed text-muted">
+          Every entry is one YAML file under <code class="num text-fg">src/data/</code>. Copy a neighbour, edit it, and open a PR. CI checks the schema,
+          references and sources before anything merges.
+        </p>
+        <a href={`${SITE.repo}/tree/main/src/data`} class="btn mt-4">
+          <Icon name="github" size={15} />
+          Browse the data
+        </a>
+      </div>
+      <div class="surface p-5 text-sm">
+        <h2 class="font-semibold">What makes a good source</h2>
+        <ul class="mt-2 list-disc space-y-1.5 pl-5 text-muted">
+          <li>A repository, release page, official docs or changelog</li>
+          <li>The date you accessed it</li>
+          <li>An archive.org link if it might disappear</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</Base>

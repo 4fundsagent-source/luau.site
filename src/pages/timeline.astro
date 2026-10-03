@@ -1,0 +1,38 @@
+---
+import ArmsRaceChart from '~/components/ArmsRaceChart.astro';
+import EventList from '~/components/EventList.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import Section from '~/components/Section.astro';
+import Base from '~/layouts/Base.astro';
+import { formatDuration } from '~/lib/dates';
+import { getSiteData } from '~/lib/data';
+
+const data = await getSiteData();
+const { stats, events } = data;
+---
+
+<Base title="Timeline" description="The arms race between Lua obfuscators and deobfuscators: every release, every break, and how long each version held.">
+  <PageHeader
+    eyebrow="Analysis"
+    title="The Arms Race"
+    description="Every obfuscator release and every public break on one axis. Each bar is a version, running from its release until it was broken, superseded, or today."
+  >
+    {
+      stats.medianDaysToBreak !== undefined && (
+        <p class="mt-6 text-sm text-muted">
+          Median time to break across tracked versions:{' '}
+          <span class="font-medium text-fg">{formatDuration(stats.medianDaysToBreak, stats.medianFuzzy)}</span>
+        </p>
+      )
+    }
+  </PageHeader>
+  <div class="container-page space-y-14 py-10">
+    <div class="surface p-4 sm:p-6">
+      <ArmsRaceChart data={data} />
+    </div>
+    <Section title="Event log" description="Releases and breaks are derived from the data; other events are added by hand with a source.">
+      <a slot="action" href="/feed.xml" class="text-sm text-muted hover:text-fg">RSS feed →</a>
+      <EventList events={events} grouped />
+    </Section>
+  </div>
+</Base>
