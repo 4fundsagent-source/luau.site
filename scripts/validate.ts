@@ -64,6 +64,15 @@ for (const [dir, list] of [['obfuscators', obfuscators], ['deobfuscators', deobf
 }
 
 for (const { id, doc } of obfuscators) {
+  if (doc.observation) checkDate(`obfuscators/${id}.yaml observation`, doc.observation.since);
+  for (const c of doc.challenges ?? []) {
+    const where = `obfuscators/${id}.yaml challenge ${c.title}`;
+    checkDate(`${where} posted`, c.posted);
+    checkDate(`${where} solvedOn`, c.solvedOn);
+    checkDate(`${where} accessed`, c.accessed);
+    checkSources(where, c.sources, true);
+    if (c.status === 'solved' && !c.solvedOn) errors.push(`${where}: a solved challenge needs solvedOn`);
+  }
   for (const v of doc.versions ?? []) {
     const where = `obfuscators/${id}.yaml version ${v.version}`;
     checkDate(where, v.released);

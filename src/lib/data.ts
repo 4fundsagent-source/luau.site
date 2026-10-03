@@ -4,6 +4,7 @@
  */
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { compareDates, daysBetween, formatDuration, parseDate, type PartialDate } from './dates';
+import { daysOpen } from './challenges';
 import { checkIntegrity } from './integrity';
 import { loadLab, recovered, type Sample } from './lab';
 import { compareScores, computeScore, provingDay, type LabSummary, type Score } from './score';
@@ -36,6 +37,8 @@ export interface ObfuscatorView {
   openSource: boolean;
   /** Codebase rubric total for open-source projects. */
   codebase?: number;
+  /** When luau.site started watching the (undated) latest version, if it is being observed. */
+  observedSince?: PartialDate;
   score: Score;
   /** Deobfuscators covering any version, most recent first. */
   deobfuscators: string[];
@@ -145,9 +148,21 @@ async function build(): Promise<SiteData> {
   if (errors.length) throw new Error(`Data integrity check failed:\n  - ${errors.join('\n  - ')}`);
 
   const obfuscators: ObfuscatorView[] = obfEntries.map((o) => {
+    // Observation start for an undated latest version: an explicit observation or the
+    // earliest open public challenge, whichever came first.
+    const starts = [
+      o.data.observation?.since,
+      ...o.data.challenges.filter((c) => c.status === 'open').map((c) => c.posted),
+    ]
+      .filter((d): d is string => Boolean(d))
+      .map((d) => parseDate(d))
+      .sort(compareDates);
+    const observedSince = starts[0];
+
     const versions: VersionView[] = o.data.versions.map((v, i) => {
       const s = deriveVersionStatus(v, collectHits(o.id, v.version, deobLike));
       const isLatest = i === o.data.versions.length - 1;
+      if (isLatest && !s.released && observedSince) s.observedSince = observedSince;
       return {
         version: v.version,
         notes: v.notes,
@@ -176,6 +191,7 @@ async function build(): Promise<SiteData> {
       status: openSource && latest.s.status === 'holding' ? 'open' : latest.s.status,
       openSource,
       codebase,
+      observedSince: latest.s.observedSince,
       score: computeScore({
         latest: latest.s,
         previous: previous?.s,
@@ -183,6 +199,7 @@ async function build(): Promise<SiteData> {
         techniques: o.data.techniques,
         lab,
         codebase,
+        disclosure: o.data.disclosure,
         now,
       }),
       deobfuscators: deobs,
@@ -239,7 +256,7 @@ async function build(): Promise<SiteData> {
     }))
     .sort((a, b) => a.data.name.localeCompare(b.data.name));
 
-  const events = deriveEvents(obfuscators, deob, eventEntries);
+  const events = deriveEvents(obfuscators, deob, eventEntries, now);
 
   const ttb = obfuscators.flatMap((o) => o.versions.map((v) => v.s)).filter((s) => s.daysToBreak !== undefined);
   const count = (s: DisplayStatus) => obfuscators.filter((o) => o.status === s).length;
@@ -271,6 +288,7 @@ function deriveEvents(
   obfuscators: ObfuscatorView[],
   deob: Map<string, DeobfuscatorView>,
   manual: CollectionEntry<'events'>[],
+  now: Date,
 ): TimelineEvent[] {
   const events: TimelineEvent[] = [];
   const breakDates = new Set<string>();
@@ -305,6 +323,37 @@ function deriveEvents(
           obfuscator: o.id,
           deobfuscator: tool.id,
           sources: tool.data.sources,
+        });
+      }
+    }
+  }
+
+  for (const o of obfuscators) {
+    for (const c of o.data.challenges) {
+      events.push({
+        id: `challenge-${o.id}-${c.posted}`,
+        date: parseDate(c.posted),
+        kind: 'challenge',
+        title: `${o.data.name} posts a public ${c.platform} challenge${c.bounty ? ` (${c.bounty} bounty)` : ''}`,
+        summary: [
+          c.difficulty !== undefined ? `Rated ${c.difficulty}/${c.difficultyScale} difficulty.` : '',
+          c.status === 'open' ? `Unsolved after ${daysOpen(c, now)} days.` : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
+        href: `/obfuscators/${o.id}#challenges`,
+        obfuscator: o.id,
+        sources: c.sources,
+      });
+      if (c.status === 'solved' && c.solvedOn) {
+        events.push({
+          id: `challenge-solved-${o.id}-${c.solvedOn}`,
+          date: parseDate(c.solvedOn),
+          kind: 'challenge',
+          title: `${o.data.name}'s ${c.platform} challenge solved`,
+          href: `/obfuscators/${o.id}#challenges`,
+          obfuscator: o.id,
+          sources: c.sources,
         });
       }
     }

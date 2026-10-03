@@ -1,0 +1,29 @@
+name: Daily rebuild
+
+# Proving periods and earned credit depend on today's date, so the site is
+# rebuilt once a day. Create a deploy hook in Cloudflare Pages (Settings →
+# Builds & deployments → Deploy hooks) and store it as the repository secret
+# CF_PAGES_DEPLOY_HOOK. Without the secret this workflow does nothing.
+
+on:
+  schedule:
+    - cron: '7 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Cloudflare Pages build
+        env:
+          HOOK: ${{ secrets.CF_PAGES_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "CF_PAGES_DEPLOY_HOOK is not set; skipping."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" > /dev/null
+          echo "Rebuild triggered."

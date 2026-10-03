@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { compareScores, computeScore, OSS_CAP, provingDay, resistancePoints, techniquePoints, tierFor } from '../src/lib/score';
+import { parseDate } from '../src/lib/dates';
 import { collectHits, deriveVersionStatus, type DeobfuscatorLike } from '../src/lib/status';
 
 const now = new Date('2026-10-03T00:00:00Z');
@@ -171,5 +172,84 @@ describe('unrated and ordering', () => {
     const low = computeScore({ latest: status(tool('open-source')), versions: [status(tool('open-source'))], techniques: ['vm'], now });
     expect(unrated.total).toBeGreaterThan(low.total);
     expect([unrated, low].sort(compareScores)[0]).toBe(low);
+  });
+});
+
+describe('transparency', () => {
+  const v = deriveVersionStatus({ version: '1.4.5' }, []);
+  it('gives no free track-record credit to vendors that publish nothing', () => {
+    const s = computeScore({ latest: v, versions: [v], techniques: ['vm'], disclosure: 'none', now });
+    const track = s.components.find((c) => c.key === 'track')!;
+    expect(track.points).toBe(0);
+    expect(track.imputed).toBe(false);
+  });
+  it('keeps neutral credit when disclosure is unknown or public', () => {
+    for (const disclosure of [undefined, 'public', 'partial'] as const) {
+      const s = computeScore({ latest: v, versions: [v], techniques: ['vm'], disclosure, now });
+      expect(s.components.find((c) => c.key === 'track')!.points).toBe(10);
+    }
+  });
+});
+
+describe('break difficulty', () => {
+  const withDifficulty = (...ds: (DeobfuscatorLike['targets'][number]['difficulty'])[]) =>
+    deriveVersionStatus(
+      { version: '1', released: '2026-06-01' },
+      collectHits(
+        'x',
+        '1',
+        ds.map((difficulty, i) => ({ ...tool('open-source'), id: `t${i}`, targets: [{ obfuscator: 'x', versions: ['1'], support: 'full' as const, difficulty }] })),
+      ),
+    );
+
+  it('adds a bonus for hard breaks', () => {
+    expect(resistancePoints(withDifficulty('hard'))).toBe(8);
+    expect(resistancePoints(withDifficulty('moderate'))).toBe(4);
+    expect(resistancePoints(withDifficulty('easy'))).toBe(0);
+  });
+  it('counts the easiest break, and unknown difficulty as no bonus', () => {
+    expect(resistancePoints(withDifficulty('hard', 'easy'))).toBe(0);
+    expect(resistancePoints(withDifficulty('hard', undefined))).toBe(0);
+  });
+  it('starts a fix after a hard break from the kept bonus', () => {
+    const prev = withDifficulty('hard');
+    const fresh = deriveVersionStatus({ version: '1.1', released: '2026-10-02' }, []);
+    const s = computeScore({ latest: fresh, previous: prev, versions: [prev, fresh], techniques: ['vm'], now });
+    expect(s.components[0]!.points).toBe(8.5);
+  });
+});
+
+describe('observation-based proving', () => {
+  const observed = (since: string) => {
+    const v = deriveVersionStatus({ version: 'current' }, []);
+    v.observedSince = parseDate(since);
+    return v;
+  };
+
+  it('ramps undated versions from the observation start', () => {
+    const v = observed('2026-08-18');
+    expect(provingDay(v, now)).toBe(46);
+    const s = computeScore({ latest: v, versions: [v], techniques: [], now });
+    expect(s.components[0]!.points).toBe(37.8);
+    expect(s.observed).toBe(true);
+  });
+
+  it('rates observed projects provisionally instead of leaving them unrated', () => {
+    const v = observed('2026-10-03');
+    const s = computeScore({ latest: v, versions: [v], techniques: [], now });
+    expect(s.total).toBe(50);
+    expect(s.unrated).toBe(false);
+    expect(s.provisional).toBe(true);
+  });
+
+  it('leaves unobserved low-data projects unrated', () => {
+    const v = deriveVersionStatus({ version: 'current' }, []);
+    expect(computeScore({ latest: v, versions: [v], techniques: [], now }).unrated).toBe(true);
+  });
+
+  it('a release date takes precedence over the observation start', () => {
+    const v = deriveVersionStatus({ version: '2', released: '2026-10-01' }, []);
+    v.observedSince = parseDate('2026-08-01');
+    expect(provingDay(v, now)).toBe(2);
   });
 });

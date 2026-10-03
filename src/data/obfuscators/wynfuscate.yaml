@@ -2,12 +2,15 @@ name: Wynfuscate
 tagline: Hosted Lua obfuscation service. Details pending verification.
 description: >-
   Added at a maintainer's request. The site could not be reached from our build environment, so
-  pricing, supported runtimes, techniques and version history are not documented yet. Until they are,
-  Wynfuscate is listed as unrated.
+  pricing, supported runtimes, techniques and version history are not documented yet. No public deobfuscator or
+  deobfuscation service is known, so it earns credit for every day it stays that way.
 website: https://wynfuscate.com
 pricing: unknown
 targets: []
 techniques: []
+observation:
+  since: 2026-10-03
+  note: GitHub and known deobfuscation services checked; no public deobfuscator found.
 versions:
   - version: current
     notes: Version history not yet documented.

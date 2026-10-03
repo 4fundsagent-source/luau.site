@@ -77,6 +77,8 @@ export const TECHNIQUES = [
   'const-encryption',
   'string-encryption',
   'function-encryption',
+  'whitebox-crypto',
+  'runtime-delivery',
   'cff',
   'opaque-predicates',
   'junk-code',
@@ -119,6 +121,17 @@ export const TECHNIQUE_META: Record<Technique, { label: string; points: number; 
     label: 'Function encryption',
     points: 1,
     description: 'Selected function bodies stay encrypted until they are called.',
+  },
+  'whitebox-crypto': {
+    label: 'White-box cryptography',
+    points: 1,
+    description: 'Keys are entangled with the code itself, so they cannot simply be lifted out and reused.',
+  },
+  'runtime-delivery': {
+    label: 'Server-gated delivery',
+    points: 2,
+    description:
+      'The script is obfuscated per execution and sent at runtime, so there is no static file to attack and old responses cannot be replayed.',
   },
   cff: {
     label: 'Control-flow flattening',
@@ -224,6 +237,32 @@ export const DEOB_TECHNIQUE_META: Record<DeobTechnique, { label: string; descrip
   },
 };
 
+/** How hard a break was to achieve (tool complexity, crackme ratings, time to appear). */
+export const DIFFICULTY = ['easy', 'moderate', 'hard'] as const;
+export type Difficulty = (typeof DIFFICULTY)[number];
+export const DIFFICULTY_LABEL: Record<Difficulty, string> = { easy: 'Easy', moderate: 'Moderate', hard: 'Hard' };
+
+/** Does the vendor publish versions and changelogs? */
+export const DISCLOSURE = ['public', 'partial', 'none'] as const;
+export type Disclosure = (typeof DISCLOSURE)[number];
+export const DISCLOSURE_LABEL: Record<Disclosure, string> = {
+  public: 'Public changelog',
+  partial: 'Partial version info',
+  none: 'No version info published',
+};
+
+/** Can anyone use the obfuscator today? */
+export const AVAILABILITY = ['public', 'request-only', 'closed'] as const;
+export type Availability = (typeof AVAILABILITY)[number];
+export const AVAILABILITY_LABEL: Record<Availability, string> = {
+  public: 'Publicly available',
+  'request-only': 'Request-only access',
+  closed: 'Closed to new users',
+};
+
+export const CHALLENGE_STATUS = ['open', 'solved'] as const;
+export type ChallengeStatus = (typeof CHALLENGE_STATUS)[number];
+
 export const SUPPORT = ['full', 'partial', 'experimental'] as const;
 export type Support = (typeof SUPPORT)[number];
 
@@ -269,12 +308,13 @@ export const BYPASS_LABEL: Record<Bypass, string> = {
   bypassed: 'Bypassed',
 };
 
-export const EVENT_KINDS = ['release', 'break', 'deobfuscator', 'patch', 'leak', 'shutdown', 'note'] as const;
+export const EVENT_KINDS = ['release', 'break', 'deobfuscator', 'challenge', 'patch', 'leak', 'shutdown', 'note'] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 export const EVENT_LABEL: Record<EventKind, string> = {
   release: 'Release',
   break: 'Broken',
   deobfuscator: 'New tool',
+  challenge: 'Challenge',
   patch: 'Patched',
   leak: 'Leak',
   shutdown: 'Shutdown',

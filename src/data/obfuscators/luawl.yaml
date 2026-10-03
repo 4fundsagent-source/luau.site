@@ -1,0 +1,52 @@
+name: luawl
+tagline: Server-gated Luau runtime obfuscator (a DRM) — a fresh, polymorphic build per execution. Crackme unsolved, $150 bounty.
+description: >-
+  luawl describes itself as a DRM rather than a file obfuscator. Scripts are obfuscated per execution
+  and delivered from its servers at runtime, so there is no static file to save and no loadstring to
+  hook, and replayed responses are rejected. Code runs on a highly polymorphic stack VM, every user and
+  execution gets a different build, the vendor says it updates daily, and it uses white-box
+  cryptography plus server-side tracking of tamper flags. It also claims self-attestable,
+  enclave-based servers. These are the vendor's claims from its release post. luawl is in heavy beta
+  and access is by request only (a demo is requested by email). Its static protections can be tested
+  with a public crackmes.one challenge (luawl-challenge-v1.2, run with Lune), rated 5.4/6 for
+  difficulty and unsolved with a $150 bounty as of October 3, 2026.
+website: https://luawl.org
+pricing: unknown
+availability: request-only
+beta: true
+targets: [luau]
+# As claimed in the vendor's r/lua release post.
+techniques: [vm, polymorphic-vm, runtime-delivery, whitebox-crypto, anti-tamper]
+challenges:
+  - title: luawl-challenge-v1.2
+    platform: crackmes.one
+    url: https://crackmes.one/crackme/6a84e079184836c0dbe7d836
+    posted: 2026-08-18
+    version: v1.2
+    difficulty: 5.4
+    difficultyScale: 6
+    quality: 5.1
+    downloads: 536
+    writeups: 0
+    bounty: $150
+    status: open
+    accessed: 2026-10-03
+    sources:
+      - url: https://crackmes.one/crackme/6a84e079184836c0dbe7d836
+        title: crackmes.one — luawl-challenge-v1.2 (stats reported by luau.site maintainers)
+        accessed: 2026-10-03
+versions:
+  - version: current
+    notes: Heavy beta, updated daily per the vendor; no numbered versions are published.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://luawl.org
+    title: luawl — "pushing the limits of luau obfuscation"
+    accessed: 2026-10-03
+  - url: https://crackmes.one/crackme/6a84e079184836c0dbe7d836
+    title: luawl-challenge-v1.2 on crackmes.one
+    accessed: 2026-10-03
+  - url: https://www.reddit.com/r/lua/comments/1wvgibj/release_luawl_lua_runtime_obfuscator/
+    title: r/lua — "[RELEASE] luawl | lua runtime obfuscator" (vendor release post)
+    accessed: 2026-10-03

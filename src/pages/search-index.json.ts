@@ -33,6 +33,15 @@ export const GET: APIRoute = async () => {
       href: `/deobfuscators/${d.id}`,
       keywords: d.data.tagline,
     })),
+    ...obfuscators.flatMap((o) =>
+      o.data.challenges.map((c) => ({
+        kind: 'Challenge',
+        title: `${c.title} (${o.data.name})`,
+        subtitle: `${c.platform} · ${c.status === 'open' ? 'unsolved' : 'solved'}${c.bounty ? ` · ${c.bounty} bounty` : ''}`,
+        href: `/obfuscators/${o.id}#challenges`,
+        keywords: 'crackme bounty challenge',
+      })),
+    ),
     ...auth.map((a) => ({ kind: 'Auth', title: a.data.name, subtitle: a.data.tagline, href: `/auth/${a.id}` })),
     ...samples.map((s) => ({ kind: 'Lab', title: s.meta.title, subtitle: s.meta.description, href: `/lab/${s.id}` })),
     ...TECHNIQUES.map((t) => ({ kind: 'Term', title: TECHNIQUE_META[t].label, subtitle: TECHNIQUE_META[t].description, href: `/learn#${t}` })),

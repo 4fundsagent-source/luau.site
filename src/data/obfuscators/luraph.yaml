@@ -13,6 +13,8 @@ website: https://lura.ph
 discord: https://discord.lura.ph
 repo: https://github.com/Luraph
 pricing: paid
+# Ships numbered releases (v14.7 … v15.1) that the community can track.
+disclosure: public
 targets: [luau, lua51]
 techniques: [vm, polymorphic-vm, const-encryption, string-encryption, cff, anti-tamper, macros]
 versions:

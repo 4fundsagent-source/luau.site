@@ -4,7 +4,11 @@ import { z } from 'astro/zod';
 import { DATE_PATTERN, toISODate } from './lib/dates';
 import {
   ACCESS,
+  AVAILABILITY,
+  CHALLENGE_STATUS,
   CODEBASE_CRITERIA,
+  DIFFICULTY,
+  DISCLOSURE,
   AUTH_FEATURES,
   BYPASS,
   DEOB_TECHNIQUES,
@@ -73,6 +77,28 @@ const codebase = z.object({
   assessedOn: date,
 } satisfies Record<(typeof CODEBASE_CRITERIA)[number], typeof grade> & Record<string, unknown>);
 
+/** A public crackme or bounty built with the obfuscator. */
+const challenge = z.object({
+  title: z.string(),
+  platform: z.string(),
+  url: z.url(),
+  posted: date,
+  /** Version of the challenge itself, e.g. "v1.2". */
+  version: z.string().optional(),
+  /** Platform difficulty rating (crackmes.one uses 1–6). */
+  difficulty: z.number().min(0).max(10).optional(),
+  difficultyScale: z.number().default(6),
+  quality: z.number().optional(),
+  downloads: z.number().int().optional(),
+  writeups: z.number().int().optional(),
+  bounty: z.string().optional(),
+  status: z.enum(CHALLENGE_STATUS),
+  solvedOn: date.optional(),
+  /** When the numbers above were last checked. */
+  accessed: date,
+  sources: sources.min(1),
+});
+
 const obfuscators = defineCollection({
   loader: glob({ pattern: '*.yaml', base: './src/data/obfuscators' }),
   schema: z
@@ -86,6 +112,13 @@ const obfuscators = defineCollection({
       targets: z.array(z.enum(RUNTIMES)),
       techniques: z.array(z.enum(TECHNIQUES)),
       discontinued: z.boolean().default(false),
+      availability: z.enum(AVAILABILITY).default('public'),
+      beta: z.boolean().default(false),
+      /** Does the vendor publish versions and changelogs? Omit when unknown. */
+      disclosure: z.enum(DISCLOSURE).optional(),
+      /** When luau.site started watching an undated version for public breaks. */
+      observation: z.object({ since: date, note: z.string() }).optional(),
+      challenges: z.array(challenge).default([]),
       codebase: codebase.optional(),
       /** Oldest first. The last entry is the current version. */
       versions: z.array(version).min(1),
@@ -114,6 +147,8 @@ const deobfuscators = defineCollection({
           versions: z.array(z.string()).min(1),
           support: z.enum(SUPPORT).default('full'),
           since: z.union([z.literal('unknown'), date]).optional(),
+          /** How hard the break was; omit when unknown. */
+          difficulty: z.enum(DIFFICULTY).optional(),
           notes: z.string().optional(),
         }),
       )

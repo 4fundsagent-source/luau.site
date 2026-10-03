@@ -9,12 +9,23 @@ import Section from '~/components/Section.astro';
 import SourcesList from '~/components/SourcesList.astro';
 import StatusBadge from '~/components/StatusBadge.astro';
 import VersionTable from '~/components/VersionTable.astro';
+import ChallengeCard from '~/components/ChallengeCard.astro';
 import Base from '~/layouts/Base.astro';
 import { formatDate, formatDuration, parseDate } from '~/lib/dates';
 import { formatVersion, getSiteData, versionPhrase, type ObfuscatorView } from '~/lib/data';
 import { issueUrl } from '~/lib/site';
 import { PROVING_DAYS } from '~/lib/score';
-import { CODEBASE_CRITERIA, CODEBASE_MAX, CODEBASE_META, PRICING_LABEL, RUNTIME_LABEL, STATUS_META, TECHNIQUE_META } from '~/lib/taxonomy';
+import {
+  AVAILABILITY_LABEL,
+  CODEBASE_CRITERIA,
+  CODEBASE_MAX,
+  CODEBASE_META,
+  DISCLOSURE_LABEL,
+  PRICING_LABEL,
+  RUNTIME_LABEL,
+  STATUS_META,
+  TECHNIQUE_META,
+} from '~/lib/taxonomy';
 
 export async function getStaticPaths() {
   const { obfuscators } = await getSiteData();
@@ -25,7 +36,7 @@ interface Props {
   o: ObfuscatorView;
 }
 const { o } = Astro.props;
-const { deob, samples, obfuscators } = await getSiteData();
+const { deob, samples, obfuscators, builtAt } = await getSiteData();
 const d = o.data;
 const s = o.latest.s;
 const rated = obfuscators.filter((x) => !x.score.unrated);
@@ -50,7 +61,9 @@ const explainer =
       : o.openSource
         ? 'Anyone can study exactly how it transforms code. It is scored on the strength of its codebase instead.'
         : o.latest.provingDay !== undefined
-          ? `It was released ${o.latest.provingDay} day${o.latest.provingDay === 1 ? '' : 's'} ago and is in its ${PROVING_DAYS}-day proving period.`
+          ? s.released
+            ? `It was released ${o.latest.provingDay} day${o.latest.provingDay === 1 ? '' : 's'} ago and is in its ${PROVING_DAYS}-day proving period.`
+            : `luau.site has watched it for ${o.latest.provingDay} day${o.latest.provingDay === 1 ? '' : 's'}${d.challenges.some((c) => c.status === 'open') ? ', including an open public challenge' : ''}; it earns credit for each day it stays unbroken.`
           : "That means none we know of, not that it's unbreakable.";
 
 const tools = o.deobfuscators.map((id) => deob.get(id)!);
@@ -79,6 +92,8 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
             <span class="chip">{PRICING_LABEL[d.pricing]}</span>
             {d.targets.length ? d.targets.map((t) => <span class="chip">{RUNTIME_LABEL[t]}</span>) : <span class="chip">Runtime unknown</span>}
             {d.discontinued && <span class="chip">Discontinued</span>}
+            {d.availability !== 'public' && <span class="chip">{AVAILABILITY_LABEL[d.availability]}</span>}
+            {d.beta && <span class="chip">Beta</span>}
           </div>
           <div class="mt-6" data-enter style="--i:4">
             <ExternalLinks variant="buttons" name={d.name} website={d.website} repo={d.repo} docs={d.docs} discord={d.discord} />
@@ -104,6 +119,22 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
           Report a new version →
         </a>
       </Section>
+
+      {
+        d.challenges.length > 0 && (
+          <Section
+            id="challenges"
+            title="Public challenges"
+            description="Crackmes and bounties built with this obfuscator. An open challenge starts the clock on earning credit; a solved one needs a matching tool or writeup before it counts as a break."
+          >
+            <div class="grid grid-cols-1 gap-4">
+              {d.challenges.map((c) => (
+                <ChallengeCard c={c} now={builtAt} />
+              ))}
+            </div>
+          </Section>
+        )
+      }
 
       <Section id="deobfuscators" title="Deobfuscators" description={`Tools that target any version of ${d.name}.`}>
         {
@@ -229,6 +260,9 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
           { label: 'Since', value: d.since },
           { label: 'Pricing', value: PRICING_LABEL[d.pricing] },
           { label: 'License', value: d.license },
+          { label: 'Availability', value: d.availability !== 'public' ? `${AVAILABILITY_LABEL[d.availability]}${d.beta ? ' (beta)' : ''}` : d.beta ? 'Beta' : undefined },
+          { label: 'Changelog', value: d.disclosure ? DISCLOSURE_LABEL[d.disclosure] : undefined },
+          { label: 'Watched since', value: o.observedSince && !s.released ? formatDate(o.observedSince) : undefined },
           { label: 'Versions tracked', value: o.versions.length },
           { label: 'Latest release', value: s.released ? formatDate(s.released) : undefined },
           { label: 'Broken on', value: s.brokenOn ? formatDate(s.brokenOn) : undefined },

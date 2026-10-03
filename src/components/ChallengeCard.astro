@@ -1,0 +1,75 @@
+---
+import { daysOpen } from '~/lib/challenges';
+import { formatDate, parseDate } from '~/lib/dates';
+import type { ObfuscatorView } from '~/lib/data';
+import Icon from './Icon.astro';
+import StatusIcon from './StatusIcon.astro';
+
+type Challenge = ObfuscatorView['data']['challenges'][number];
+
+interface Props {
+  c: Challenge;
+  now: Date;
+}
+const { c, now } = Astro.props;
+const days = daysOpen(c, now);
+const open = c.status === 'open';
+const stats = [
+  c.difficulty !== undefined && { label: 'Difficulty', value: `${c.difficulty}`, suffix: `/${c.difficultyScale}`, count: true },
+  c.quality !== undefined && { label: 'Quality', value: `${c.quality}`, suffix: `/${c.difficultyScale}`, count: true },
+  c.downloads !== undefined && { label: 'Downloads', value: `${c.downloads}`, suffix: '', count: true },
+  c.writeups !== undefined && { label: 'Writeups', value: `${c.writeups}`, suffix: '', count: true },
+].filter(Boolean) as { label: string; value: string; suffix: string; count: boolean }[];
+---
+
+<article class="surface card-hover relative overflow-hidden p-5" data-reveal>
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0">
+      <p class="eyebrow">{c.platform}</p>
+      <h3 class="mt-1 text-lg font-semibold tracking-tight">
+        <a href={c.url} rel="noopener nofollow" target="_blank" class="card-link">
+          {c.title}
+        </a>
+      </h3>
+      <p class="mt-1 text-sm text-muted">Posted {formatDate(parseDate(c.posted))}</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      {
+        c.bounty && (
+          <span class="chip border-line-strong font-medium text-fg">
+            <Icon name="trophy" size={13} />
+            {c.bounty} bounty
+          </span>
+        )
+      }
+      <span
+        class="inline-flex h-6 items-center gap-1.5 rounded-full border px-2 text-xs font-medium text-fg"
+        style={`border-color:color-mix(in oklab, var(--${open ? 'holding' : 'broken'}) 30%, var(--line));background:color-mix(in oklab, var(--${open ? 'holding' : 'broken'}) 7%, var(--bg-elev))`}
+      >
+        <StatusIcon status={open ? 'holding' : 'broken'} />
+        {open ? `Unsolved · ${days} days` : `Solved ${c.solvedOn ? formatDate(parseDate(c.solvedOn)) : ''}`}
+      </span>
+    </div>
+  </div>
+
+  {
+    stats.length > 0 && (
+      <dl class="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-4">
+        {stats.map((s) => (
+          <div class="bg-sunken px-3 py-2.5">
+            <dt class="text-xs text-subtle">{s.label}</dt>
+            <dd class="mt-0.5 text-lg font-semibold tracking-tight text-fg">
+              <span data-countup={s.value}>{s.value}</span>
+              <span class="text-sm font-normal text-subtle">{s.suffix}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+
+  <p class="mt-4 flex items-center gap-1.5 text-xs text-subtle">
+    <Icon name="external" size={12} />
+    Stats as of {formatDate(parseDate(c.accessed))}. Open the challenge to see the current state.
+  </p>
+</article>

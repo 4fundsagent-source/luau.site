@@ -8,16 +8,20 @@
  * the share of the weight backed by real data: below PROVISIONAL_BELOW a score
  * is provisional, and below UNRATED_BELOW it is not ranked at all.
  *
- * Two special rules:
+ * Special rules:
  *  - Open source can never "hold". Resistance and track record are replaced by
  *    a graded Codebase rubric, missing data earns nothing (anyone can study the
  *    code, so there is no benefit of the doubt), and the total is capped at OSS_CAP.
  *  - A brand-new unbroken release is in a proving period: its Resistance ramps
- *    from its predecessor's level to full over PROVING_DAYS.
+ *    from its predecessor's level to full over PROVING_DAYS. Undated versions
+ *    enter the same ramp from when luau.site started watching them (an explicit
+ *    observation or an open public challenge), so survival is earned, not assumed.
+ *  - Vendors that publish no versions or changelogs get no free track-record credit.
+ *  - A broken version keeps a small bonus if even the easiest break was hard.
  */
 import { daysBetween, formatDuration } from './dates';
 import { median, survivalDays, type VersionStatus } from './status';
-import { CODEBASE_MAX, TECHNIQUE_META, type Access, type Technique } from './taxonomy';
+import { CODEBASE_MAX, TECHNIQUE_META, type Access, type Difficulty, type Disclosure, type Technique } from './taxonomy';
 
 export const WEIGHTS = { resistance: 50, codebase: 40, track: 20, lab: 20, technique: 10 } as const;
 export type ComponentKey = keyof typeof WEIGHTS;
@@ -36,6 +40,9 @@ export const PROVING_DAYS = 90;
 
 /** Resistance a first-ever release starts its proving period from. */
 const PROVING_BASELINE = 25;
+
+/** Resistance kept by a broken version, by how hard its easiest break was. */
+export const DIFFICULTY_BONUS: Record<Difficulty, number> = { easy: 0, moderate: 4, hard: 8 };
 
 /** Highest total an open-source obfuscator can reach. */
 export const OSS_CAP = 60;
@@ -66,6 +73,8 @@ export interface ScoreInput {
   lab?: LabSummary;
   /** Present for open-source obfuscators: the codebase rubric total (0–CODEBASE_MAX). */
   codebase?: number;
+  /** Whether the vendor publishes versions and changelogs; undefined when unknown. */
+  disclosure?: Disclosure;
   now: Date;
 }
 
@@ -90,12 +99,12 @@ export interface Score {
   capped: boolean;
   /** Days into the proving period of the latest version, if it is in one. */
   provingDay?: number;
+  /** True when that proving period runs from an observation start rather than a release. */
+  observed?: boolean;
   components: ScoreComponent[];
 }
 
-export function resistancePoints(v: VersionStatus): number {
-  if (v.status === 'holding') return 50;
-  if (v.status === 'partial') return 20;
+function exposurePoints(v: VersionStatus): number {
   switch (v.exposure) {
     case 'open-source':
       return 0;
@@ -109,10 +118,17 @@ export function resistancePoints(v: VersionStatus): number {
   }
 }
 
+export function resistancePoints(v: VersionStatus): number {
+  if (v.status === 'holding') return 50;
+  if (v.status === 'partial') return 20;
+  return exposurePoints(v) + (v.difficulty ? DIFFICULTY_BONUS[v.difficulty] : 0);
+}
+
 /** Age in days of a holding version that is still inside its proving period. */
 export function provingDay(v: VersionStatus, now: Date): number | undefined {
-  if (v.status !== 'holding' || !v.released) return undefined;
-  const age = Math.max(0, daysBetween(v.released, now));
+  const start = v.released ?? v.observedSince;
+  if (v.status !== 'holding' || !start) return undefined;
+  const age = Math.max(0, daysBetween(start, now));
   return age < PROVING_DAYS ? age : undefined;
 }
 
@@ -127,7 +143,12 @@ function resistanceDetail(v: VersionStatus): string {
   if (v.status === 'holding') return 'Latest version: no public deobfuscator tracked.';
   if (v.status === 'partial') return 'Latest version: constants, bytecode or traces recoverable; no readable source.';
   const tool = v.exposure ? ARTICLE_ACCESS[v.exposure] : 'a';
-  return `Latest version: readable source recoverable with ${tool} tool.`;
+  const effort = v.difficulty
+    ? v.difficulty === 'easy'
+      ? ' The break was easy.'
+      : ` Even the easiest break was ${v.difficulty}, worth +${DIFFICULTY_BONUS[v.difficulty]}.`
+    : '';
+  return `Latest version: readable source recoverable with ${tool} tool.${effort}`;
 }
 
 /** Survival days of versions with a settled outcome (versions still proving are left out). */
@@ -167,6 +188,7 @@ function resistanceComponent(input: ScoreInput): { component: ScoreComponent; pr
   }
   const base = input.previous ? resistancePoints(input.previous) : PROVING_BASELINE;
   const points = round1(base + (WEIGHTS.resistance - base) * (day / PROVING_DAYS));
+  const observed = !input.latest.released;
   return {
     provingDay: day,
     component: {
@@ -175,7 +197,9 @@ function resistanceComponent(input: ScoreInput): { component: ScoreComponent; pr
       weight: WEIGHTS.resistance,
       points,
       imputed: false,
-      detail: `Latest version is unbroken but new: day ${day} of a ${PROVING_DAYS}-day proving period, ramping from ${base} to ${WEIGHTS.resistance}.`,
+      detail: observed
+        ? `No public deobfuscator found since luau.site started watching: day ${day} of ${PROVING_DAYS}, earning credit from ${base} toward ${WEIGHTS.resistance}.`
+        : `Latest version is unbroken but new: day ${day} of a ${PROVING_DAYS}-day proving period, ramping from ${base} to ${WEIGHTS.resistance}.`,
     },
   };
 }
@@ -211,16 +235,20 @@ export function computeScore(input: ScoreInput): Score {
     // Versions still proving themselves say nothing yet about how long versions survive.
     const { days: survivals, fuzzy } = settledSurvivals(input.versions, input.now);
     const med = median(survivals);
+    // A vendor that publishes nothing gets no benefit of the doubt for the missing history.
+    const opaque = med === undefined && input.disclosure === 'none';
     components.push({
       key: 'track',
       label: 'Track record',
       weight: WEIGHTS.track,
-      points: med === undefined ? WEIGHTS.track / 2 : round1(WEIGHTS.track * Math.min(1, med / TRACK_FULL_DAYS)),
-      imputed: med === undefined,
+      points: med !== undefined ? round1(WEIGHTS.track * Math.min(1, med / TRACK_FULL_DAYS)) : opaque ? 0 : WEIGHTS.track / 2,
+      imputed: med === undefined && !opaque,
       detail:
-        med === undefined
-          ? 'No dated versions with a settled outcome yet — neutral half credit.'
-          : `Median survival ${formatDuration(med, fuzzy)} across ${survivals.length} version${survivals.length === 1 ? '' : 's'}.`,
+        med !== undefined
+          ? `Median survival ${formatDuration(med, fuzzy)} across ${survivals.length} version${survivals.length === 1 ? '' : 's'}.`
+          : opaque
+            ? 'The vendor publishes no versions or changelog, so there is no history to credit.'
+            : 'No dated versions with a settled outcome yet — neutral half credit.',
     });
   }
 
@@ -257,7 +285,8 @@ export function computeScore(input: ScoreInput): Score {
   const weight = components.reduce((a, c) => a + c.weight, 0);
   const confidence = round2(components.filter((c) => !c.imputed).reduce((a, c) => a + c.weight, 0) / weight);
 
-  const unrated = confidence < UNRATED_BELOW;
+  // Anything in a proving period is rated: the ramp already keeps it from outranking proven projects.
+  const unrated = confidence < UNRATED_BELOW && day === undefined;
   return {
     total,
     tier: tierFor(total),
@@ -266,6 +295,7 @@ export function computeScore(input: ScoreInput): Score {
     unrated,
     capped: openSource && raw > OSS_CAP,
     provingDay: day,
+    observed: day !== undefined && !input.latest.released,
     components,
   };
 }

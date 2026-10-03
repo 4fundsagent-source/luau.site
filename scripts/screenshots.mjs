@@ -20,7 +20,14 @@ for (const theme of themes) {
     page.on('pageerror', (e) => console.log(`  ! JS error on ${page.url()}: ${e.message}`));
     for (const p of paths) {
       await page.goto(base + p, { waitUntil: 'networkidle' });
-      await page.evaluate(() => document.querySelectorAll('[data-reveal]').forEach((el) => (el.dataset.inview = '')));
+      await page.evaluate(() => {
+        document.querySelectorAll('[data-reveal]').forEach((el) => (el.dataset.inview = ''));
+        // Full-page captures never scroll, so settle count-ups that would animate on scroll.
+        document.querySelectorAll('[data-countup]').forEach((el) => {
+          el.textContent = el.dataset.countup;
+          el.dataset.counted = '';
+        });
+      });
       await page.waitForTimeout(700);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       if (overflow > 0) {

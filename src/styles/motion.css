@@ -413,3 +413,14 @@
     transform: none;
   }
 }
+
+/* Printed pages never animate: show every count-up number and revealed element. */
+@media print {
+  [data-countup] {
+    visibility: visible !important;
+  }
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

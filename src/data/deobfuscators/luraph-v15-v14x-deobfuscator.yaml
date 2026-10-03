@@ -18,6 +18,8 @@ targets:
   - obfuscator: luraph
     versions: ["14.7", "14.8", "14.9", "15"]
     support: full
+    # Instrumented runtime, symbolic VM lifting and control-flow rebuild.
+    difficulty: hard
 verified: false
 lastVerified: 2026-10-03
 sources:
