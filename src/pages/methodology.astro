@@ -1,7 +1,17 @@
 ---
 import PageHeader from '~/components/PageHeader.astro';
 import Base from '~/layouts/Base.astro';
-import { OSS_CAP, OSS_STATUS_FACTOR, PROVING_DAYS, PROVISIONAL_BELOW, TIERS, TRACK_FULL_DAYS, UNRATED_BELOW, WEIGHTS } from '~/lib/score';
+import {
+  DIFFICULTY_BONUS,
+  OSS_CAP,
+  OSS_STATUS_FACTOR,
+  PROVING_DAYS,
+  PROVISIONAL_BELOW,
+  TIERS,
+  TRACK_FULL_DAYS,
+  UNRATED_BELOW,
+  WEIGHTS,
+} from '~/lib/score';
 import { SITE } from '~/lib/site';
 import { CODEBASE_CRITERIA, CODEBASE_MAX, CODEBASE_META, TECHNIQUES, TECHNIQUE_META } from '~/lib/taxonomy';
 
@@ -10,7 +20,9 @@ const toc = [
   { id: 'status', label: 'How status is derived' },
   { id: 'score', label: 'Security Score' },
   { id: 'open-source', label: 'Open source' },
-  { id: 'proving', label: 'Proving period' },
+  { id: 'proving', label: 'Proving & earned credit' },
+  { id: 'transparency', label: 'Transparency & difficulty' },
+  { id: 'challenges', label: 'Public challenges' },
   { id: 'evidence', label: 'Evidence rules' },
   { id: 'lab', label: 'The Lab' },
   { id: 'outputs', label: 'What we host' },
@@ -68,7 +80,7 @@ const toc = [
         <tbody>
           <tr>
             <td><strong>Resistance</strong></td><td>{WEIGHTS.resistance}</td>
-            <td>Holding 50 · broken only by private or paid tools 30 · partial 20 · broken by a free closed tool 5 · broken by an open-source tool 0. When several tools break it, the most widely available one counts.</td>
+            <td>Holding 50 · broken only by private or paid tools 30 · partial 20 · broken by a free closed tool 5 · broken by an open-source tool 0. When several tools break it, the most widely available one counts. A broken version keeps a small bonus if even its easiest break was hard (see <a href="#transparency">difficulty</a>).</td>
           </tr>
           <tr>
             <td><strong>Track record</strong></td><td>{WEIGHTS.track}</td>
@@ -132,13 +144,45 @@ const toc = [
         <tbody>{CODEBASE_CRITERIA.map((c) => <tr><td><strong>{CODEBASE_META[c].label}</strong></td><td>{CODEBASE_META[c].description}</td></tr>)}</tbody>
       </table>
 
-      <h2 id="proving">Proving period</h2>
+      <h2 id="proving">Proving period and earned credit</h2>
       <p>
         A new release with no tracked break hasn't proven anything yet. For its first {PROVING_DAYS} days, its Resistance ramps linearly from the
         previous version's Resistance up to the full 50. A first-ever release starts from 25. So when a broken obfuscator ships a fix, its score
         rises a little on day one and keeps rising every day the new version holds. A break ends the proving period immediately.
       </p>
+      <p>
+        <strong>Earned credit.</strong> Some obfuscators publish no release dates. For those, the clock starts when luau.site begins watching:
+        either a recorded check that found no public deobfuscator, or the date an <a href="#challenges">open public challenge</a> was posted,
+        whichever came first. Survival is rewarded once it has been observed, not assumed. Projects earning credit are always rated
+        (provisionally if data is thin), because the ramp already keeps them from outranking proven projects on day one.
+      </p>
       <p>Versions still in their proving period are left out of the track-record median until they have a settled outcome.</p>
+      <p>Scores that depend on the date are rebuilt daily.</p>
+
+      <h2 id="transparency">Transparency and break difficulty</h2>
+      <ul>
+        <li>
+          <strong>Transparency.</strong> When a vendor publishes no versions or changelog, a missing history earns no neutral credit; the track
+          record is 0. Otherwise an opaque vendor would outscore one whose public history shows a fast break.
+        </li>
+        <li>
+          <strong>Difficulty.</strong> Breaks are tagged easy, moderate or hard, based on tool complexity, crackme ratings and how long a break took to
+          appear. A broken version keeps +{DIFFICULTY_BONUS.moderate} for a moderate break and +{DIFFICULTY_BONUS.hard} for a hard one. The
+          easiest break decides, and an untagged break counts as easy: once something is broken, there's no benefit of the doubt.
+        </li>
+        <li>
+          <strong>Availability.</strong> Request-only and beta products are labelled as such. Limited availability means fewer people can attack
+          real outputs, so it earns no points by itself. A public challenge is what lets such a product prove itself.
+        </li>
+      </ul>
+
+      <h2 id="challenges">Public challenges</h2>
+      <p>
+        Vendors sometimes publish crackmes or bounties protected by their own obfuscator. luau.site records them with their platform rating,
+        downloads, writeups and bounty. An <strong>open</strong> challenge starts the earned-credit clock. A <strong>solved</strong> challenge is
+        shown on the timeline, but it only counts as a break once a matching deobfuscator or public writeup is recorded, because one solved
+        sample doesn't mean every script can be recovered.
+      </p>
 
       <h2 id="evidence">Evidence rules</h2>
       <ul>

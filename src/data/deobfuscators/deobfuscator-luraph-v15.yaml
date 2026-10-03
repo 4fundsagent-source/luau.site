@@ -20,10 +20,12 @@ targets:
   - obfuscator: luraph
     versions: ["15"]
     support: full
+    difficulty: hard
   - obfuscator: luraph
     versions: ["14.7", "14.8", "14.9"]
     support: experimental
     since: 2026-09-28
+    difficulty: hard
     notes: Partial support with fallback to execution traces.
 verified: false
 lastVerified: 2026-10-03

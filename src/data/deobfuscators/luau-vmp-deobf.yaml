@@ -20,16 +20,22 @@ targets:
     versions: ["14.7"]
     support: full
     since: 2026-08-08
+    difficulty: hard
     notes: '"Safe public Luraph v14.7 devirtualization" committed August 8, 2026.'
   - obfuscator: luraph
     versions: ["14.8", "14.9"]
     support: partial
+    difficulty: hard
     notes: README claims v14.x loader support; only v14.7 is covered by its regression corpus.
   - obfuscator: moonveil
     versions: ["1.4.5"]
     support: full
     since: unknown
-    notes: Listed as supported in the README (seen by luau.site on October 3, 2026); the date support was added is unknown.
+    # Maintainer assessment: far easier than breaking Luraph v15.
+    difficulty: easy
+    notes: >-
+      Listed as supported in the README (seen by luau.site on October 3, 2026); the date support was
+      added is unknown. Maintainers rate this break as easy compared with Luraph v15.
 verified: false
 lastVerified: 2026-10-03
 sources:

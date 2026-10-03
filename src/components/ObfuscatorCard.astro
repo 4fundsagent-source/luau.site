@@ -4,6 +4,7 @@ import { formatVersion, type ObfuscatorView } from '~/lib/data';
 import { PROVING_DAYS } from '~/lib/score';
 import { CODEBASE_MAX, PRICING_LABEL, RUNTIME_LABEL } from '~/lib/taxonomy';
 import ExternalLinks from './ExternalLinks.astro';
+import Icon from './Icon.astro';
 import Monogram from './Monogram.astro';
 import ScoreBar from './ScoreBar.astro';
 import StatusBadge from './StatusBadge.astro';
@@ -15,6 +16,7 @@ interface Props {
 const { o, index = 0 } = Astro.props;
 const d = o.data;
 const s = o.latest.s;
+const openChallenge = d.challenges.find((c) => c.status === 'open');
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 const footer =
@@ -23,7 +25,9 @@ const footer =
     : s.status === 'partial'
       ? `Partial coverage by ${plural(s.decisive.length, 'tool')}`
       : o.latest.provingDay !== undefined
-        ? `New release · proving, day ${o.latest.provingDay} of ${PROVING_DAYS}`
+        ? o.observedSince && !s.released
+          ? `Earning credit · day ${o.latest.provingDay} of ${PROVING_DAYS}`
+          : `New release · proving, day ${o.latest.provingDay} of ${PROVING_DAYS}`
         : o.openSource
           ? `Codebase graded ${o.codebase ?? '—'}/${CODEBASE_MAX}`
           : o.deobfuscators.length
@@ -70,7 +74,17 @@ const footer =
   />
 
   <div class="mt-4 flex flex-wrap gap-1.5">
+    {
+      openChallenge && (
+        <span class="chip border-line-strong text-fg">
+          <Icon name="trophy" size={12} />
+          Open challenge{openChallenge.bounty ? ` · ${openChallenge.bounty}` : ''}
+        </span>
+      )
+    }
     {d.targets.length ? d.targets.map((t) => <span class="chip">{RUNTIME_LABEL[t]}</span>) : <span class="chip">Runtime unknown</span>}
+    {d.availability !== 'public' && <span class="chip">{d.availability === 'request-only' ? 'Request-only' : 'Closed'}</span>}
+    {d.beta && <span class="chip">Beta</span>}
   </div>
 
   <div class="mt-4 flex min-h-8 items-center justify-between gap-3 border-t border-line pt-3">

@@ -4,7 +4,7 @@
  * sources alongside it.
  */
 import { daysBetween, isFuzzy, parseDate, type PartialDate } from './dates';
-import type { Access, OutputLevel, Status, Support } from './taxonomy';
+import type { Access, Difficulty, OutputLevel, Status, Support } from './taxonomy';
 
 export interface CoverageTarget {
   obfuscator: string;
@@ -15,6 +15,8 @@ export interface CoverageTarget {
    * `unknown` means the date is not known: no date is shown and firstSeen is not assumed.
    */
   since?: string;
+  /** How hard the break was; unknown means no difficulty bonus. */
+  difficulty?: Difficulty;
   notes?: string;
 }
 
@@ -42,6 +44,7 @@ export interface Hit {
   /** When this coverage became public, if known. */
   date?: PartialDate;
   effect: 'break' | 'partial';
+  difficulty?: Difficulty;
   notes?: string;
 }
 
@@ -57,6 +60,13 @@ export interface VersionStatus {
   fuzzy: boolean;
   /** Most exposed access level among breaking tools. */
   exposure?: Access;
+  /** Difficulty of the easiest decisive break; undefined if any break's difficulty is unknown. */
+  difficulty?: Difficulty;
+  /**
+   * For an undated version: when luau.site started watching it (explicit observation
+   * or an open public challenge). Drives the proving period like a release date.
+   */
+  observedSince?: PartialDate;
   overridden: boolean;
   statusNote?: string;
 }
@@ -82,6 +92,7 @@ export function collectHits(obfuscatorId: string, version: string, deobfuscators
         support: t.support,
         date: t.since === 'unknown' ? undefined : dateOf(t.since ?? d.firstSeen),
         effect: hitEffect(t.support, d.outputLevel),
+        difficulty: t.difficulty,
         notes: t.notes,
       });
     }
@@ -110,6 +121,7 @@ export function deriveVersionStatus(version: VersionLike, hits: Hit[]): VersionS
     status === 'broken' && breaks.length
       ? EXPOSURE_ORDER.find((a) => breaks.some((b) => b.access === a))
       : undefined;
+  const difficulty = status === 'broken' ? easiestDifficulty(breaks) : undefined;
 
   return {
     status,
@@ -120,9 +132,18 @@ export function deriveVersionStatus(version: VersionLike, hits: Hit[]): VersionS
     daysToBreak,
     fuzzy: isFuzzy(released, brokenOn),
     exposure,
+    difficulty,
     overridden,
     statusNote: version.statusNote,
   };
+}
+
+const DIFFICULTY_ORDER: Difficulty[] = ['easy', 'moderate', 'hard'];
+
+/** The easiest path decides: unknown difficulty on any break counts as no difficulty at all. */
+export function easiestDifficulty(breaks: Hit[]): Difficulty | undefined {
+  if (!breaks.length || breaks.some((b) => !b.difficulty)) return undefined;
+  return DIFFICULTY_ORDER.find((d) => breaks.some((b) => b.difficulty === d));
 }
 
 /** Days a version stayed unbroken: time-to-break, or time since release if it is still holding. */

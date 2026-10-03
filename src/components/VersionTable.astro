@@ -43,7 +43,8 @@ const toolName = (id: string) => deob.get(id)?.data.name ?? id;
               <StatusBadge status={openSource && v.s.status === 'holding' ? 'open' : v.s.status} />
               {v.provingDay !== undefined && (
                 <p class="mt-1 text-xs text-subtle">
-                  Proving: day {v.provingDay} of {PROVING_DAYS}
+                  {v.s.released ? 'Proving' : 'Earning credit'}: day {v.provingDay} of {PROVING_DAYS}
+                  {!v.s.released && v.s.observedSince && <span> · watched since {formatDate(v.s.observedSince)}</span>}
                 </p>
               )}
               {v.s.overridden && <p class="mt-1 text-xs text-subtle">Manually set: {v.s.statusNote}</p>}
