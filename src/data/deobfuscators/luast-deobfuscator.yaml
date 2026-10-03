@@ -1,0 +1,30 @@
+name: luast-deobfuscator
+author: HamieXD
+tagline: Offline Luast v1.0.1 deobfuscator that inverts its stream ciphers, with AI-assisted reconstruction.
+description: >-
+  A dependency-free Python engine that extracts Luast's constant pool, inverts its 7-round 32-bit seed
+  mixer, decrypts all four stream-cipher variants and replays the runtime index permutations, then
+  rebuilds the script. An AGENTS.md workflow lets AI coding agents run the whole process and restore
+  names and structure. Ground-truth samples for protection levels 1, 2 and 3 are reported as exact matches.
+repo: https://github.com/HamieXD/luast-deobfuscator
+access: open-source
+license: MIT
+techniques: [constant-dump, ast-cleanup, ai-assisted]
+outputLevel: readable
+# First commit on August 30, 2026.
+firstSeen: 2026-08-30
+maintenance: active
+targets:
+  - obfuscator: luast
+    versions: ["1.0.1"]
+    support: full
+    notes: Covers protection levels 1–3, verified against ground-truth samples in the repository.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/HamieXD/luast-deobfuscator
+    title: HamieXD/luast-deobfuscator (README)
+    accessed: 2026-10-03
+  - url: https://github.com/HamieXD/luast-deobfuscator/commits/main
+    title: Commit history — first commit August 30, 2026
+    accessed: 2026-10-03

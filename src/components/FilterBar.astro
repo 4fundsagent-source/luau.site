@@ -104,27 +104,6 @@ const { filters, sorts, total, noun, placeholder = 'Filter by name…' } = Astro
 </div>
 
 <style>
-  .seg-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    height: 100%;
-    padding-inline: 0.625rem;
-    border-radius: 6px;
-    font-size: 0.8125rem;
-    color: var(--fg-muted);
-    transition:
-      background-color 150ms,
-      color 150ms;
-  }
-  .seg-btn:hover {
-    color: var(--fg);
-  }
-  .seg-btn[aria-pressed='true'] {
-    background: var(--bg-elev);
-    color: var(--fg);
-    box-shadow: var(--shadow-card);
-  }
   .select-wrap {
     position: relative;
     display: inline-flex;

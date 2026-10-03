@@ -109,7 +109,7 @@ if (existsSync(join(LAB_ROOT, 'corpus'))) {
 
 errors.push(
   ...checkIntegrity({
-    obfuscators: obfuscators.map(({ id, doc }) => ({ id, versions: doc.versions ?? [] })),
+    obfuscators: obfuscators.map(({ id, doc }) => ({ id, versions: doc.versions ?? [], basedOn: doc.basedOn })),
     deobfuscators: deobfuscators.map(({ id, doc }) => ({ id, targets: doc.targets ?? [] })),
     labRuns,
   }),

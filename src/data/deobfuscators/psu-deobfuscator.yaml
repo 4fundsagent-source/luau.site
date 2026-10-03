@@ -1,0 +1,28 @@
+name: PSU-Deobfuscator
+author: memcpython
+tagline: Static devirtualizer for PSU 4.0 and 4.5 that lifts the packed VM back to readable Lua.
+description: >-
+  Recovers PSU's wrapper and packed VM, identifies its handlers, expands super-instructions and lowers
+  the program back to Lua 5.1 bytecode, which unluac then decompiles before a source clean-up pass. No
+  runtime execution is needed for the lifting stage, and the decoder fails rather than inventing
+  bytecode when a handler layout can't be recovered with confidence. It credits earlier research by "LSD".
+repo: https://github.com/memcpython/PSU-Deobfuscator
+access: open-source
+techniques: [static-devirt, ast-cleanup]
+outputLevel: readable
+# First commit on September 11, 2026.
+firstSeen: 2026-09-11
+maintenance: active
+targets:
+  - obfuscator: psu
+    versions: ["4.0", "4.5"]
+    support: full
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/memcpython/PSU-Deobfuscator
+    title: memcpython/PSU-Deobfuscator (README)
+    accessed: 2026-10-03
+  - url: https://github.com/memcpython/PSU-Deobfuscator/commits/main
+    title: Commit history — first commit September 11, 2026
+    accessed: 2026-10-03

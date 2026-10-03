@@ -44,6 +44,35 @@ describe('deriveVersionStatus', () => {
     expect(s.fuzzy).toBe(false);
   });
 
+  it('counts a public bytecode lifter as exposing a privately broken version', () => {
+    const service: DeobfuscatorLike = {
+      id: 'service',
+      access: 'private',
+      outputLevel: 'readable',
+      firstSeen: '2024-01-01',
+      targets: [{ obfuscator: 'moonsec', versions: ['3'], support: 'full' }],
+    };
+    const lifter: DeobfuscatorLike = {
+      id: 'lifter',
+      access: 'open-source',
+      outputLevel: 'bytecode',
+      firstSeen: '2025-11-15',
+      targets: [{ obfuscator: 'moonsec', versions: ['3'], support: 'full' }],
+    };
+    const privateOnly = deriveVersionStatus({ version: '3' }, collectHits('moonsec', '3', [service]));
+    expect(privateOnly.exposure).toBe('private');
+
+    const both = deriveVersionStatus({ version: '3' }, collectHits('moonsec', '3', [service, lifter]));
+    expect(both.status).toBe('broken');
+    expect(both.exposure).toBe('open-source');
+    expect(both.decisive.map((h) => h.deobfuscator)).toEqual(['service']);
+
+    // A bytecode lifter on its own is still only partial coverage.
+    const alone = deriveVersionStatus({ version: '3' }, collectHits('moonsec', '3', [lifter]));
+    expect(alone.status).toBe('partial');
+    expect(alone.exposure).toBeUndefined();
+  });
+
   it('marks experimental coverage as partial', () => {
     const s = deriveVersionStatus({ version: '14.8' }, collectHits('luraph', '14.8', [luraphDeob]));
     expect(s.status).toBe('partial');

@@ -1,0 +1,20 @@
+name: Luast
+tagline: Luau obfuscator with three protection levels built on PRNG stream ciphers and runtime permutations.
+description: >-
+  Luast protects Roblox Luau scripts at three levels. A public toolkit documents its internals: a
+  constant pool encrypted with four different PRNG stream ciphers, seeds derived through a 7-round
+  32-bit mixer, and runtime tuple swaps that permute indices. In August 2026 that toolkit recovered
+  readable scripts from all three levels of Luast v1.0.1 statically, with ground-truth samples that
+  match the originals. Luast's own website and pricing are not documented yet.
+pricing: unknown
+targets: [luau]
+techniques: [const-encryption, string-encryption]
+versions:
+  - version: "1.0.1"
+    notes: Protection levels 1, 2 and 3.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/HamieXD/luast-deobfuscator
+    title: HamieXD/luast-deobfuscator — targets Luast v1.0.1, levels 1–3
+    accessed: 2026-10-03

@@ -9,6 +9,8 @@ export function apiCollections(data: SiteData) {
     url: `/obfuscators/${o.id}`,
     name: o.data.name,
     vendor: o.data.vendor ?? null,
+    basedOn: o.basedOn ?? null,
+    derivatives: o.derivatives,
     tagline: o.data.tagline,
     pricing: o.data.pricing,
     license: o.data.license ?? null,

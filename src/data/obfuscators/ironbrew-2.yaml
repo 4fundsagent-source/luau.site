@@ -3,7 +3,7 @@ tagline: VM-based Lua 5.1 obfuscator whose design many later obfuscators borrowe
 description: >-
   IronBrew 2 compiles Lua 5.1 code to a custom VM. Its source is public under the MIT license, and it
   is widely cited as an ancestor of many obfuscators seen in the wild. Public deobfuscation work
-  exists for v2.7.0 and v2.7.1, including a 2026 tool that also handles the AztupBrew v2.7.2 fork.
+  exists for v2.7.0 and v2.7.1, including a 2026 tool that also handles its AztupBrew fork.
 repo: https://github.com/Trollicus/ironbrew-2
 pricing: open-source
 license: MIT

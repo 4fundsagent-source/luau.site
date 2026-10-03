@@ -42,6 +42,10 @@ export interface ObfuscatorView {
   score: Score;
   /** Deobfuscators covering any version, most recent first. */
   deobfuscators: string[];
+  /** The tracked obfuscator this one is a fork of or built on. */
+  basedOn?: string;
+  /** Tracked obfuscators that are forks of or built on this one. */
+  derivatives: string[];
   lab?: LabSummary;
   stale: boolean;
 }
@@ -75,6 +79,17 @@ export interface AuthView {
   stale: boolean;
 }
 
+/** An unbroken, closed-source latest version and how long it has stood. */
+export interface StandingView {
+  obfuscator: string;
+  version: string;
+  /** Start of the unbroken stretch: an open challenge, the release, or the start of observation. */
+  since: PartialDate;
+  days: number;
+  reason: 'challenge' | 'release' | 'observation';
+  challenge?: ObfData['challenges'][number];
+}
+
 export interface TimelineEvent {
   id: string;
   date: PartialDate;
@@ -92,6 +107,8 @@ export interface SiteData {
   deobfuscators: DeobfuscatorView[];
   auth: AuthView[];
   events: TimelineEvent[];
+  /** Unbroken latest versions, longest-standing first. */
+  standing: StandingView[];
   samples: Sample[];
   obf: Map<string, ObfuscatorView>;
   deob: Map<string, DeobfuscatorView>;
@@ -141,7 +158,7 @@ async function build(): Promise<SiteData> {
   }));
 
   const errors = checkIntegrity({
-    obfuscators: obfEntries.map((o) => ({ id: o.id, versions: o.data.versions })),
+    obfuscators: obfEntries.map((o) => ({ id: o.id, versions: o.data.versions, basedOn: o.data.basedOn?.id })),
     deobfuscators: deobLike,
     labRuns: samples.flatMap((s) => s.runs.map((r) => ({ ...r, sample: s.id }))),
   });
@@ -203,6 +220,8 @@ async function build(): Promise<SiteData> {
         now,
       }),
       deobfuscators: deobs,
+      basedOn: o.data.basedOn?.id,
+      derivatives: obfEntries.filter((x) => x.data.basedOn?.id === o.id).map((x) => x.id),
       lab,
       stale: isStale(o.data.lastVerified, now),
     };
@@ -257,6 +276,7 @@ async function build(): Promise<SiteData> {
     .sort((a, b) => a.data.name.localeCompare(b.data.name));
 
   const events = deriveEvents(obfuscators, deob, eventEntries, now);
+  const standing = deriveStanding(obfuscators, now);
 
   const ttb = obfuscators.flatMap((o) => o.versions.map((v) => v.s)).filter((s) => s.daysToBreak !== undefined);
   const count = (s: DisplayStatus) => obfuscators.filter((o) => o.status === s).length;
@@ -266,6 +286,7 @@ async function build(): Promise<SiteData> {
     deobfuscators,
     auth,
     events,
+    standing,
     samples,
     obf,
     deob,
@@ -284,6 +305,28 @@ async function build(): Promise<SiteData> {
   };
 }
 
+function deriveStanding(obfuscators: ObfuscatorView[], now: Date): StandingView[] {
+  const out: StandingView[] = [];
+  for (const o of obfuscators) {
+    const s = o.latest.s;
+    if (o.openSource || s.status !== 'holding') continue;
+    const challenge = o.data.challenges
+      .filter((c) => c.status === 'open')
+      .sort((a, b) => compareDates(parseDate(a.posted), parseDate(b.posted)))[0];
+    const since = challenge ? parseDate(challenge.posted) : (s.released ?? o.observedSince);
+    if (!since) continue;
+    out.push({
+      obfuscator: o.id,
+      version: o.latest.version,
+      since,
+      days: Math.max(0, daysBetween(since, now)),
+      reason: challenge ? 'challenge' : s.released ? 'release' : 'observation',
+      challenge,
+    });
+  }
+  return out.sort((a, b) => b.days - a.days || a.obfuscator.localeCompare(b.obfuscator));
+}
+
 function deriveEvents(
   obfuscators: ObfuscatorView[],
   deob: Map<string, DeobfuscatorView>,
@@ -294,37 +337,48 @@ function deriveEvents(
   const breakDates = new Set<string>();
 
   for (const o of obfuscators) {
+    // Versions broken on the same day by the same tool read as one event.
+    const breaks = new Map<string, VersionView[]>();
     for (const v of o.versions) {
-      const label = `${o.data.name} ${formatVersion(v.version)}`;
       if (v.s.released) {
         events.push({
           id: `release-${o.id}-${v.version}`,
           date: v.s.released,
           kind: 'release',
-          title: `${label} released`,
+          title: `${o.data.name} ${formatVersion(v.version)} released`,
           href: `/obfuscators/${o.id}`,
           obfuscator: o.id,
           sources: v.sources.length ? v.sources : o.data.sources,
         });
       }
       if (v.s.status === 'broken' && v.s.brokenOn) {
-        const first = v.s.decisive[0]!;
-        const tool = deob.get(first.deobfuscator)!;
-        breakDates.add(`${tool.id}|${v.s.brokenOn.raw}`);
-        events.push({
-          id: `break-${o.id}-${v.version}`,
-          date: v.s.brokenOn,
-          kind: 'break',
-          title: `${label} broken`,
-          summary:
-            `Readable source recoverable with ${tool.data.name}` +
-            (v.s.daysToBreak !== undefined ? `, ${formatDuration(v.s.daysToBreak, v.s.fuzzy)} after release.` : '.'),
-          href: `/obfuscators/${o.id}`,
-          obfuscator: o.id,
-          deobfuscator: tool.id,
-          sources: tool.data.sources,
-        });
+        const key = `${v.s.brokenOn.raw}|${v.s.decisive[0]!.deobfuscator}`;
+        breaks.set(key, [...(breaks.get(key) ?? []), v]);
       }
+    }
+    for (const group of breaks.values()) {
+      const first = group[0]!;
+      const tool = deob.get(first.s.decisive[0]!.deobfuscator)!;
+      const timed = group.find((v) => v.s.daysToBreak !== undefined);
+      breakDates.add(`${tool.id}|${first.s.brokenOn!.raw}`);
+      events.push({
+        id: `break-${o.id}-${group.map((v) => v.version).join('-')}`,
+        date: first.s.brokenOn!,
+        kind: 'break',
+        // Rolling names like "main" or "current" add nothing to a headline.
+        title: group.every((v) => /^\d/.test(v.version))
+          ? `${o.data.name} ${listVersions(group.map((v) => v.version))} broken`
+          : `${o.data.name} broken`,
+        summary:
+          `Readable source recoverable with ${tool.data.name}` +
+          (timed
+            ? `, ${formatDuration(timed.s.daysToBreak!, timed.s.fuzzy)} after ${group.length > 1 ? `${formatVersion(timed.version)}'s ` : ''}release.`
+            : '.'),
+        href: `/obfuscators/${o.id}`,
+        obfuscator: o.id,
+        deobfuscator: tool.id,
+        sources: tool.data.sources,
+      });
     }
   }
 
@@ -393,6 +447,12 @@ function deriveEvents(
   }
 
   return events.sort((a, b) => compareDates(b.date, a.date));
+}
+
+/** ["14.8", "14.9"] → "v14.8 and v14.9"; three or more get commas. */
+export function listVersions(versions: string[]): string {
+  const v = versions.map(formatVersion);
+  return v.length < 3 ? v.join(' and ') : `${v.slice(0, -1).join(', ')} and ${v.at(-1)}`;
 }
 
 /** "15" → "v15", "main" → "main", "current" → "current". */

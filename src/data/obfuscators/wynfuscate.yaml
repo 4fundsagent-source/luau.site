@@ -1,8 +1,10 @@
 name: Wynfuscate
 tagline: Hosted Lua obfuscation service. Details pending verification.
 description: >-
-  Added at a maintainer's request. The site could not be reached from our build environment, so
-  pricing, supported runtimes, techniques and version history are not documented yet. No public deobfuscator or
+  Added at a maintainer's request. Wynfuscate is the obfuscation engine hosted on KeyForge, a Roblox
+  key-system and licensing platform: scripts saved to a KeyForge dashboard are obfuscated server-side,
+  with allowances set by plan. The site could not be reached from our build environment, so pricing,
+  supported runtimes, techniques and version history are not documented yet. No public deobfuscator or
   deobfuscation service is known, so it earns credit for every day it stays that way.
 website: https://wynfuscate.com
 pricing: unknown
@@ -19,4 +21,7 @@ lastVerified: 2026-10-03
 sources:
   - url: https://wynfuscate.com
     title: Wynfuscate
+    accessed: 2026-10-03
+  - url: https://github.com/timmytim12354-png/free-luau-obfuscator
+    title: KeyForge SDK docs — "Hosted wYnFuscate runs on KeyForge"
     accessed: 2026-10-03

@@ -1,0 +1,29 @@
+name: MoonsecDeobfuscator
+author: tupsutumppu
+tagline: Open-source MoonSec V3 devirtualizer that dumps standard Lua 5.1 bytecode for any decompiler.
+description: >-
+  A C# (.NET) command-line tool that devirtualizes MoonSec V3 and writes the recovered program as
+  standard Lua 5.1 bytecode, or as an annotated disassembly. Turning that bytecode into source takes a
+  separate Lua decompiler; the README shows the result, which keeps the logic but loses names. Because
+  the tool itself stops at bytecode, it counts as partial coverage here.
+repo: https://github.com/tupsutumppu/MoonsecDeobfuscator
+access: open-source
+license: GPL-3.0
+techniques: [static-devirt]
+outputLevel: bytecode
+# First commit on November 15, 2025.
+firstSeen: 2025-11-15
+maintenance: stale
+targets:
+  - obfuscator: moonsec
+    versions: ["3"]
+    support: full
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/tupsutumppu/MoonsecDeobfuscator
+    title: tupsutumppu/MoonsecDeobfuscator (README)
+    accessed: 2026-10-03
+  - url: https://github.com/tupsutumppu/MoonsecDeobfuscator/commits/master
+    title: Commit history — first commit November 15, 2025
+    accessed: 2026-10-03

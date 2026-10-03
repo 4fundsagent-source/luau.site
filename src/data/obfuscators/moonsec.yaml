@@ -2,11 +2,12 @@ name: MoonSec
 tagline: Long-running Lua obfuscation service; its v3 is one of the most deobfuscated targets in the scene.
 description: >-
   MoonSec is a Lua obfuscator used across Roblox and FiveM scripting. Several public tools target
-  MoonSec v3, from constant dumpers to a deobfuscation service that also claims v2 support. Pricing,
-  supported runtimes and current version are not yet documented here.
+  MoonSec v3, from constant dumpers and an open-source devirtualizer that lifts it back to Lua 5.1
+  bytecode, to a deobfuscation service that also claims v2 support. An older open-source tool
+  devirtualizes v2. Pricing, supported runtimes and current version are not yet documented here.
 pricing: unknown
 targets: []
-techniques: []
+techniques: [vm]
 versions:
   - version: "2"
   - version: "3"
@@ -19,4 +20,10 @@ sources:
     accessed: 2026-10-03
   - url: https://github.com/richdentistboy/MoonsecV3Dumper
     title: richdentistboy/MoonsecV3Dumper
+    accessed: 2026-10-03
+  - url: https://github.com/tupsutumppu/MoonsecDeobfuscator
+    title: tupsutumppu/MoonsecDeobfuscator — devirtualizes MoonSec V3
+    accessed: 2026-10-03
+  - url: https://github.com/SixZensED/Lua-Deobfuscator
+    title: SixZensED/Lua-Deobfuscator — devirtualizes MoonSec V2
     accessed: 2026-10-03

@@ -1,6 +1,6 @@
 ---
 import { formatDate, formatDuration } from '~/lib/dates';
-import { formatVersion, type ObfuscatorView } from '~/lib/data';
+import { formatVersion, getSiteData, type ObfuscatorView } from '~/lib/data';
 import { PROVING_DAYS } from '~/lib/score';
 import { CODEBASE_MAX, PRICING_LABEL, RUNTIME_LABEL } from '~/lib/taxonomy';
 import ExternalLinks from './ExternalLinks.astro';
@@ -17,6 +17,7 @@ const { o, index = 0 } = Astro.props;
 const d = o.data;
 const s = o.latest.s;
 const openChallenge = d.challenges.find((c) => c.status === 'open');
+const parent = o.basedOn ? (await getSiteData()).obf.get(o.basedOn) : undefined;
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 const footer =
@@ -82,6 +83,7 @@ const footer =
         </span>
       )
     }
+    {parent && <span class="chip">Based on {parent.data.name}</span>}
     {d.targets.length ? d.targets.map((t) => <span class="chip">{RUNTIME_LABEL[t]}</span>) : <span class="chip">Runtime unknown</span>}
     {d.availability !== 'public' && <span class="chip">{d.availability === 'request-only' ? 'Request-only' : 'Closed'}</span>}
     {d.beta && <span class="chip">Beta</span>}

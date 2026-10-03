@@ -105,6 +105,8 @@ const obfuscators = defineCollection({
     .object({
       ...common,
       vendor: z.string().optional(),
+      /** The tracked obfuscator this one is a fork of or built on. Informational; it doesn't affect scores. */
+      basedOn: reference('obfuscators').optional(),
       since: z.number().int().min(2000).optional(),
       pricing: z.enum(PRICING),
       license: z.string().optional(),

@@ -4,7 +4,7 @@
  */
 
 export interface IntegrityInput {
-  obfuscators: { id: string; versions: { version: string }[] }[];
+  obfuscators: { id: string; versions: { version: string }[]; basedOn?: string }[];
   deobfuscators: { id: string; targets: { obfuscator: string; versions: string[] }[] }[];
   labRuns?: { sample: string; obfuscator: string; version: string; deob: { deobfuscator: string }[] }[];
 }
@@ -20,6 +20,23 @@ export function checkIntegrity({ obfuscators, deobfuscators, labRuns = [] }: Int
       seen.add(v.version);
     }
     versions.set(o.id, seen);
+  }
+
+  // Lineage: every parent must exist, and following parents must never loop back.
+  const parent = new Map(obfuscators.filter((o) => o.basedOn).map((o) => [o.id, o.basedOn!]));
+  for (const [id, base] of parent) {
+    if (!versions.has(base)) {
+      errors.push(`obfuscators/${id}: basedOn unknown obfuscator "${base}"`);
+      continue;
+    }
+    const chain = [id];
+    for (let at: string | undefined = base; at; at = parent.get(at)) {
+      if (chain.includes(at)) {
+        errors.push(`obfuscators/${id}: basedOn forms a cycle (${[...chain, at].join(' → ')})`);
+        break;
+      }
+      chain.push(at);
+    }
   }
 
   const deobIds = new Set(deobfuscators.map((d) => d.id));

@@ -58,7 +58,11 @@ export interface VersionStatus {
   daysToBreak?: number;
   /** True when daysToBreak rests on month-precision or approximate dates. */
   fuzzy: boolean;
-  /** Most exposed access level among breaking tools. */
+  /**
+   * Most exposed access level among breaking tools, and among full bytecode lifters:
+   * once a version is broken, a tool that lifts it to standard bytecode is one
+   * decompiler away from the same source, so the break is no more exclusive than it.
+   */
   exposure?: Access;
   /** Difficulty of the easiest decisive break; undefined if any break's difficulty is unknown. */
   difficulty?: Difficulty;
@@ -117,10 +121,9 @@ export function deriveVersionStatus(version: VersionLike, hits: Hit[]): VersionS
   const decisive = status === 'broken' ? breaks : status === 'partial' ? partials : [];
   const brokenOn = status === 'broken' ? breaks[0]?.date : undefined;
   const daysToBreak = brokenOn && released ? Math.max(0, daysBetween(released, brokenOn)) : undefined;
+  const exposing = [...breaks, ...partials.filter((h) => h.support === 'full' && h.outputLevel === 'bytecode')];
   const exposure =
-    status === 'broken' && breaks.length
-      ? EXPOSURE_ORDER.find((a) => breaks.some((b) => b.access === a))
-      : undefined;
+    status === 'broken' && breaks.length ? EXPOSURE_ORDER.find((a) => exposing.some((b) => b.access === a)) : undefined;
   const difficulty = status === 'broken' ? easiestDifficulty(breaks) : undefined;
 
   return {

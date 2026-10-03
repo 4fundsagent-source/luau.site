@@ -1,0 +1,37 @@
+name: hercules-deobfuscator
+author: approu
+tagline: Static Hercules deobfuscator that unwraps the VM and bytecode encoder back to readable Lua, through v2.0.1.
+description: >-
+  A dependency-free Python package that statically reverses Hercules: it extracts the payload,
+  deserializes the custom VM bytecode, disassembles and decompiles it, and pretty-prints the result.
+  It also parses Lua 5.4 bytecode, so the `--maximum` preset — a VM nested inside the bytecode
+  encoder — is unwrapped too. Its changelog is titled "Hercules 2.0.1 support", and the repository
+  ships an obfuscated sample with its recovered output. The author says the break was "very very
+  easy" and was built with an AI model (GLM 5.2).
+repo: https://github.com/approu/hercules-deobfuscator
+access: open-source
+license: Apache-2.0
+techniques: [static-devirt, ast-cleanup, ai-assisted]
+outputLevel: readable
+# First commit on July 2, 2026.
+firstSeen: 2026-07-02
+maintenance: active
+targets:
+  - obfuscator: hercules
+    versions: ["1.6.x", "2.0.0", "2.0.1"]
+    support: full
+    # The author calls the break "very very easy" and built it with AI assistance.
+    difficulty: easy
+    notes: README claims 1.6.x through 2.0.0; CHANGES.md adds Hercules 2.0.1 and the --maximum preset.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://github.com/approu/hercules-deobfuscator
+    title: approu/hercules-deobfuscator (README — "support versions from 1.6.X up to 2.0.0")
+    accessed: 2026-10-03
+  - url: https://github.com/approu/hercules-deobfuscator/blob/main/hercules/deobfhercules_fixed/CHANGES.md
+    title: CHANGES.md — "Hercules 2.0.1 support"
+    accessed: 2026-10-03
+  - url: https://github.com/approu/hercules-deobfuscator/commits/main
+    title: Commit history — first commit July 2, 2026
+    accessed: 2026-10-03
