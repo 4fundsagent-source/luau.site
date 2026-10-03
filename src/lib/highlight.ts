@@ -12,6 +12,8 @@ export async function highlight(code: string, lang: 'luau' | 'text' = 'luau'): P
     lang: lang === 'text' ? 'text' : 'luau',
     themes: { light: 'github-light', dark: 'github-dark-dimmed' },
     defaultColor: false,
+    // github-light's orange (#e36209) is 3.5:1 on white; darken it to pass WCAG AA.
+    colorReplacements: { 'github-light': { '#e36209': '#b35200' } },
   });
 }
 

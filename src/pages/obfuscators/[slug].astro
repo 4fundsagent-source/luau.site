@@ -11,7 +11,7 @@ import StatusBadge from '~/components/StatusBadge.astro';
 import VersionTable from '~/components/VersionTable.astro';
 import Base from '~/layouts/Base.astro';
 import { formatDate, formatDuration } from '~/lib/dates';
-import { formatVersion, getSiteData, type ObfuscatorView } from '~/lib/data';
+import { formatVersion, getSiteData, versionPhrase, type ObfuscatorView } from '~/lib/data';
 import { issueUrl } from '~/lib/site';
 import { PRICING_LABEL, RUNTIME_LABEL, STATUS_META, TECHNIQUE_META } from '~/lib/taxonomy';
 
@@ -29,12 +29,21 @@ const d = o.data;
 const s = o.latest.s;
 const rank = (await getSiteData()).obfuscators.indexOf(o) + 1;
 
+const phrase = versionPhrase(o.latest.version);
+const Phrase = phrase[0]!.toUpperCase() + phrase.slice(1);
+const breaker = s.decisive[0] ? deob.get(s.decisive[0].deobfuscator) : undefined;
 const headline =
   s.status === 'broken'
-    ? `${formatVersion(o.latest.version)} is broken${s.daysToBreak !== undefined ? `, ${formatDuration(s.daysToBreak, s.fuzzy)} after release` : ''}.`
+    ? `${Phrase} is broken${s.daysToBreak !== undefined ? `, ${formatDuration(s.daysToBreak, s.fuzzy)} after release` : ''}.`
     : s.status === 'partial'
-      ? `${formatVersion(o.latest.version)} is partially broken.`
-      : `No public deobfuscator is tracked for ${formatVersion(o.latest.version)}.`;
+      ? `${Phrase} is partially broken.`
+      : `No public deobfuscator is tracked for ${phrase}.`;
+const explainer =
+  s.status === 'broken'
+    ? `${breaker?.data.name ?? 'A public tool'} recovers readable source from it.`
+    : s.status === 'partial'
+      ? STATUS_META.partial.description
+      : "That means none we know of, not that it's unbreakable.";
 
 const tools = o.deobfuscators.map((id) => deob.get(id)!);
 const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id).map((r) => ({ sample: sm, run: r })));
@@ -77,7 +86,7 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
         <Icon name={o.status === 'holding' ? 'shield' : 'unlock'} size={18} class="mt-0.5 shrink-0 text-muted" />
         <div>
           <p class="font-medium text-fg">{headline}</p>
-          <p class="mt-1 text-muted">{STATUS_META[o.status].description}</p>
+          <p class="mt-1 text-muted">{explainer}</p>
         </div>
       </div>
 

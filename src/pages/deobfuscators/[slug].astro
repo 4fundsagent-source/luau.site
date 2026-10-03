@@ -7,6 +7,7 @@ import SourcesList from '~/components/SourcesList.astro';
 import StatusBadge from '~/components/StatusBadge.astro';
 import Base from '~/layouts/Base.astro';
 import { formatDate } from '~/lib/dates';
+import { githubStats } from '~/lib/github';
 import { formatVersion, getSiteData, type DeobfuscatorView } from '~/lib/data';
 import { ACCESS_LABEL, DEOB_TECHNIQUE_META, MAINTENANCE_LABEL, OUTPUT_META } from '~/lib/taxonomy';
 
@@ -21,6 +22,7 @@ interface Props {
 const { d } = Astro.props;
 const { samples } = await getSiteData();
 const x = d.data;
+const gh = githubStats(x.repo);
 const runs = samples.flatMap((s) =>
   s.runs.flatMap((r) => r.deob.filter((dr) => dr.deobfuscator === d.id).map((dr) => ({ sample: s, run: r, dr }))),
 );
@@ -149,6 +151,9 @@ const runs = samples.flatMap((s) =>
           { label: 'First seen', value: d.firstSeen ? formatDate(d.firstSeen) : 'Unknown' },
           { label: 'Maintenance', value: MAINTENANCE_LABEL[x.maintenance] },
           { label: 'Versions covered', value: d.coverage.length },
+          { label: 'GitHub stars', value: gh?.stars.toLocaleString() },
+          { label: 'Last push', value: gh?.pushedAt },
+          { label: 'Repository', value: gh?.archived ? 'Archived' : undefined },
         ]}
       />
       <div class="surface p-4 text-xs leading-relaxed text-muted">

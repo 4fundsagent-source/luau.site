@@ -133,6 +133,7 @@ function barPath(x0: number, x1: number, yTop: number, rounded: boolean) {
   return `M${x0},${yTop}H${xe - r}Q${xe},${yTop} ${xe},${yTop + r}V${yTop + BAR_H - r}Q${xe},${yTop + BAR_H} ${xe - r},${yTop + BAR_H}H${x0}Z`;
 }
 const CHAR = 6.6;
+const uid = `arc${compact ? 'c' : 'f'}`;
 const nowX = x(now.getTime());
 ---
 
@@ -141,9 +142,11 @@ const nowX = x(now.getTime());
     <svg
       viewBox={`0 0 ${W} ${H}`}
       class="block w-full min-w-[720px]"
-      role="img"
-      aria-label={`Timeline of ${lanes.length} obfuscators: each version runs from its release until it was broken, superseded, or today.`}
+      aria-labelledby={`${uid}-title`}
     >
+      <title id={`${uid}-title`}>
+        Timeline of {lanes.length} obfuscators: each version runs from its release until it was broken, superseded, or today.
+      </title>
       <!-- grid -->
       {
         visibleTicks.map((tk) => (
@@ -176,7 +179,7 @@ const nowX = x(now.getTime());
               const rightOk = x1 + markerSpace + 6 + lw < W - RIGHT;
               const lx = rightOk ? x1 + markerSpace + 6 : x0 - 6;
               return (
-                <g class="bar" tabindex="0" data-tip={b.tip.join('\n')} data-status={b.status} aria-label={b.tip.join(', ')}>
+                <a href={`/obfuscators/${l.id}#v-${b.version.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`} class="bar" data-tip={b.tip.join('\n')} data-status={b.status} aria-label={b.tip.join(', ')}>
                   <rect x={x0 - 2} y={yTop - 5} width={Math.max(x1 - x0, 2) + 4 + markerSpace} height={BAR_H + 10} fill="transparent" />
                   <path d={barPath(x0, x1, yTop, b.endKind !== 'superseded')} fill={`var(--${b.status})`} class="bar-fill" />
                   {b.endKind === 'broken' && (
@@ -193,7 +196,7 @@ const nowX = x(now.getTime());
                   <text x={lx} y={yTop + BAR_H - 2} class="vlabel" text-anchor={rightOk ? 'start' : 'end'}>
                     {label}
                   </text>
-                </g>
+                </a>
               );
             })}
           </g>

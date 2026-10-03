@@ -78,9 +78,18 @@ import Icon from './Icon.astro';
       ],
       threshold: 0.38,
       ignoreLocation: true,
+      includeScore: true,
     };
     const fuse = new Fuse(entries, options);
-    search = (q) => fuse.search(q, { limit: 12 }).map((r) => r.item);
+    // Prefer primary entities over versions and glossary terms when matches are close.
+    const boost: Record<string, number> = { Obfuscator: 0.55, Deobfuscator: 0.8, Auth: 0.8, Page: 0.85, Version: 0.9 };
+    search = (q) =>
+      fuse
+        .search(q, { limit: 24 })
+        .map((r) => ({ item: r.item, s: (r.score ?? 1) * (boost[r.item.kind] ?? 1) }))
+        .sort((a, b) => a.s - b.s)
+        .slice(0, 12)
+        .map((r) => r.item);
   }
 
   function render() {

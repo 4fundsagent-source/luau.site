@@ -33,7 +33,7 @@ const host = (u: string) => new URL(u).hostname.replace(/^www\./, '');
       )
     }
     <span class="text-muted">Last checked {formatDate(parseDate(lastVerified))}</span>
-    {stale && <span class="text-partial">· may be outdated</span>}
+    {stale && <span class="text-fg">· may be outdated</span>}
   </div>
 
   <ol class="mt-4 space-y-3 text-sm">

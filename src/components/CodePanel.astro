@@ -54,7 +54,10 @@ const lines = code.split('\n').length;
   </header>
   {
     result && !result.ok && result.error && (
-      <p class="num border-b border-line px-4 py-2 text-xs break-words text-broken">{result.error}</p>
+      <p class="num flex gap-2 border-b border-line px-4 py-2 text-xs break-words text-fg">
+        <Icon name="alert" size={13} class="mt-px shrink-0 text-broken" />
+        {result.error}
+      </p>
     )
   }
   <div class:list={['code-block overflow-auto', height, longLines && 'wrap']} set:html={html} />

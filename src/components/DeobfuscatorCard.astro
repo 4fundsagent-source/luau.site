@@ -1,5 +1,6 @@
 ---
 import { formatDate } from '~/lib/dates';
+import { githubStats } from '~/lib/github';
 import { formatVersion, type DeobfuscatorView } from '~/lib/data';
 import { ACCESS_LABEL, MAINTENANCE_LABEL, OUTPUT_META } from '~/lib/taxonomy';
 import ExternalLinks from './ExternalLinks.astro';
@@ -12,6 +13,7 @@ interface Props {
 }
 const { d, index = 0 } = Astro.props;
 const x = d.data;
+const gh = githubStats(x.repo);
 
 // Group coverage by obfuscator: "Luraph v15 · v14.7–v14.9 (partial)"
 const groups = new Map<string, { name: string; breaks: string[]; partials: string[] }>();
@@ -72,7 +74,7 @@ const lines = [...groups.values()].flatMap((g) => [
   <div class="mt-auto pt-4" />
   <div class="flex min-h-8 items-center justify-between gap-3 border-t border-line pt-3">
     <span class="truncate text-xs text-muted">
-      {OUTPUT_META[x.outputLevel].label}{d.firstSeen ? ` · since ${formatDate(d.firstSeen)}` : ''}
+      {OUTPUT_META[x.outputLevel].label}{d.firstSeen ? ` · since ${formatDate(d.firstSeen)}` : ''}{gh ? ` · ★ ${gh.stars.toLocaleString()}` : ''}
     </span>
     <span class="card-raise -mr-1.5">
       <ExternalLinks name={x.name} website={x.website} repo={x.repo} docs={x.docs} discord={x.discord} />

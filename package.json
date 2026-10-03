@@ -14,7 +14,9 @@
     "check": "astro check",
     "test": "vitest run",
     "validate": "astro sync && tsx scripts/validate.ts",
-    "lab:verify": "tsx lab/harness/run.ts"
+    "lab:verify": "tsx lab/harness/run.ts",
+    "smoke": "node scripts/smoke.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

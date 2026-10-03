@@ -323,3 +323,11 @@ function deriveEvents(
 export function formatVersion(v: string): string {
   return /^\d/.test(v) ? `v${v}` : v;
 }
+
+/** Version as it reads mid-sentence: "v15", "the current version", "the main branch". */
+export function versionPhrase(v: string): string {
+  if (/^\d/.test(v)) return `v${v}`;
+  if (v === 'current') return 'the current version';
+  if (v === 'main' || v === 'master') return `the ${v} branch`;
+  return v;
+}
