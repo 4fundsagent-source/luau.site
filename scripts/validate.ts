@@ -72,7 +72,7 @@ for (const { id, doc } of obfuscators) {
 }
 for (const { id, doc } of deobfuscators) {
   checkDate(`deobfuscators/${id}.yaml firstSeen`, doc.firstSeen);
-  for (const t of doc.targets ?? []) checkDate(`deobfuscators/${id}.yaml target since`, t.since);
+  for (const t of doc.targets ?? []) if (t.since !== 'unknown') checkDate(`deobfuscators/${id}.yaml target since`, t.since);
 }
 
 const events = parse(readFileSync(join(DATA, 'events.yaml'), 'utf8')) as Doc[];

@@ -1,21 +1,26 @@
 name: IronBrew2-Deobfuscator
 author: Gork3m
-tagline: Experimental deobfuscator for IronBrew 2 output.
+tagline: Early experimental deobfuscator for IronBrew 2, written in C# with an embedded Lua VM.
 description: >-
-  Described by its author as "an experimental ib2 deobfuscator" that is still being worked on.
-  It targets scripts protected with IronBrew 2 and aims to recover readable code.
+  Described by its author as "an experimental ib2 deobfuscator". It finds the interpreter and opcode
+  enum, dumps instructions and emulates the VM with MoonSharp. Development ran from June to December
+  2021, ending with a full rewrite.
 repo: https://github.com/Gork3m/IronBrew2-Deobfuscator
 access: open-source
-techniques: [static-devirt]
+techniques: [static-devirt, emulation]
 outputLevel: readable
+firstSeen: 2021-06-03
 maintenance: stale
 targets:
   - obfuscator: ironbrew-2
-    versions: ["2"]
+    versions: ["2.7.0", "2.7.1"]
     support: experimental
 verified: false
 lastVerified: 2026-10-03
 sources:
   - url: https://github.com/Gork3m/IronBrew2-Deobfuscator
     title: Gork3m/IronBrew2-Deobfuscator
+    accessed: 2026-10-03
+  - url: https://github.com/Gork3m/IronBrew2-Deobfuscator/commits/main
+    title: Commit history — June to December 2021
     accessed: 2026-10-03

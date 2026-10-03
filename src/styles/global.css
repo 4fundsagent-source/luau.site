@@ -24,6 +24,7 @@
   --holding: #0f8a63;
   --partial: #c26f08;
   --broken: #dc2c50;
+  --open: #57575f;
   --shadow-card: 0 1px 0 rgb(0 0 0 / 0.02), 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 12px -4px rgb(0 0 0 / 0.06);
   --shadow-lift: 0 1px 0 rgb(0 0 0 / 0.02), 0 2px 4px rgb(0 0 0 / 0.04), 0 12px 32px -12px rgb(0 0 0 / 0.14);
   --highlight: inset 0 1px 0 rgb(255 255 255 / 0.6);
@@ -46,6 +47,7 @@
   --holding: #14a58a;
   --partial: #c4860c;
   --broken: #ef4f6c;
+  --open: #a0a0aa;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-lift: 0 16px 40px -16px rgb(0 0 0 / 0.7);
   --highlight: inset 0 1px 0 rgb(255 255 255 / 0.04);
@@ -70,6 +72,7 @@
   --color-holding: var(--holding);
   --color-partial: var(--partial);
   --color-broken: var(--broken);
+  --color-open: var(--open);
 
   --shadow-card: var(--shadow-card);
   --shadow-lift: var(--shadow-lift);

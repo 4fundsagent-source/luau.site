@@ -6,7 +6,7 @@ import PageHeader from '~/components/PageHeader.astro';
 import Base from '~/layouts/Base.astro';
 import { getSiteData } from '~/lib/data';
 import { issueUrl } from '~/lib/site';
-import { PRICING, PRICING_LABEL, RUNTIMES, RUNTIME_LABEL, STATUSES, STATUS_META } from '~/lib/taxonomy';
+import { DISPLAY_STATUSES, PRICING, PRICING_LABEL, RUNTIMES, RUNTIME_LABEL, STATUS_META } from '~/lib/taxonomy';
 
 const { obfuscators } = await getSiteData();
 const countBy = (pred: (o: (typeof obfuscators)[number]) => boolean) => obfuscators.filter(pred).length;
@@ -16,7 +16,11 @@ const filters: FilterDef[] = [
     key: 'status',
     label: 'Status',
     kind: 'segmented',
-    options: STATUSES.map((s) => ({ value: s, label: STATUS_META[s].label, count: countBy((o) => o.status === s) })),
+    options: DISPLAY_STATUSES.filter((s) => countBy((o) => o.status === s)).map((s) => ({
+      value: s,
+      label: STATUS_META[s].label,
+      count: countBy((o) => o.status === s),
+    })),
   },
   {
     key: 'pricing',

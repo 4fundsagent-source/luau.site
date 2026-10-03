@@ -1,14 +1,16 @@
 ---
 import PageHeader from '~/components/PageHeader.astro';
 import Base from '~/layouts/Base.astro';
-import { PROVISIONAL_BELOW, TIERS, TRACK_FULL_DAYS, WEIGHTS } from '~/lib/score';
+import { OSS_CAP, OSS_STATUS_FACTOR, PROVING_DAYS, PROVISIONAL_BELOW, TIERS, TRACK_FULL_DAYS, UNRATED_BELOW, WEIGHTS } from '~/lib/score';
 import { SITE } from '~/lib/site';
-import { TECHNIQUES, TECHNIQUE_META } from '~/lib/taxonomy';
+import { CODEBASE_CRITERIA, CODEBASE_MAX, CODEBASE_META, TECHNIQUES, TECHNIQUE_META } from '~/lib/taxonomy';
 
 const toc = [
   { id: 'principles', label: 'Principles' },
   { id: 'status', label: 'How status is derived' },
   { id: 'score', label: 'Security Score' },
+  { id: 'open-source', label: 'Open source' },
+  { id: 'proving', label: 'Proving period' },
   { id: 'evidence', label: 'Evidence rules' },
   { id: 'lab', label: 'The Lab' },
   { id: 'outputs', label: 'What we host' },
@@ -46,6 +48,7 @@ const toc = [
           <tr><td><strong>Broken</strong></td><td>At least one tool has <em>full</em> support for this version and outputs readable (or near-original) source.</td></tr>
           <tr><td><strong>Partial</strong></td><td>Tools exist, but they only recover constants, bytecode or traces, or their support is partial or experimental.</td></tr>
           <tr><td><strong>Holding</strong></td><td>No public tool is tracked for this version. This means "none known", not "unbreakable".</td></tr>
+          <tr><td><strong>Open source</strong></td><td>Shown instead of Holding for open-source projects. When the source is public, it can never truly hold.</td></tr>
         </tbody>
       </table>
       <p>
@@ -81,19 +84,61 @@ const toc = [
           </tr>
         </tbody>
       </table>
-      <h3>Missing data and provisional scores</h3>
+      <h3>Missing data, provisional and unrated scores</h3>
       <p>
-        If a component has no data (no dated versions, no Lab runs), it gets <strong>neutral half credit</strong>. We don't drop it and re-scale the
-        rest, because missing evidence shouldn't push a score up or down. The share of the weight that is backed by real data is shown as{' '}
-        <em>data %</em>. Below {Math.round(PROVISIONAL_BELOW * 100)}%, the score is <strong>provisional</strong> and its tier is drawn with a dashed border.
+        If a component has no data (no dated versions, no Lab runs, no documented techniques), it gets <strong>neutral half credit</strong>. We
+        don't drop it and re-scale the rest, because missing evidence shouldn't push a score up or down. The share of the weight that is backed
+        by real data is shown as <em>data %</em>.
       </p>
+      <ul>
+        <li>Below {Math.round(PROVISIONAL_BELOW * 100)}%, the score is <strong>provisional</strong> and its tier is drawn with a dashed border.</li>
+        <li>
+          Below {Math.round(UNRATED_BELOW * 100)}%, the project is <strong>unrated</strong>: no score or tier is shown, and it's listed after every rated
+          project. This keeps a brand-new entry we know almost nothing about from topping the rankings.
+        </li>
+      </ul>
       <h3>Tiers</h3>
-      <p>{TIERS.map((t) => `${t.tier} ≥ ${t.min}`).join(' · ')}.</p>
+      <p>{TIERS.map((t) => `${t.tier} ≥ ${t.min}`).join(' · ')}. Tiers are not shown for unrated projects.</p>
       <h3>Technique points</h3>
       <table>
         <thead><tr><th>Technique</th><th>Points</th></tr></thead>
         <tbody>{TECHNIQUES.map((t) => <tr><td><a href={`/learn#${t}`}>{TECHNIQUE_META[t].label}</a></td><td>{TECHNIQUE_META[t].points}</td></tr>)}</tbody>
       </table>
+
+      <h2 id="open-source">Open source</h2>
+      <p>
+        An open-source obfuscator can never truly hold. Anyone can read exactly how it transforms code, so "no public deobfuscator yet" means
+        little. Open-source projects are scored differently:
+      </p>
+      <ul>
+        <li>Instead of Holding, they show the status <strong>Open source</strong>. Partial and Broken still apply when tools exist.</li>
+        <li>
+          <strong>Resistance and track record are replaced by a Codebase grade</strong> worth {WEIGHTS.codebase} points. A maintainer grades
+          five criteria from 0 to 4, for a total out of {CODEBASE_MAX}.
+        </li>
+        <li>
+          The grade is multiplied by {OSS_STATUS_FACTOR.partial} if the latest version is partially broken, or {OSS_STATUS_FACTOR.broken} if it is
+          broken.
+        </li>
+        <li><strong>No benefit of the doubt:</strong> missing Lab results or techniques earn nothing, instead of the usual neutral half credit.</li>
+        <li>The total is <strong>capped at {OSS_CAP}</strong>, so open source can reach a decent score but never A or S.</li>
+      </ul>
+      <p>
+        The effect: an average open-source project scores about the same as a broken closed-source one, and only a genuinely strong codebase
+        scores clearly higher.
+      </p>
+      <table>
+        <thead><tr><th>Criterion</th><th>What a 4 looks like</th></tr></thead>
+        <tbody>{CODEBASE_CRITERIA.map((c) => <tr><td><strong>{CODEBASE_META[c].label}</strong></td><td>{CODEBASE_META[c].description}</td></tr>)}</tbody>
+      </table>
+
+      <h2 id="proving">Proving period</h2>
+      <p>
+        A new release with no tracked break hasn't proven anything yet. For its first {PROVING_DAYS} days, its Resistance ramps linearly from the
+        previous version's Resistance up to the full 50. A first-ever release starts from 25. So when a broken obfuscator ships a fix, its score
+        rises a little on day one and keeps rising every day the new version holds. A break ends the proving period immediately.
+      </p>
+      <p>Versions still in their proving period are left out of the track-record median until they have a settled outcome.</p>
 
       <h2 id="evidence">Evidence rules</h2>
       <ul>

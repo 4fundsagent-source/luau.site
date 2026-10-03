@@ -6,8 +6,9 @@ tagline: Long-running commercial VM obfuscator for Lua and Luau, with API bindin
 description: >-
   Luraph describes itself as the longest-standing Lua obfuscation service, active since 2017.
   It compiles scripts to a per-build virtual machine, and offers macros, a VS Code extension and
-  API bindings for .NET and Node.js. In 2026 the v14.7–v14.9 line was publicly deobfuscated, and
-  an open-source deobfuscator for v15 appeared within weeks of its release.
+  API bindings for .NET and Node.js. In 2026 the v14.7–v14.9 line was publicly devirtualized, and
+  two open-source deobfuscators for v15 appeared about six weeks after its August release. Luraph
+  shipped v15.1 on October 2, 2026.
 website: https://lura.ph
 discord: https://discord.lura.ph
 repo: https://github.com/Luraph
@@ -20,8 +21,11 @@ versions:
   - version: "14.8"
   - version: "14.9"
   - version: "15"
-    # TODO(verify): approximate — "released, then broken within a few weeks".
-    released: "~2026-08"
+    # Month only: reported as an August 2026 release.
+    released: "2026-08"
+  - version: "15.1"
+    released: 2026-10-02
+    notes: Reported by the luau.site maintainers; changelog link pending.
 verified: false
 lastVerified: 2026-10-03
 sources:

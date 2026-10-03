@@ -7,7 +7,7 @@ import SourcesList from '~/components/SourcesList.astro';
 import StatusBadge from '~/components/StatusBadge.astro';
 import Base from '~/layouts/Base.astro';
 import { getSiteData, type AuthView } from '~/lib/data';
-import { AUTH_FEATURE_LABEL, BYPASS_LABEL, PRICING_LABEL } from '~/lib/taxonomy';
+import { AUTH_FEATURE_LABEL, BYPASS_LABEL, PRICING_LABEL, STATUS_META } from '~/lib/taxonomy';
 
 export async function getStaticPaths() {
   const { auth } = await getSiteData();
@@ -37,6 +37,7 @@ const bundled = x.bundledObfuscator ? obf.get(x.bundledObfuscator.id) : undefine
         <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h1 class="text-3xl font-semibold tracking-tight md:text-4xl">{x.name}</h1>
+            {a.protection && <StatusBadge status={a.protection} label={`Obfuscation ${STATUS_META[a.protection].label.toLowerCase()}`} size="md" />}
             <StatusBadge status={a.status} label={BYPASS_LABEL[x.bypass.status]} size="md" />
           </div>
           <p class="mt-3 max-w-2xl text-[1.0625rem] leading-relaxed text-muted">{x.tagline}</p>
@@ -54,7 +55,36 @@ const bundled = x.bundledObfuscator ? obf.get(x.bundledObfuscator.id) : undefine
 
   <div class="container-page grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
     <div class="min-w-0 space-y-12">
-      <Section title="Bypass status">
+      {
+        x.protection && (
+          <Section title="Obfuscation" description="Whether scripts protected by this service can be deobfuscated.">
+            <div class="surface p-5 text-sm">
+              <div class="flex flex-wrap items-center gap-2">
+                <StatusBadge status={x.protection.status} />
+                {bundled && (
+                  <span class="text-muted">
+                    via{' '}
+                    <a href={`/obfuscators/${bundled.id}`} class="link">
+                      {bundled.data.name}
+                    </a>
+                  </span>
+                )}
+              </div>
+              <p class="mt-3 text-muted">{x.protection.note}</p>
+              <ul class="mt-3 space-y-1">
+                {x.protection.sources.map((s) => (
+                  <li>
+                    <a href={s.url} class="link" rel="noopener nofollow" target="_blank">
+                      {s.title ?? s.url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Section>
+        )
+      }
+      <Section title="Key system bypass" description="Whether the licensing itself (keys, whitelist, HWID lock) has been bypassed.">
         <div class="surface p-5 text-sm">
           <StatusBadge status={a.status} label={BYPASS_LABEL[x.bypass.status]} />
           {x.bypass.note && <p class="mt-3 text-muted">{x.bypass.note}</p>}

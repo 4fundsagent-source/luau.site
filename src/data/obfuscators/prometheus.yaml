@@ -10,6 +10,14 @@ pricing: open-source
 license: Prometheus License (MIT-style, attribution required)
 targets: [lua51, luau]
 techniques: [vm, const-encryption, string-encryption, cff, renaming]
+codebase:
+  vm: 2
+  randomization: 2
+  antiTamper: 1
+  luau: 1
+  maintenance: 3
+  notes: Preliminary grade. A single-layer VM step with randomized naming and constants; basic Luau support; actively maintained and widely starred.
+  assessedOn: 2026-10-03
 versions:
   - version: main
     notes: Rolling releases from the main branch.

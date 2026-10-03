@@ -22,7 +22,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
         title: o.data.name,
         subtitle: o.data.tagline,
         status: { status: o.status, label: STATUS_META[o.status].label },
-        score: { total: o.score.total, tier: o.score.tier },
+        score: o.score.unrated ? undefined : { total: o.score.total, tier: o.score.tier },
       },
     })),
     ...deobfuscators.map((d) => ({

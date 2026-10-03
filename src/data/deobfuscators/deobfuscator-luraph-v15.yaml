@@ -6,15 +6,15 @@ description: >-
   offline Roblox emulator neutralizes crash traps; a live Luau REPL decrypts constants on demand;
   symbolic evaluation rebuilds if/else, while, for and repeat-until; and an SSA pass names variables
   using Roblox API patterns. Scripts of 500–750+ functions take one to two minutes. A fast
-  trace mode (--no-devirt) finishes in seconds but skips full lifting. v14.7–v14.9 are supported
-  experimentally, falling back to execution traces.
+  trace mode (--no-devirt) finishes in seconds but skips full lifting. Experimental v14.7–v14.9
+  support landed on September 28, 2026, falling back to execution traces.
 repo: https://github.com/caomod2077/Deobfuscator-Luraph-V15
 access: open-source
 license: MIT
 techniques: [static-devirt, emulation, dynamic-trace, constant-dump]
 outputLevel: near-original
-# TODO(verify): approximate — "within a few weeks" of the v15 release.
-firstSeen: "~2026-09"
+# Public by this date: issue #1 was opened on the repository.
+firstSeen: 2026-09-26
 maintenance: active
 targets:
   - obfuscator: luraph
@@ -23,10 +23,17 @@ targets:
   - obfuscator: luraph
     versions: ["14.7", "14.8", "14.9"]
     support: experimental
+    since: 2026-09-28
     notes: Partial support with fallback to execution traces.
 verified: false
 lastVerified: 2026-10-03
 sources:
   - url: https://github.com/caomod2077/Deobfuscator-Luraph-V15
     title: caomod2077/Deobfuscator-Luraph-V15 (README)
+    accessed: 2026-10-03
+  - url: https://github.com/caomod2077/Deobfuscator-Luraph-V15/issues/1
+    title: Issue #1, opened September 26, 2026
+    accessed: 2026-10-03
+  - url: https://github.com/caomod2077/Deobfuscator-Luraph-V15/commits/master
+    title: Commit history — v14.7/14.8/14.9 support added September 28, 2026
     accessed: 2026-10-03

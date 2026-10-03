@@ -10,7 +10,10 @@ export interface CoverageTarget {
   obfuscator: string;
   versions: string[];
   support: Support;
-  /** When support for these versions shipped, if later than the tool's first release. */
+  /**
+   * When support for these versions shipped, if later than the tool's first release.
+   * `unknown` means the date is not known: no date is shown and firstSeen is not assumed.
+   */
   since?: string;
   notes?: string;
 }
@@ -77,7 +80,7 @@ export function collectHits(obfuscatorId: string, version: string, deobfuscators
         access: d.access,
         outputLevel: d.outputLevel,
         support: t.support,
-        date: dateOf(t.since ?? d.firstSeen),
+        date: t.since === 'unknown' ? undefined : dateOf(t.since ?? d.firstSeen),
         effect: hitEffect(t.support, d.outputLevel),
         notes: t.notes,
       });

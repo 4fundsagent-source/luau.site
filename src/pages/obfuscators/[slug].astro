@@ -10,10 +10,11 @@ import SourcesList from '~/components/SourcesList.astro';
 import StatusBadge from '~/components/StatusBadge.astro';
 import VersionTable from '~/components/VersionTable.astro';
 import Base from '~/layouts/Base.astro';
-import { formatDate, formatDuration } from '~/lib/dates';
+import { formatDate, formatDuration, parseDate } from '~/lib/dates';
 import { formatVersion, getSiteData, versionPhrase, type ObfuscatorView } from '~/lib/data';
 import { issueUrl } from '~/lib/site';
-import { PRICING_LABEL, RUNTIME_LABEL, STATUS_META, TECHNIQUE_META } from '~/lib/taxonomy';
+import { PROVING_DAYS } from '~/lib/score';
+import { CODEBASE_CRITERIA, CODEBASE_MAX, CODEBASE_META, PRICING_LABEL, RUNTIME_LABEL, STATUS_META, TECHNIQUE_META } from '~/lib/taxonomy';
 
 export async function getStaticPaths() {
   const { obfuscators } = await getSiteData();
@@ -24,10 +25,11 @@ interface Props {
   o: ObfuscatorView;
 }
 const { o } = Astro.props;
-const { deob, samples } = await getSiteData();
+const { deob, samples, obfuscators } = await getSiteData();
 const d = o.data;
 const s = o.latest.s;
-const rank = (await getSiteData()).obfuscators.indexOf(o) + 1;
+const rated = obfuscators.filter((x) => !x.score.unrated);
+const rank = rated.indexOf(o) + 1;
 
 const phrase = versionPhrase(o.latest.version);
 const Phrase = phrase[0]!.toUpperCase() + phrase.slice(1);
@@ -37,13 +39,19 @@ const headline =
     ? `${Phrase} is broken${s.daysToBreak !== undefined ? `, ${formatDuration(s.daysToBreak, s.fuzzy)} after release` : ''}.`
     : s.status === 'partial'
       ? `${Phrase} is partially broken.`
-      : `No public deobfuscator is tracked for ${phrase}.`;
+      : o.openSource
+        ? `${d.name} is open source, so it can never truly hold.`
+        : `No public deobfuscator is tracked for ${phrase}.`;
 const explainer =
   s.status === 'broken'
     ? `${breaker?.data.name ?? 'A public tool'} recovers readable source from it.`
     : s.status === 'partial'
       ? STATUS_META.partial.description
-      : "That means none we know of, not that it's unbreakable.";
+      : o.openSource
+        ? 'Anyone can study exactly how it transforms code. It is scored on the strength of its codebase instead.'
+        : o.latest.provingDay !== undefined
+          ? `It was released ${o.latest.provingDay} day${o.latest.provingDay === 1 ? '' : 's'} ago and is in its ${PROVING_DAYS}-day proving period.`
+          : "That means none we know of, not that it's unbreakable.";
 
 const tools = o.deobfuscators.map((id) => deob.get(id)!);
 const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id).map((r) => ({ sample: sm, run: r })));
@@ -69,7 +77,7 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
           <div class="mt-4 flex flex-wrap gap-1.5">
             <span class="chip num">{formatVersion(o.latest.version)}</span>
             <span class="chip">{PRICING_LABEL[d.pricing]}</span>
-            {d.targets.map((t) => <span class="chip">{RUNTIME_LABEL[t]}</span>)}
+            {d.targets.length ? d.targets.map((t) => <span class="chip">{RUNTIME_LABEL[t]}</span>) : <span class="chip">Runtime unknown</span>}
             {d.discontinued && <span class="chip">Discontinued</span>}
           </div>
           <div class="mt-6">
@@ -83,7 +91,7 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
   <div class="container-page grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
     <div class="min-w-0 space-y-12">
       <div class="surface flex items-start gap-3 p-4 text-sm" style={`border-color:color-mix(in oklab, var(--${o.status}) 30%, var(--line))`}>
-        <Icon name={o.status === 'holding' ? 'shield' : 'unlock'} size={18} class="mt-0.5 shrink-0 text-muted" />
+        <Icon name={o.status === 'holding' ? 'shield' : o.status === 'open' ? 'code' : 'unlock'} size={18} class="mt-0.5 shrink-0 text-muted" />
         <div>
           <p class="font-medium text-fg">{headline}</p>
           <p class="mt-1 text-muted">{explainer}</p>
@@ -91,7 +99,7 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
       </div>
 
       <Section id="versions" title="Version history" description="Status is derived from the deobfuscators below; nobody types it by hand.">
-        <VersionTable versions={o.versions} deob={deob} />
+        <VersionTable versions={o.versions} deob={deob} openSource={o.openSource} />
         <a slot="action" href={issueUrl('version-release', { title: `New version: ${d.name}` })} class="text-sm text-muted hover:text-fg">
           Report a new version →
         </a>
@@ -116,19 +124,53 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
         }
       </Section>
 
+      {
+        o.openSource && d.codebase && (
+          <Section
+            id="codebase"
+            title="Codebase grade"
+            description={`Open-source projects are graded on their code: ${o.codebase}/${CODEBASE_MAX}, assessed ${formatDate(parseDate(d.codebase.assessedOn))}.`}
+          >
+            <ul class="surface divide-y divide-line">
+              {CODEBASE_CRITERIA.map((c) => (
+                <li class="flex flex-col gap-2 px-4 py-3 text-sm sm:flex-row sm:items-center sm:gap-4">
+                  <span class="shrink-0 font-medium text-fg sm:w-44">{CODEBASE_META[c].label}</span>
+                  <span class="flex-1 text-muted">{CODEBASE_META[c].description}</span>
+                  <span class="flex shrink-0 items-center gap-1" aria-label={`${d.codebase![c]} of 4`}>
+                    {[0, 1, 2, 3].map((i) => (
+                      <span class:list={['h-1.5 w-5 rounded-full', i < d.codebase![c] ? 'bg-fg' : 'bg-sunken']} />
+                    ))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p class="mt-3 text-sm text-muted">{d.codebase.notes}</p>
+          </Section>
+        )
+      }
+
       <Section id="techniques" title="Protection techniques" description="As documented by the vendor or observed in output.">
-        <ul class="surface divide-y divide-line">
-          {
-            d.techniques.map((t) => (
-              <li class="flex flex-col gap-1 px-4 py-3 text-sm sm:flex-row sm:gap-4">
-                <a href={`/learn#${t}`} class="shrink-0 font-medium text-fg hover:underline sm:w-44">
-                  {TECHNIQUE_META[t].label}
-                </a>
-                <span class="text-muted">{TECHNIQUE_META[t].description}</span>
-              </li>
-            ))
-          }
-        </ul>
+        {
+          d.techniques.length ? (
+            <ul class="surface divide-y divide-line">
+              {d.techniques.map((t) => (
+                <li class="flex flex-col gap-1 px-4 py-3 text-sm sm:flex-row sm:gap-4">
+                  <a href={`/learn#${t}`} class="shrink-0 font-medium text-fg hover:underline sm:w-44">
+                    {TECHNIQUE_META[t].label}
+                  </a>
+                  <span class="text-muted">{TECHNIQUE_META[t].description}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div class="surface p-6 text-sm text-muted">
+              Not documented yet.{' '}
+              <a href={issueUrl('correction', { title: `Techniques: ${d.name}` })} class="link">
+                Know what it uses?
+              </a>
+            </div>
+          )
+        }
       </Section>
 
       <Section id="lab" title="In the Lab" description="Our own benchmark scripts, run through this obfuscator and every deobfuscator.">
@@ -150,7 +192,9 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
             <div class="surface flex items-start gap-3 p-6 text-sm text-muted">
               <Icon name="flask" size={18} class="shrink-0" />
               <p>
-                Not benchmarked yet, so the Lab component of the score gets neutral half credit.{' '}
+                {o.openSource
+                  ? 'Not benchmarked yet. Open source gets no credit for missing Lab results.'
+                  : 'Not benchmarked yet, so the Lab component of the score gets neutral half credit.'}{' '}
                 <a href="/lab#contribute" class="link">
                   How to add a run
                 </a>
@@ -180,7 +224,7 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
       <ScoreCard score={o.score} />
       <Facts
         items={[
-          { label: 'Rank', value: `#${rank} of ${(await getSiteData()).obfuscators.length}`, href: '/rankings' },
+          { label: 'Rank', value: rank ? `#${rank} of ${rated.length}` : 'Unrated', href: '/rankings' },
           { label: 'Vendor', value: d.vendor },
           { label: 'Since', value: d.since },
           { label: 'Pricing', value: PRICING_LABEL[d.pricing] },

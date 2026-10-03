@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { Resvg } from '@resvg/resvg-js';
 import satori from 'satori';
-import type { Status } from './taxonomy';
+import type { DisplayStatus } from './taxonomy';
 
 const require = createRequire(import.meta.url);
 const font = (pkg: string, file: string) => readFileSync(require.resolve(`${pkg}/files/${file}`));
@@ -36,6 +36,7 @@ const C = {
   holding: '#0f8a63',
   partial: '#c26f08',
   broken: '#dc2c50',
+  open: '#57575f',
 };
 
 const LOGO = `data:image/svg+xml;utf8,${encodeURIComponent(
@@ -46,7 +47,7 @@ export interface OgCard {
   eyebrow: string;
   title: string;
   subtitle?: string;
-  status?: { status: Status; label: string };
+  status?: { status: DisplayStatus; label: string };
   score?: { total: number; tier: string };
   footer?: string;
 }

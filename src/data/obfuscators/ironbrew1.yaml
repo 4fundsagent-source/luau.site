@@ -1,0 +1,19 @@
+name: IronBrew1
+tagline: Hosted obfuscation service under the IronBrew name. Details pending verification.
+description: >-
+  Added at a maintainer's request. The site could not be reached from our build environment, so its
+  relation to the original IronBrew, pricing, runtimes and techniques are not documented yet. Until
+  they are, IronBrew1 is listed as unrated.
+website: https://ironbrew1.com
+pricing: unknown
+targets: []
+techniques: []
+versions:
+  - version: current
+    notes: Version history not yet documented.
+verified: false
+lastVerified: 2026-10-03
+sources:
+  - url: https://ironbrew1.com
+    title: IronBrew1
+    accessed: 2026-10-03

@@ -13,7 +13,7 @@ import { issueUrl } from '~/lib/site';
 
 const data = await getSiteData();
 const { stats, obfuscators, events, samples, auth } = data;
-const top = obfuscators.slice(0, 5);
+const top = obfuscators.filter((o) => !o.score.unrated).slice(0, 5);
 
 // Deterministic "obfuscated Luau" texture for the hero background.
 let seed = 1337;

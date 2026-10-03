@@ -11,6 +11,14 @@ pricing: open-source
 license: Apache-2.0
 targets: [lua54, luau]
 techniques: [vm, string-encryption, renaming, cff, junk-code, opaque-predicates, anti-tamper, compression, watermarking]
+codebase:
+  vm: 2
+  randomization: 2
+  antiTamper: 2
+  luau: 2
+  maintenance: 1
+  notes: Preliminary grade. Many stacked modules including a VM layer and runtime anti-tamper; 12 of 14 modules work on Luau; last push mid-2025.
+  assessedOn: 2026-10-03
 versions:
   - version: main
     notes: Rolling releases from the main branch.

@@ -4,9 +4,22 @@
  */
 
 export const STATUSES = ['holding', 'partial', 'broken'] as const;
+/** Status of a single version, derived from deobfuscator coverage. */
 export type Status = (typeof STATUSES)[number];
 
-export const STATUS_META: Record<Status, { label: string; description: string }> = {
+/**
+ * Status shown for a whole project. Open-source obfuscators can never "hold":
+ * their source is public, so an unbroken open-source project shows as `open`.
+ */
+export const DISPLAY_STATUSES = ['holding', 'open', 'partial', 'broken'] as const;
+export type DisplayStatus = (typeof DISPLAY_STATUSES)[number];
+
+export const STATUS_META: Record<DisplayStatus, { label: string; description: string }> = {
+  open: {
+    label: 'Open source',
+    description:
+      'The source is public, so it can never truly hold. It is scored on the strength of its codebase instead.',
+  },
   holding: {
     label: 'Holding',
     description: 'No public deobfuscator is tracked for this version.',
@@ -21,14 +34,30 @@ export const STATUS_META: Record<Status, { label: string; description: string }>
   },
 };
 
-export const PRICING = ['free', 'freemium', 'paid', 'open-source'] as const;
+export const PRICING = ['free', 'freemium', 'paid', 'open-source', 'unknown'] as const;
 export type Pricing = (typeof PRICING)[number];
 export const PRICING_LABEL: Record<Pricing, string> = {
   free: 'Free',
   freemium: 'Freemium',
   paid: 'Paid',
   'open-source': 'Open source',
+  unknown: 'Pricing unknown',
 };
+
+/** Rubric for grading an open-source obfuscator's codebase, 0–4 per criterion. */
+export const CODEBASE_CRITERIA = ['vm', 'randomization', 'antiTamper', 'luau', 'maintenance'] as const;
+export type CodebaseCriterion = (typeof CODEBASE_CRITERIA)[number];
+export const CODEBASE_META: Record<CodebaseCriterion, { label: string; description: string }> = {
+  vm: { label: 'VM design', description: 'How deep and original the virtual machine is: custom ISA, nesting, handler obfuscation.' },
+  randomization: {
+    label: 'Per-build randomization',
+    description: 'How much every output differs: shuffled opcodes, randomized layouts, polymorphic handlers.',
+  },
+  antiTamper: { label: 'Anti-tamper', description: 'Integrity checks, environment checks and anti-hooking that survive scrutiny.' },
+  luau: { label: 'Luau coverage', description: 'How completely modern Luau syntax and runtime features are supported.' },
+  maintenance: { label: 'Maintenance', description: 'Active development and responses to published deobfuscators.' },
+};
+export const CODEBASE_MAX = CODEBASE_CRITERIA.length * 4;
 
 export const RUNTIMES = ['luau', 'lua51', 'lua52', 'lua53', 'lua54', 'luajit'] as const;
 export type Runtime = (typeof RUNTIMES)[number];

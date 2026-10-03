@@ -1,7 +1,8 @@
 ---
 import { formatDate, formatDuration } from '~/lib/dates';
 import { formatVersion, type ObfuscatorView } from '~/lib/data';
-import { PRICING_LABEL, RUNTIME_LABEL } from '~/lib/taxonomy';
+import { PROVING_DAYS } from '~/lib/score';
+import { CODEBASE_MAX, PRICING_LABEL, RUNTIME_LABEL } from '~/lib/taxonomy';
 import ExternalLinks from './ExternalLinks.astro';
 import Monogram from './Monogram.astro';
 import ScoreBar from './ScoreBar.astro';
@@ -21,9 +22,13 @@ const footer =
     ? `Broken${s.daysToBreak !== undefined ? ` ${formatDuration(s.daysToBreak, s.fuzzy)} after release` : s.brokenOn ? ` ${formatDate(s.brokenOn)}` : ''}`
     : s.status === 'partial'
       ? `Partial coverage by ${plural(s.decisive.length, 'tool')}`
-      : o.deobfuscators.length
-        ? `${plural(o.deobfuscators.length, 'tool')} on older versions`
-        : 'No public tools tracked';
+      : o.latest.provingDay !== undefined
+        ? `New release · proving, day ${o.latest.provingDay} of ${PROVING_DAYS}`
+        : o.openSource
+          ? `Codebase graded ${o.codebase ?? '—'}/${CODEBASE_MAX}`
+          : o.deobfuscators.length
+            ? `${plural(o.deobfuscators.length, 'tool')} on older versions`
+            : 'No public tools tracked';
 ---
 
 <article
@@ -33,7 +38,7 @@ const footer =
   data-f-pricing={d.pricing}
   data-f-runtime={d.targets.join(' ')}
   data-search={`${d.name} ${d.vendor ?? ''} ${d.tagline} ${d.targets.map((t) => RUNTIME_LABEL[t]).join(' ')}`.toLowerCase()}
-  data-s-score={o.score.total}
+  data-s-score={o.score.unrated ? -1 : o.score.total}
   data-s-name={d.name.toLowerCase()}
   data-s-released={s.released?.date.getTime() ?? 0}
   data-s-broken={s.brokenOn?.date.getTime() ?? 0}
@@ -55,10 +60,17 @@ const footer =
 
   <p class="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-muted">{d.tagline}</p>
 
-  <ScoreBar class="mt-4" score={o.score.total} tier={o.score.tier} confidence={o.score.confidence} provisional={o.score.provisional} />
+  <ScoreBar
+    class="mt-4"
+    score={o.score.total}
+    tier={o.score.tier}
+    confidence={o.score.confidence}
+    provisional={o.score.provisional}
+    unrated={o.score.unrated}
+  />
 
   <div class="mt-4 flex flex-wrap gap-1.5">
-    {d.targets.map((t) => <span class="chip">{RUNTIME_LABEL[t]}</span>)}
+    {d.targets.length ? d.targets.map((t) => <span class="chip">{RUNTIME_LABEL[t]}</span>) : <span class="chip">Runtime unknown</span>}
   </div>
 
   <div class="mt-4 flex min-h-8 items-center justify-between gap-3 border-t border-line pt-3">

@@ -4,6 +4,7 @@ import { z } from 'astro/zod';
 import { DATE_PATTERN, toISODate } from './lib/dates';
 import {
   ACCESS,
+  CODEBASE_CRITERIA,
   AUTH_FEATURES,
   BYPASS,
   DEOB_TECHNIQUES,
@@ -59,20 +60,40 @@ const version = z
     message: 'A status override needs a statusNote and at least one source',
   });
 
+const grade = z.number().int().min(0).max(4);
+
+/** Maintainer-graded rubric for open-source obfuscators (see methodology). */
+const codebase = z.object({
+  vm: grade,
+  randomization: grade,
+  antiTamper: grade,
+  luau: grade,
+  maintenance: grade,
+  notes: z.string(),
+  assessedOn: date,
+} satisfies Record<(typeof CODEBASE_CRITERIA)[number], typeof grade> & Record<string, unknown>);
+
 const obfuscators = defineCollection({
   loader: glob({ pattern: '*.yaml', base: './src/data/obfuscators' }),
-  schema: z.object({
-    ...common,
-    vendor: z.string().optional(),
-    since: z.number().int().min(2000).optional(),
-    pricing: z.enum(PRICING),
-    license: z.string().optional(),
-    targets: z.array(z.enum(RUNTIMES)).min(1),
-    techniques: z.array(z.enum(TECHNIQUES)),
-    discontinued: z.boolean().default(false),
-    /** Oldest first. The last entry is the current version. */
-    versions: z.array(version).min(1),
-  }),
+  schema: z
+    .object({
+      ...common,
+      vendor: z.string().optional(),
+      since: z.number().int().min(2000).optional(),
+      pricing: z.enum(PRICING),
+      license: z.string().optional(),
+      /** Empty when unknown. */
+      targets: z.array(z.enum(RUNTIMES)),
+      techniques: z.array(z.enum(TECHNIQUES)),
+      discontinued: z.boolean().default(false),
+      codebase: codebase.optional(),
+      /** Oldest first. The last entry is the current version. */
+      versions: z.array(version).min(1),
+    })
+    .refine((o) => o.pricing !== 'open-source' || o.codebase, {
+      message: 'Open-source obfuscators need a codebase rubric (vm, randomization, antiTamper, luau, maintenance)',
+      path: ['codebase'],
+    }),
 });
 
 const deobfuscators = defineCollection({
@@ -92,7 +113,7 @@ const deobfuscators = defineCollection({
           obfuscator: reference('obfuscators'),
           versions: z.array(z.string()).min(1),
           support: z.enum(SUPPORT).default('full'),
-          since: date.optional(),
+          since: z.union([z.literal('unknown'), date]).optional(),
           notes: z.string().optional(),
         }),
       )
@@ -107,11 +128,20 @@ const auth = defineCollection({
     pricing: z.enum(PRICING),
     features: z.array(z.enum(AUTH_FEATURES)).min(1),
     bundledObfuscator: reference('obfuscators').optional(),
+    /** Whether the key system / whitelist itself has been bypassed. */
     bypass: z.object({
       status: z.enum(BYPASS),
       note: z.string().optional(),
       sources: sources.default([]),
     }),
+    /** Whether scripts protected by the service have been deobfuscated. */
+    protection: z
+      .object({
+        status: z.enum(STATUSES),
+        note: z.string(),
+        sources: sources.min(1),
+      })
+      .optional(),
   }),
 });
 

@@ -1,9 +1,9 @@
 ---
-import { STATUS_META, type Status } from '~/lib/taxonomy';
+import { STATUS_META, type DisplayStatus } from '~/lib/taxonomy';
 import StatusIcon from './StatusIcon.astro';
 
 interface Props {
-  status: Status;
+  status: DisplayStatus;
   /** Optional trailing detail, e.g. "since Sep 2026". */
   detail?: string;
   label?: string;

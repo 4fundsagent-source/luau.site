@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeScore, resistancePoints, techniquePoints, tierFor } from '../src/lib/score';
+import { compareScores, computeScore, OSS_CAP, provingDay, resistancePoints, techniquePoints, tierFor } from '../src/lib/score';
 import { collectHits, deriveVersionStatus, type DeobfuscatorLike } from '../src/lib/status';
 
 const now = new Date('2026-10-03T00:00:00Z');
@@ -84,5 +84,92 @@ describe('tiers', () => {
     expect(tierFor(55)).toBe('B');
     expect(tierFor(40)).toBe('C');
     expect(tierFor(39)).toBe('F');
+  });
+});
+
+describe('open source', () => {
+  const holding = deriveVersionStatus({ version: 'main' }, []);
+
+  it('replaces resistance and track record with a codebase grade and gives no benefit of the doubt', () => {
+    const s = computeScore({ latest: holding, versions: [holding], techniques: ['vm'], codebase: 10, now });
+    expect(s.components.map((c) => c.key)).toEqual(['codebase', 'lab', 'technique']);
+    // codebase 10/20 × 40 = 20, missing lab earns 0, technique 3
+    expect(s.components.map((c) => c.points)).toEqual([20, 0, 3]);
+    expect(s.total).toBe(23);
+    expect(s.confidence).toBe(0.71);
+    expect(s.unrated).toBe(false);
+  });
+
+  it('halves the codebase grade once the latest version is broken', () => {
+    const broken = status(tool('open-source'));
+    const s = computeScore({ latest: broken, versions: [broken], techniques: [], codebase: 10, now });
+    expect(s.components[0]!.points).toBe(10);
+  });
+
+  it('is capped at OSS_CAP', () => {
+    const s = computeScore({ latest: holding, versions: [holding], techniques: ['vm', 'nested-vm', 'polymorphic-vm', 'cff', 'anti-tamper', 'env-checks'], codebase: 20, lab: { tested: 3, recovered: 0 }, now });
+    expect(s.total).toBe(OSS_CAP);
+    expect(s.capped).toBe(true);
+  });
+
+  it('lets a really good open-source project beat a broken closed-source one, but not an average one', () => {
+    const closed = status(tool('open-source'));
+    const brokenClosed = computeScore({ latest: closed, versions: [closed], techniques: ['vm', 'polymorphic-vm', 'cff'], now });
+    const great = computeScore({ latest: holding, versions: [holding], techniques: ['vm', 'cff', 'anti-tamper'], codebase: 18, now });
+    const average = computeScore({ latest: holding, versions: [holding], techniques: ['vm', 'cff'], codebase: 8, now });
+    expect(great.total).toBeGreaterThan(brokenClosed.total);
+    expect(average.total).toBeLessThanOrEqual(brokenClosed.total);
+  });
+});
+
+describe('proving period', () => {
+  const brokenPrev = deriveVersionStatus(
+    { version: '15', released: '2026-08-12' },
+    collectHits('x', '15', [{ ...tool('open-source'), targets: [{ obfuscator: 'x', versions: ['15'], support: 'full' }] }]),
+  );
+  const fresh = deriveVersionStatus({ version: '15.1', released: '2026-10-02' }, []);
+
+  it('ramps resistance from the predecessor level, so a day-old release adds only slightly', () => {
+    expect(provingDay(fresh, now)).toBe(1);
+    const s = computeScore({ latest: fresh, previous: brokenPrev, versions: [brokenPrev, fresh], techniques: ['vm'], now });
+    expect(s.components[0]!.points).toBe(0.6);
+    expect(s.provingDay).toBe(1);
+  });
+
+  it('starts a first-ever release from the neutral baseline', () => {
+    const s = computeScore({ latest: fresh, versions: [fresh], techniques: ['vm'], now });
+    expect(s.components[0]!.points).toBe(25.3);
+  });
+
+  it('reaches full resistance after the proving period', () => {
+    const old = deriveVersionStatus({ version: '15.1', released: '2026-06-01' }, []);
+    expect(provingDay(old, now)).toBeUndefined();
+    const s = computeScore({ latest: old, previous: brokenPrev, versions: [brokenPrev, old], techniques: [], now });
+    expect(s.components[0]!.points).toBe(50);
+  });
+
+  it('keeps proving versions out of the track record', () => {
+    const s = computeScore({ latest: fresh, previous: brokenPrev, versions: [brokenPrev, fresh], techniques: ['vm'], now });
+    const track = s.components.find((c) => c.key === 'track')!;
+    expect(track.detail).toMatch(/across 1 version\b/);
+  });
+});
+
+describe('unrated and ordering', () => {
+  it('marks scores with almost no real data as unrated, not provisional', () => {
+    const v = deriveVersionStatus({ version: 'current' }, []);
+    const s = computeScore({ latest: v, versions: [v], techniques: [], now });
+    expect(s.components.find((c) => c.key === 'technique')!.imputed).toBe(true);
+    expect(s.confidence).toBe(0.5);
+    expect(s.unrated).toBe(true);
+    expect(s.provisional).toBe(false);
+  });
+
+  it('ranks unrated projects last regardless of their total', () => {
+    const v = deriveVersionStatus({ version: 'current' }, []);
+    const unrated = computeScore({ latest: v, versions: [v], techniques: [], now });
+    const low = computeScore({ latest: status(tool('open-source')), versions: [status(tool('open-source'))], techniques: ['vm'], now });
+    expect(unrated.total).toBeGreaterThan(low.total);
+    expect([unrated, low].sort(compareScores)[0]).toBe(low);
   });
 });

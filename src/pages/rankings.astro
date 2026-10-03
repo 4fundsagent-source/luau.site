@@ -7,16 +7,18 @@ import StatusBadge from '~/components/StatusBadge.astro';
 import Base from '~/layouts/Base.astro';
 import { formatDate, formatDuration } from '~/lib/dates';
 import { formatVersion, getSiteData } from '~/lib/data';
-import { TIERS } from '~/lib/score';
-import { median, survivalDays } from '~/lib/status';
+import { settledSurvivals, TIERS } from '~/lib/score';
+import { median } from '~/lib/status';
 
 const { obfuscators, deob, builtAt } = await getSiteData();
 
-const rows = obfuscators.map((o, i) => {
-  const surv = o.versions.map((v) => survivalDays(v.s, builtAt)).filter((d): d is number => d !== undefined);
-  const med = median(surv);
-  return { o, rank: i + 1, med, fuzzy: o.versions.some((v) => v.s.fuzzy) };
+const rows = obfuscators.filter((o) => !o.score.unrated).map((o, i) => {
+  // Open source can't hold, so survival is not meaningful for it.
+  const { days, fuzzy } = o.openSource ? { days: [], fuzzy: false } : settledSurvivals(o.versions.map((v) => v.s), builtAt);
+  return { o, rank: i + 1, med: median(days), fuzzy };
 });
+
+const unrated = obfuscators.filter((o) => o.score.unrated);
 
 const fastest = obfuscators
   .flatMap((o) => o.versions.filter((v) => v.s.daysToBreak !== undefined).map((v) => ({ o, v })))
@@ -86,7 +88,7 @@ const fastest = obfuscators
                   data-rank={rank}
                   data-name={o.data.name.toLowerCase()}
                   data-score={o.score.total}
-                  data-status={{ holding: 3, partial: 2, broken: 1 }[o.status]}
+                  data-status={{ holding: 4, open: 3, partial: 2, broken: 1 }[o.status]}
                   data-survival={med ?? -1}
                   data-confidence={o.score.confidence}
                 >
@@ -117,6 +119,30 @@ const fastest = obfuscators
         </table>
       </div>
     </Section>
+
+ {
+      unrated.length > 0 && (
+        <Section
+          title="Not enough data to rank"
+          description="Less than 55% of these scores would rest on real data, so they get no rank or tier yet. Help fill them in."
+        >
+          <ul class="surface divide-y divide-line">
+            {unrated.map((o) => (
+              <li class="relative flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-hover">
+                <Monogram name={o.data.name} id={o.id} size="sm" />
+                <div class="min-w-0 flex-1">
+                  <a href={`/obfuscators/${o.id}`} class="card-link block truncate text-sm font-medium text-fg">
+                    {o.data.name}
+                  </a>
+                  <span class="text-xs text-subtle">{Math.round(o.score.confidence * 100)}% backed by data</span>
+                </div>
+                <StatusBadge status={o.status} />
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )
+    }
 
     <Section title="Fastest broken" description="Versions with known release and break dates, ordered by how long they held.">
       {

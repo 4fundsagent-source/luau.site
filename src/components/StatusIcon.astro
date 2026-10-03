@@ -1,8 +1,8 @@
 ---
-import type { Status } from '~/lib/taxonomy';
+import type { DisplayStatus } from '~/lib/taxonomy';
 
 interface Props {
-  status: Status;
+  status: DisplayStatus;
   size?: number;
 }
 const { status, size = 12 } = Astro.props;
@@ -11,6 +11,11 @@ const color = `var(--${status})`;
 
 <svg width={size} height={size} viewBox="0 0 12 12" class="status-icon shrink-0" aria-hidden="true" style={`color:${color}`}>
   {status === 'holding' && <circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6" />}
+  {
+    status === 'open' && (
+      <circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2.4 1.8" />
+    )
+  }
   {
     status === 'partial' && (
       <>

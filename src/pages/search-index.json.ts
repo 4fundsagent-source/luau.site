@@ -14,7 +14,7 @@ export const GET: APIRoute = async () => {
     ...obfuscators.map((o) => ({
       kind: 'Obfuscator',
       title: o.data.name,
-      subtitle: `${formatVersion(o.latest.version)} · ${STATUS_META[o.status].label} · score ${o.score.total}`,
+      subtitle: `${formatVersion(o.latest.version)} · ${STATUS_META[o.status].label} · ${o.score.unrated ? 'unrated' : `score ${o.score.total}`}`,
       href: `/obfuscators/${o.id}`,
       keywords: [o.data.vendor, o.data.tagline].filter(Boolean).join(' '),
     })),

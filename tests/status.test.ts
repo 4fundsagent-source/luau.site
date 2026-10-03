@@ -94,3 +94,18 @@ describe('survival', () => {
     expect(median([4, 1, 2, 3])).toBe(2.5);
   });
 });
+
+describe('unknown coverage dates', () => {
+  it('keeps the status but does not invent a break date', () => {
+    const d: DeobfuscatorLike = {
+      id: 'late-claim',
+      access: 'open-source',
+      outputLevel: 'readable',
+      firstSeen: '2026-07-31',
+      targets: [{ obfuscator: 'moonveil', versions: ['1.4.5'], support: 'full', since: 'unknown' }],
+    };
+    const s = deriveVersionStatus({ version: '1.4.5' }, collectHits('moonveil', '1.4.5', [d]));
+    expect(s.status).toBe('broken');
+    expect(s.brokenOn).toBeUndefined();
+  });
+});

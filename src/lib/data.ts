@@ -6,10 +6,10 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 import { compareDates, daysBetween, formatDuration, parseDate, type PartialDate } from './dates';
 import { checkIntegrity } from './integrity';
 import { loadLab, recovered, type Sample } from './lab';
-import { computeScore, type LabSummary, type Score } from './score';
+import { compareScores, computeScore, provingDay, type LabSummary, type Score } from './score';
 import { SITE } from './site';
 import { collectHits, deriveVersionStatus, median, type DeobfuscatorLike, type VersionStatus } from './status';
-import { BYPASS_TO_STATUS, type EventKind, type Status } from './taxonomy';
+import { BYPASS_TO_STATUS, CODEBASE_CRITERIA, type DisplayStatus, type EventKind, type Status } from './taxonomy';
 
 type ObfData = CollectionEntry<'obfuscators'>['data'];
 type DeobData = CollectionEntry<'deobfuscators'>['data'];
@@ -22,6 +22,8 @@ export interface VersionView {
   sources: SourceRef[];
   s: VersionStatus;
   isLatest: boolean;
+  /** Days into the proving period, for a new unbroken release. */
+  provingDay?: number;
 }
 
 export interface ObfuscatorView {
@@ -29,7 +31,11 @@ export interface ObfuscatorView {
   data: ObfData;
   versions: VersionView[];
   latest: VersionView;
-  status: Status;
+  /** Project-level status: open-source projects never show as "holding". */
+  status: DisplayStatus;
+  openSource: boolean;
+  /** Codebase rubric total for open-source projects. */
+  codebase?: number;
   score: Score;
   /** Deobfuscators covering any version, most recent first. */
   deobfuscators: string[];
@@ -59,7 +65,10 @@ export interface DeobfuscatorView {
 export interface AuthView {
   id: string;
   data: AuthData;
+  /** Key system / whitelist bypass status. */
   status: Status;
+  /** Deobfuscation status of scripts protected by the service, if known. */
+  protection?: Status;
   stale: boolean;
 }
 
@@ -88,6 +97,7 @@ export interface SiteData {
     deobfuscators: number;
     auth: number;
     holding: number;
+    open: number;
     partial: number;
     broken: number;
     medianDaysToBreak?: number;
@@ -108,7 +118,9 @@ function isStale(lastVerified: string, now: Date): boolean {
 }
 
 async function build(): Promise<SiteData> {
-  const now = new Date();
+  // Day-granular "today" so durations and proving days don't depend on the build's time of day.
+  const clock = new Date();
+  const now = new Date(Date.UTC(clock.getUTCFullYear(), clock.getUTCMonth(), clock.getUTCDate()));
   const [obfEntries, deobEntries, authEntries, eventEntries] = await Promise.all([
     getCollection('obfuscators'),
     getCollection('deobfuscators'),
@@ -133,14 +145,23 @@ async function build(): Promise<SiteData> {
   if (errors.length) throw new Error(`Data integrity check failed:\n  - ${errors.join('\n  - ')}`);
 
   const obfuscators: ObfuscatorView[] = obfEntries.map((o) => {
-    const versions: VersionView[] = o.data.versions.map((v, i) => ({
-      version: v.version,
-      notes: v.notes,
-      sources: v.sources,
-      s: deriveVersionStatus(v, collectHits(o.id, v.version, deobLike)),
-      isLatest: i === o.data.versions.length - 1,
-    }));
+    const versions: VersionView[] = o.data.versions.map((v, i) => {
+      const s = deriveVersionStatus(v, collectHits(o.id, v.version, deobLike));
+      const isLatest = i === o.data.versions.length - 1;
+      return {
+        version: v.version,
+        notes: v.notes,
+        sources: v.sources,
+        s,
+        isLatest,
+        provingDay: isLatest ? provingDay(s, now) : undefined,
+      };
+    });
     const latest = versions[versions.length - 1]!;
+    const previous = versions[versions.length - 2];
+    const openSource = o.data.pricing === 'open-source';
+    const cb = o.data.codebase;
+    const codebase = openSource && cb ? CODEBASE_CRITERIA.reduce((sum, c) => sum + cb[c], 0) : undefined;
 
     const runs = samples.flatMap((s) => s.runs.filter((r) => r.obfuscator === o.id && r.version === latest.version));
     const lab = runs.length ? { tested: runs.length, recovered: runs.filter(recovered).length } : undefined;
@@ -152,12 +173,16 @@ async function build(): Promise<SiteData> {
       data: o.data,
       versions,
       latest,
-      status: latest.s.status,
+      status: openSource && latest.s.status === 'holding' ? 'open' : latest.s.status,
+      openSource,
+      codebase,
       score: computeScore({
         latest: latest.s,
+        previous: previous?.s,
         versions: versions.map((v) => v.s),
         techniques: o.data.techniques,
         lab,
+        codebase,
         now,
       }),
       deobfuscators: deobs,
@@ -165,7 +190,7 @@ async function build(): Promise<SiteData> {
       stale: isStale(o.data.lastVerified, now),
     };
   });
-  obfuscators.sort((a, b) => b.score.total - a.score.total || a.data.name.localeCompare(b.data.name));
+  obfuscators.sort((a, b) => compareScores(a.score, b.score) || a.data.name.localeCompare(b.data.name));
   const obf = new Map(obfuscators.map((o) => [o.id, o]));
 
   const deobfuscators: DeobfuscatorView[] = deobEntries.map((d) => {
@@ -209,6 +234,7 @@ async function build(): Promise<SiteData> {
       id: a.id,
       data: a.data,
       status: BYPASS_TO_STATUS[a.data.bypass.status],
+      protection: a.data.protection?.status,
       stale: isStale(a.data.lastVerified, now),
     }))
     .sort((a, b) => a.data.name.localeCompare(b.data.name));
@@ -216,7 +242,7 @@ async function build(): Promise<SiteData> {
   const events = deriveEvents(obfuscators, deob, eventEntries);
 
   const ttb = obfuscators.flatMap((o) => o.versions.map((v) => v.s)).filter((s) => s.daysToBreak !== undefined);
-  const count = (s: Status) => obfuscators.filter((o) => o.status === s).length;
+  const count = (s: DisplayStatus) => obfuscators.filter((o) => o.status === s).length;
 
   return {
     obfuscators,
@@ -231,6 +257,7 @@ async function build(): Promise<SiteData> {
       deobfuscators: deobfuscators.length,
       auth: auth.length,
       holding: count('holding'),
+      open: count('open'),
       partial: count('partial'),
       broken: count('broken'),
       medianDaysToBreak: median(ttb.map((s) => s.daysToBreak!)),
