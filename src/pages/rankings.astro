@@ -48,8 +48,8 @@ const fastest = obfuscators
     <Section title="Leaderboard" description="Ranked by Security Score.">
       <ol class="surface divide-y divide-line md:hidden">
         {
-          rows.map(({ o, rank, med, fuzzy }) => (
-            <li class="relative px-4 py-3.5">
+          rows.map(({ o, rank, med, fuzzy }, i) => (
+            <li class="relative px-4 py-3.5" data-reveal style={`--reveal-i:${i}`}>
               <div class="flex items-center gap-3">
                 <span class="num w-4 text-sm text-subtle">{rank}</span>
                 <Monogram name={o.data.name} id={o.id} size="sm" />
@@ -82,8 +82,10 @@ const fastest = obfuscators
           </thead>
           <tbody class="divide-y divide-line">
             {
-              rows.map(({ o, rank, med, fuzzy }) => (
+              rows.map(({ o, rank, med, fuzzy }, i) => (
                 <tr
+                  data-reveal
+                  style={`--reveal-i:${i}`}
                   class="transition-colors hover:bg-hover"
                   data-rank={rank}
                   data-name={o.data.name.toLowerCase()}

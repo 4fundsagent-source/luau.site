@@ -21,7 +21,7 @@ const forms: { template: Parameters<typeof issueUrl>[0]; title: string; text: st
     description="Everything goes through public GitHub issues and pull requests. Bring a source, because we can't add a claim we can't verify."
   />
   <div class="container-page grid gap-12 py-12 lg:grid-cols-[minmax(0,1fr)_22rem]">
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {
         forms.map((f) => (
           <a href={issueUrl(f.template)} class="surface card-hover group flex flex-col p-5">

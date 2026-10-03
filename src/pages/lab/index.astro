@@ -47,7 +47,7 @@ const steps = [
     </ol>
 
     <Section id="corpus" title="Corpus" description={`${samples.length} scripts, each exercising a different weak spot.`}>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {
           samples.map((s, i) => (
             <article class="surface card-hover relative flex flex-col p-5" data-reveal style={`--reveal-i:${i}`}>

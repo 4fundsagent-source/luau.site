@@ -29,7 +29,7 @@ const lines = [...groups.values()].flatMap((g) => [
 ---
 
 <article
-  class="surface card-hover relative flex flex-col p-5"
+  class="surface card-hover relative flex min-w-0 flex-col p-5"
   data-item
   data-f-access={x.access}
   data-f-output={x.outputLevel}
@@ -46,7 +46,7 @@ const lines = [...groups.values()].flatMap((g) => [
     <Monogram name={x.name} id={d.id} transitionName={`mono-${d.id}`} />
     <div class="min-w-0 flex-1">
       <h3 class="truncate text-[0.9375rem] font-semibold tracking-tight text-fg">
-        <a href={`/deobfuscators/${d.id}`} class="card-link focus-visible:outline-none">{x.name}</a>
+        <a href={`/deobfuscators/${d.id}`} class="card-link focus-visible:outline-none" style={`view-transition-name:title-${d.id}`}>{x.name}</a>
       </h3>
       <p class="mt-0.5 truncate text-xs text-muted">by {x.author} · {ACCESS_LABEL[x.access]}{x.license ? ` (${x.license})` : ''}</p>
     </div>
@@ -62,7 +62,7 @@ const lines = [...groups.values()].flatMap((g) => [
           <span class="mt-[0.3rem]">
             <StatusIcon status={l.status} />
           </span>
-          <span class="min-w-0 text-fg">
+          <span class="min-w-0 break-words text-fg">
             {l.name} <span class="num text-muted">{l.versions.join(' · ')}</span>
             <span class="text-subtle"> — {l.note}</span>
           </span>

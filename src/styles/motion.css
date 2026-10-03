@@ -1,0 +1,415 @@
+/*
+ * luau.site motion system.
+ *
+ * Everything that moves lives behind `prefers-reduced-motion: no-preference`
+ * (CSS) or `html[data-motion]` (set by the head script for JS-driven effects),
+ * so reduced-motion users get a static, fully readable page.
+ *
+ *   data-enter      page-load / refresh entrance (CSS only), stagger with --i
+ *   data-reveal     scroll reveal (IntersectionObserver in scripts/motion.ts)
+ *   data-countup    number counts up when revealed
+ *   .card-hover     lift + cursor spotlight (--mx/--my from scripts/motion.ts)
+ *   .btn / .icon-btn  press, ripple, shine
+ */
+
+:root {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes vt-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+@keyframes ripple {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+@keyframes icon-in {
+  from {
+    transform: rotate(-90deg) scale(0.4);
+    opacity: 0;
+  }
+}
+@keyframes pop {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes bar-draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes line-draw {
+  from {
+    stroke-dashoffset: var(--len, 400);
+  }
+}
+@keyframes focus-ring {
+  from {
+    outline-offset: 6px;
+    outline-color: transparent;
+  }
+}
+@keyframes item-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(0.85);
+  }
+}
+@keyframes show-late {
+  to {
+    visibility: visible;
+  }
+}
+
+/* Cross-document view transitions (must stay outside cascade layers). */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
+/* Layered so Tailwind utilities (e.g. md:hidden) still win, and imported after
+   global.css so these rules extend the base component styles. */
+@layer components {
+  @media (prefers-reduced-motion: no-preference) {
+    /* ------------------------------------------------ page transitions */
+    ::view-transition-old(root) {
+      animation: 160ms var(--ease-out) both vt-out;
+    }
+    ::view-transition-new(root) {
+      animation: 360ms var(--ease-out) both vt-in;
+    }
+    ::view-transition-group(*) {
+      animation-duration: 420ms;
+      animation-timing-function: var(--ease-out);
+    }
+    .site-header {
+      view-transition-name: site-header;
+    }
+    .preview-banner {
+      view-transition-name: preview-banner;
+    }
+    .nav-active {
+      view-transition-name: nav-pill;
+    }
+    /* The theme switch reveals the new theme in a circle instead of cross-fading. */
+    html.theme-vt * {
+      view-transition-name: none !important;
+    }
+    html.theme-vt::view-transition-old(root),
+    html.theme-vt::view-transition-new(root),
+    html.same-vt::view-transition-old(root),
+    html.same-vt::view-transition-new(root) {
+      animation: none;
+      mix-blend-mode: normal;
+    }
+
+    /* ------------------------------------------------ page-load entrance */
+    [data-enter] {
+      animation: enter 760ms var(--ease-out) both;
+      animation-delay: calc(var(--i, 0) * 70ms + 40ms);
+    }
+
+    /* ------------------------------------------------ scroll reveal */
+    html[data-js] [data-reveal] {
+      opacity: 0;
+      transform: translateY(12px);
+      transition:
+        opacity 700ms var(--ease-out),
+        transform 700ms var(--ease-out);
+      transition-delay: calc(var(--reveal-i, 0) * 70ms);
+    }
+    html[data-js] [data-reveal][data-inview] {
+      opacity: 1;
+      transform: none;
+    }
+
+    .score-fill {
+      transform-origin: left center;
+      transform: scaleX(var(--seen, 1));
+      transition: transform 1100ms var(--ease-out);
+      transition-delay: calc(var(--reveal-i, 0) * 70ms + 120ms);
+    }
+    html[data-js] [data-reveal]:not([data-inview]) .score-fill {
+      --seen: 0;
+    }
+
+    /* ------------------------------------------------ count-up */
+    html[data-motion] [data-countup] {
+      font-variant-numeric: tabular-nums;
+      visibility: hidden;
+      /* Never stuck invisible: if the script never runs, show the number anyway. */
+      animation: show-late 0s 2.5s forwards;
+    }
+    html[data-motion] [data-countup][data-count-armed] {
+      animation: none;
+    }
+    html[data-motion] [data-countup][data-counted] {
+      visibility: visible;
+      animation: none;
+    }
+
+    /* ------------------------------------------------ buttons */
+    .btn,
+    .icon-btn,
+    .seg-btn {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .btn {
+      transition:
+        background-color 180ms,
+        border-color 180ms,
+        box-shadow 240ms var(--ease-out),
+        transform 180ms var(--ease-out);
+    }
+    .btn:hover {
+      box-shadow: var(--shadow-lift), var(--highlight);
+      transform: translateY(-1px);
+    }
+    .btn:active,
+    .icon-btn:active,
+    .seg-btn:active {
+      transform: scale(0.96);
+      transition-duration: 80ms;
+    }
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(
+        105deg,
+        transparent 30%,
+        color-mix(in oklab, var(--accent) 45%, transparent) 50%,
+        transparent 70%
+      );
+      transform: translateX(-130%);
+      transition: transform 800ms var(--ease-out);
+      pointer-events: none;
+    }
+    .btn-primary:hover::after {
+      transform: translateX(130%);
+    }
+    .btn svg,
+    .icon-btn svg {
+      transition: transform 260ms var(--ease-spring);
+    }
+    .btn:hover svg:last-child:not(:first-child) {
+      transform: translateX(2px);
+    }
+    .icon-btn:hover svg {
+      transform: scale(1.12);
+    }
+    [data-theme-toggle] svg {
+      animation: icon-in 560ms var(--ease-spring);
+    }
+    .ripple {
+      position: absolute;
+      z-index: -1;
+      border-radius: 999px;
+      background: currentColor;
+      opacity: 0.16;
+      transform: scale(0);
+      animation: ripple 620ms var(--ease-out) forwards;
+      pointer-events: none;
+    }
+
+    /* ------------------------------------------------ cards */
+    .card-hover {
+      isolation: isolate;
+      transition:
+        border-color 260ms,
+        box-shadow 320ms var(--ease-out),
+        transform 320ms var(--ease-out);
+    }
+    .card-hover:hover {
+      transform: translateY(-3px);
+    }
+    .card-hover::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      border-radius: inherit;
+      background: radial-gradient(
+        380px circle at var(--mx, 50%) var(--my, -20%),
+        color-mix(in oklab, var(--accent) 10%, transparent),
+        transparent 65%
+      );
+      opacity: 0;
+      transition: opacity 320ms;
+      pointer-events: none;
+    }
+    .card-hover:hover::before {
+      opacity: 1;
+    }
+    .card-hover .monogram {
+      transition: transform 420ms var(--ease-spring);
+    }
+    .card-hover:hover .monogram {
+      transform: rotate(-5deg) scale(1.07);
+    }
+    .card-hover:active {
+      transform: translateY(-1px) scale(0.995);
+    }
+
+    /* ------------------------------------------------ links & focus */
+    .link {
+      text-decoration: none;
+      background:
+        linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat,
+        linear-gradient(var(--line-strong), var(--line-strong)) 0 100% / 100% 1px no-repeat;
+      padding-bottom: 1px;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+      transition: background-size 380ms var(--ease-out);
+    }
+    .link:hover {
+      background-size:
+        100% 1px,
+        100% 1px;
+    }
+    :focus-visible {
+      animation: focus-ring 240ms var(--ease-out);
+    }
+
+    /* ------------------------------------------------ header */
+    .site-header {
+      transition:
+        box-shadow 300ms,
+        background-color 300ms,
+        border-color 300ms;
+    }
+    .site-header[data-scrolled] {
+      box-shadow: 0 8px 24px -16px rgb(0 0 0 / 0.25);
+      background: color-mix(in oklab, var(--bg) 92%, transparent);
+    }
+
+    /* ------------------------------------------------ timeline chart */
+    html[data-js] .arms-race .bar-fill {
+      transform-box: fill-box;
+      transform-origin: left center;
+      transform: scaleX(0);
+    }
+    html[data-js] .arms-race[data-inview] .bar-fill {
+      transform: none;
+      animation: bar-draw 900ms var(--ease-out) both;
+      animation-delay: var(--d, 0ms);
+    }
+    html[data-js] .arms-race .marker {
+      transform-box: fill-box;
+      transform-origin: center;
+      transform: scale(0);
+    }
+    html[data-js] .arms-race[data-inview] .marker {
+      transform: none;
+      animation: pop 520ms var(--ease-spring) both;
+      animation-delay: calc(var(--d, 0ms) + 700ms);
+    }
+    html[data-js] .arms-race .now-line {
+      stroke-dasharray: var(--len, 400);
+      stroke-dashoffset: var(--len, 400);
+    }
+    html[data-js] .arms-race[data-inview] .now-line {
+      stroke-dashoffset: 0;
+      animation: line-draw 900ms var(--ease-in-out) both 300ms;
+    }
+
+    /* ------------------------------------------------ lists */
+    .stagger-in > * {
+      animation: item-in 280ms var(--ease-out) both;
+      animation-delay: calc(var(--i, 0) * 22ms);
+    }
+  }
+
+  /* Mobile menu: slides open by animating grid rows; hidden from AT when closed. */
+  .mobile-menu {
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition:
+      grid-template-rows 340ms var(--ease-out),
+      visibility 0s 340ms;
+  }
+  .mobile-menu[data-open] {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition:
+      grid-template-rows 340ms var(--ease-out),
+      visibility 0s;
+  }
+  .mobile-menu > * {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Navigation progress bar for slow page loads. */
+  .nav-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 60;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left center;
+    pointer-events: none;
+  }
+  .nav-progress[data-active] {
+    animation: progress 2.4s var(--ease-out) forwards;
+  }
+
+  /* Chart tooltip fades instead of popping. */
+  [data-tooltip] {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+    transition:
+      opacity 160ms,
+      transform 200ms var(--ease-out);
+  }
+  [data-tooltip][data-show] {
+    opacity: 1;
+    transform: none;
+  }
+}

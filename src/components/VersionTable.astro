@@ -16,7 +16,7 @@ const anchor = (v: string) => `v-${v.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}
 const toolName = (id: string) => deob.get(id)?.data.name ?? id;
 ---
 
-<div class="surface overflow-hidden">
+<div class="surface overflow-hidden" data-reveal>
   <table class="w-full text-left text-sm">
     <thead class="hidden border-b border-line bg-sunken text-xs text-subtle md:table-header-group">
       <tr>

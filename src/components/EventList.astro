@@ -34,8 +34,8 @@ for (const e of events) {
       <section>
         {month && <h3 class="eyebrow mb-3">{month}</h3>}
         <ol class="surface divide-y divide-line">
-          {items.map((e) => (
-            <li class="flex gap-4 px-4 py-3.5">
+          {items.map((e, i) => (
+            <li class="flex gap-4 px-4 py-3.5" data-reveal style={`--reveal-i:${Math.min(i, 6)}`}>
               <span class="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border border-line bg-sunken text-muted">
                 {e.kind === 'break' ? <StatusIcon status="broken" size={13} /> : <Icon name={ICON[e.kind] ?? 'info'} size={14} />}
               </span>

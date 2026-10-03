@@ -33,13 +33,36 @@ import Icon from './Icon.astro';
 
 <style>
   .cmdk[open] {
-    animation: cmdk-in 160ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    animation: cmdk-in 240ms var(--ease-out);
+  }
+  .cmdk[open]::backdrop {
+    animation: cmdk-fade 240ms var(--ease-out);
+  }
+  .cmdk[data-closing] {
+    animation: cmdk-out 150ms ease-in forwards;
+  }
+  .cmdk[data-closing]::backdrop {
+    animation: cmdk-fade 150ms ease-in reverse forwards;
   }
   @keyframes cmdk-in {
     from {
       opacity: 0;
-      transform: translateY(-6px) scale(0.99);
+      transform: translateY(-10px) scale(0.98);
     }
+  }
+  @keyframes cmdk-out {
+    to {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.98);
+    }
+  }
+  @keyframes cmdk-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  :global(.cmdk-item) {
+    transition: background-color 140ms;
   }
   :global(.cmdk-item[aria-selected='true']) {
     background: var(--bg-hover);
@@ -103,6 +126,7 @@ import Icon from './Icon.astro';
     }
     results.forEach((r, i) => {
       const li = document.createElement('li');
+      li.style.setProperty('--i', String(Math.min(i, 10)));
       li.id = `cmdk-${i}`;
       li.setAttribute('role', 'option');
       li.setAttribute('aria-selected', String(i === active));
@@ -154,6 +178,8 @@ import Icon from './Icon.astro';
     render();
     dialog.showModal();
     input.focus();
+    list.classList.add('stagger-in');
+    window.setTimeout(() => list.classList.remove('stagger-in'), 600);
     try {
       await ensureIndex();
     } catch {
@@ -180,8 +206,26 @@ import Icon from './Icon.astro';
       window.location.href = results[active].href;
     }
   });
+  function close() {
+    if (!dialog.open || dialog.hasAttribute('data-closing')) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return dialog.close();
+    dialog.setAttribute('data-closing', '');
+    dialog.addEventListener(
+      'animationend',
+      () => {
+        dialog.removeAttribute('data-closing');
+        dialog.close();
+      },
+      { once: true },
+    );
+  }
+
+  dialog.addEventListener('cancel', (e) => {
+    e.preventDefault();
+    close();
+  });
   dialog.addEventListener('click', (e) => {
-    if (e.target === dialog) dialog.close();
+    if (e.target === dialog) close();
   });
 
   document.querySelectorAll('[data-search-open]').forEach((b) => b.addEventListener('click', open));

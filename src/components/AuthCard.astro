@@ -15,12 +15,12 @@ const { obf } = await getSiteData();
 const bundled = x.bundledObfuscator ? obf.get(x.bundledObfuscator.id) : undefined;
 ---
 
-<article class="surface card-hover relative flex flex-col p-5" data-reveal style={`--reveal-i:${index % 6}`}>
+<article class="surface card-hover relative flex min-w-0 flex-col p-5" data-reveal style={`--reveal-i:${index % 6}`}>
   <div class="flex items-start gap-3">
     <Monogram name={x.name} id={a.id} transitionName={`mono-${a.id}`} />
     <div class="min-w-0 flex-1">
       <h3 class="truncate text-[0.9375rem] font-semibold tracking-tight">
-        <a href={`/auth/${a.id}`} class="card-link">{x.name}</a>
+        <a href={`/auth/${a.id}`} class="card-link" style={`view-transition-name:title-${a.id}`}>{x.name}</a>
       </h3>
       <p class="mt-0.5 text-xs text-muted">{PRICING_LABEL[x.pricing]}</p>
     </div>

@@ -7,7 +7,7 @@ const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
 ---
 
-<header class="sticky top-0 z-40 border-b border-line/70 bg-bg/80 backdrop-blur-xl backdrop-saturate-150">
+<header class="site-header sticky top-0 z-40 border-b border-line/70 bg-bg/80 backdrop-blur-xl backdrop-saturate-150">
   <div class="container-page flex h-14 items-center gap-6">
     <a href="/" class="flex items-center gap-2 text-[0.9375rem] font-semibold tracking-tight text-fg" aria-label="luau.site home">
       <Logo />
@@ -20,8 +20,8 @@ const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
           <a
             href={item.href}
             class:list={[
-              'rounded-md px-2.5 py-1.5 transition-colors',
-              isActive(item.href) ? 'bg-hover text-fg' : 'text-muted hover:text-fg',
+              'rounded-md px-2.5 py-1.5 transition-colors duration-200',
+              isActive(item.href) ? 'nav-active bg-hover text-fg' : 'text-muted hover:bg-hover/60 hover:text-fg',
             ]}
             aria-current={isActive(item.href) ? 'page' : undefined}
           >
@@ -58,8 +58,8 @@ const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
     </div>
   </div>
 
-  <nav id="mobile-nav" data-menu class="hidden border-t border-line md:hidden" aria-label="Primary mobile">
-    <ul class="container-page grid grid-cols-2 gap-1 py-3 text-sm">
+  <nav id="mobile-nav" data-menu class="mobile-menu md:hidden" aria-label="Primary mobile">
+    <ul class="container-page grid grid-cols-2 gap-1 border-t border-line py-3 text-sm">
       {
         NAV.map((item) => (
           <li>
@@ -81,22 +81,22 @@ const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
 
 
 <script>
+  import { setTheme } from '~/scripts/motion';
+
   const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
   const menu = document.querySelector<HTMLElement>('[data-menu]');
   toggle?.addEventListener('click', () => {
-    const open = menu?.classList.toggle('hidden') === false;
+    const open = !menu?.hasAttribute('data-open');
+    menu?.toggleAttribute('data-open', open);
     toggle.setAttribute('aria-expanded', String(open));
     toggle.querySelector('.menu-open')?.classList.toggle('hidden', open);
     toggle.querySelector('.menu-close')?.classList.toggle('hidden', !open);
   });
 
-  document.querySelector('[data-theme-toggle]')?.addEventListener('click', () => {
+  const themeButton = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  themeButton?.addEventListener('click', () => {
     const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = next;
-    try {
-      localStorage.setItem('theme', next);
-    } catch {
-      /* storage unavailable — theme still applies for this page */
-    }
+    const r = themeButton.getBoundingClientRect();
+    setTheme(next, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
   });
 </script>

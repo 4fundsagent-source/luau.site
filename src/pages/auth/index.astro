@@ -16,7 +16,7 @@ const { auth } = await getSiteData();
     description="Key systems, whitelists and loaders that decide who can run a script, often bundled with obfuscation. We track their features and whether a public bypass exists."
   />
   <div class="container-page py-10">
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {auth.map((a, i) => <AuthCard a={a} index={i} />)}
     </div>
     <p class="mt-8 flex items-center gap-2 text-sm text-muted">

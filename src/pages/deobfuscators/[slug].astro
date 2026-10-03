@@ -32,7 +32,7 @@ const runs = samples.flatMap((s) =>
   <section class="relative overflow-hidden border-b border-line">
     <div class="pointer-events-none absolute inset-0" style="background:var(--glow)" aria-hidden="true"></div>
     <div class="container-page relative py-10 md:py-14">
-      <nav aria-label="Breadcrumb" class="mb-6 text-sm text-subtle">
+      <nav aria-label="Breadcrumb" class="mb-6 text-sm text-subtle" data-enter style="--i:0">
         <a href="/deobfuscators" class="hover:text-fg">Deobfuscators</a>
         <span aria-hidden="true"> / </span>
         <span class="text-muted">{x.name}</span>
@@ -40,16 +40,16 @@ const runs = samples.flatMap((s) =>
       <div class="flex flex-col gap-6 sm:flex-row sm:items-start">
         <Monogram name={x.name} id={d.id} size="lg" transitionName={`mono-${d.id}`} />
         <div class="min-w-0 flex-1">
-          <h1 class="text-3xl font-semibold tracking-tight break-words text-fg md:text-4xl">{x.name}</h1>
+          <h1 class="text-3xl font-semibold tracking-tight break-words text-fg md:text-4xl" style={`view-transition-name:title-${d.id}`}>{x.name}</h1>
           <p class="mt-1 text-sm text-muted">by {x.author}</p>
-          <p class="mt-3 max-w-2xl text-[1.0625rem] leading-relaxed text-muted">{x.tagline}</p>
-          <div class="mt-4 flex flex-wrap gap-1.5">
+          <p class="mt-3 max-w-2xl text-[1.0625rem] leading-relaxed text-muted" data-enter style="--i:2">{x.tagline}</p>
+          <div class="mt-4 flex flex-wrap gap-1.5" data-enter style="--i:3">
             <span class="chip">{ACCESS_LABEL[x.access]}</span>
             {x.license && <span class="chip">{x.license}</span>}
             <span class="chip">{OUTPUT_META[x.outputLevel].label}</span>
             <span class="chip">{MAINTENANCE_LABEL[x.maintenance]}</span>
           </div>
-          <div class="mt-6">
+          <div class="mt-6" data-enter style="--i:4">
             <ExternalLinks variant="buttons" name={x.name} website={x.website} repo={x.repo} docs={x.docs} discord={x.discord} />
           </div>
         </div>

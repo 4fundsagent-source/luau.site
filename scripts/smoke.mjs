@@ -60,6 +60,9 @@ await page.waitForURL(/\/obfuscators\/luraph/);
 await page.goto(base + '/obfuscators', { waitUntil: 'networkidle' });
 const total = await page.locator('[data-item]:visible').count();
 await page.click('button[data-filter="status"][data-value="broken"]');
+// Filtering runs inside a view transition, so the DOM updates asynchronously.
+await page.waitForFunction((t) => document.querySelectorAll('[data-item]:not([hidden])').length < t, total).catch(() => {});
+await page.waitForTimeout(500);
 const broken = await page.locator('[data-item]:visible').count();
 if (!(broken > 0 && broken < total)) fail(`filter: broken=${broken} total=${total}`);
 if (!page.url().includes('status=broken')) fail('filter: URL not updated');
@@ -67,6 +70,7 @@ await page.reload({ waitUntil: 'networkidle' });
 if ((await page.locator('[data-item]:visible').count()) !== broken) fail('filter: state not restored from URL');
 
 await page.click('[data-theme-toggle]');
+await page.waitForTimeout(900);
 await page.reload();
 const theme = await page.evaluate(() => document.documentElement.dataset.theme);
 if (theme !== 'dark') fail(`theme toggle did not persist (got ${theme})`);

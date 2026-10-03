@@ -1,5 +1,6 @@
 ---
 import '~/styles/global.css';
+import '~/styles/motion.css';
 import CommandPalette from '~/components/CommandPalette.astro';
 import Footer from '~/components/Footer.astro';
 import Header from '~/components/Header.astro';
@@ -46,6 +47,7 @@ const ogImage = new URL(image, SITE.url);
       (() => {
         const d = document.documentElement;
         d.dataset.js = '';
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) d.dataset.motion = '';
         let stored = null;
         try {
           stored = localStorage.getItem('theme');
@@ -68,7 +70,7 @@ const ogImage = new URL(image, SITE.url);
     >
     {
       SITE.dataPreview && (
-        <div class="border-b border-line bg-sunken">
+        <div class="preview-banner border-b border-line bg-sunken">
           <p class="container-page flex items-center gap-2 py-2 text-xs text-muted">
             <Icon name="info" size={14} class="shrink-0" />
             <span>
@@ -89,23 +91,7 @@ const ogImage = new URL(image, SITE.url);
     <CommandPalette />
 
     <script>
-      // Reveal-on-scroll for [data-reveal]; also fills score bars inside them.
-      const els = document.querySelectorAll<HTMLElement>('[data-reveal]');
-      if ('IntersectionObserver' in window) {
-        const io = new IntersectionObserver(
-          (entries) => {
-            for (const e of entries) {
-              if (!e.isIntersecting) continue;
-              (e.target as HTMLElement).dataset.inview = '';
-              io.unobserve(e.target);
-            }
-          },
-          { rootMargin: '0px 0px -8% 0px' },
-        );
-        els.forEach((el) => io.observe(el));
-      } else {
-        els.forEach((el) => (el.dataset.inview = ''));
-      }
+      import '~/scripts/motion';
     </script>
   </body>
 </html>

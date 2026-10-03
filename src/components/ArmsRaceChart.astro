@@ -137,7 +137,7 @@ const uid = `arc${compact ? 'c' : 'f'}`;
 const nowX = x(now.getTime());
 ---
 
-<figure class="arms-race relative" data-chart>
+<figure class="arms-race relative" data-chart data-reveal>
   <div class="overflow-x-auto">
     <svg
       viewBox={`0 0 ${W} ${H}`}
@@ -169,7 +169,8 @@ const nowX = x(now.getTime());
                 {l.name}
               </text>
             </a>
-            {l.bars.map((b) => {
+            {l.bars.map((b, bi) => {
+              const delay = `--d:${li * 110 + bi * 70}ms`;
               const x0 = x(b.start);
               const x1 = x(b.end);
               const yTop = l.top + LANE_PAD / 2 + b.row * ROW_H + (ROW_H - BAR_H) / 2;
@@ -181,9 +182,9 @@ const nowX = x(now.getTime());
               return (
                 <a href={`/obfuscators/${l.id}#v-${b.version.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`} class="bar" data-tip={b.tip.join('\n')} data-status={b.status} aria-label={b.tip.join(', ')}>
                   <rect x={x0 - 2} y={yTop - 5} width={Math.max(x1 - x0, 2) + 4 + markerSpace} height={BAR_H + 10} fill="transparent" />
-                  <path d={barPath(x0, x1, yTop, b.endKind !== 'superseded')} fill={`var(--${b.status})`} class="bar-fill" />
+                  <path d={barPath(x0, x1, yTop, b.endKind !== 'superseded')} fill={`var(--${b.status})`} class="bar-fill" style={delay} />
                   {b.endKind === 'broken' && (
-                    <g>
+                    <g class="marker" style={delay}>
                       <circle cx={x1} cy={yTop + BAR_H / 2} r="6.5" fill="var(--broken)" stroke="var(--bg-elev)" stroke-width="2" />
                       <path
                         d={`M${x1 - 2.4},${yTop + BAR_H / 2 - 2.4}l4.8,4.8M${x1 + 2.4},${yTop + BAR_H / 2 - 2.4}l-4.8,4.8`}
@@ -219,7 +220,8 @@ const nowX = x(now.getTime());
                   fill="var(--fg)"
                   stroke="var(--bg-elev)"
                   stroke-width="2"
-                  class="bar-fill"
+                  class="marker"
+                  style={`--d:${laneLayout.length * 110}ms`}
                 />
               </a>
             ))}
@@ -228,7 +230,17 @@ const nowX = x(now.getTime());
       }
 
       <!-- now -->
-      <line x1={nowX} x2={nowX} y1={TOP - 6} y2={H - 8} stroke="var(--fg)" stroke-width="1" stroke-opacity="0.55" />
+      <line
+        x1={nowX}
+        x2={nowX}
+        y1={TOP - 6}
+        y2={H - 8}
+        stroke="var(--fg)"
+        stroke-width="1"
+        stroke-opacity="0.55"
+        class="now-line"
+        style={`--len:${H}`}
+      />
       <text x={nowX - 4} y={TOP - 12} class="tick now" text-anchor="end">Today</text>
     </svg>
   </div>
@@ -257,7 +269,7 @@ const nowX = x(now.getTime());
     <span class="text-subtle sm:ml-auto">Built {formatPlainDate(now)}</span>
   </figcaption>
 
-  <div data-tooltip role="tooltip" class="pointer-events-none absolute z-10 hidden rounded-lg border border-line-strong bg-elev px-3 py-2 text-xs shadow-lift"></div>
+  <div data-tooltip aria-hidden="true" class="pointer-events-none absolute z-10 rounded-lg border border-line-strong bg-elev px-3 py-2 text-xs shadow-lift"></div>
 </figure>
 
 <style>
@@ -312,14 +324,14 @@ const nowX = x(now.getTime());
           return p;
         }),
       );
-      tip.classList.remove('hidden');
+      tip.setAttribute('data-show', '');
       const box = fig.getBoundingClientRect();
       const w = tip.offsetWidth;
       const left = Math.min(Math.max(8, cx - box.left + 12), box.width - w - 8);
       tip.style.left = `${left}px`;
       tip.style.top = `${cy - box.top + 14}px`;
     };
-    const hide = () => tip.classList.add('hidden');
+    const hide = () => tip.removeAttribute('data-show');
     fig.querySelectorAll('[data-tip]').forEach((el) => {
       el.addEventListener('pointermove', (e) => show(el, (e as PointerEvent).clientX, (e as PointerEvent).clientY));
       el.addEventListener('pointerleave', hide);

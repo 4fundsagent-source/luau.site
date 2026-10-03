@@ -149,6 +149,8 @@ const { filters, sorts, total, noun, placeholder = 'Filter by name…' } = Astro
 </style>
 
 <script>
+  import { withTransition } from '~/scripts/motion';
+
   for (const bar of document.querySelectorAll<HTMLElement>('[data-filterbar]')) {
     const scope = bar.parentElement!;
     const items = [...scope.querySelectorAll<HTMLElement>('[data-item]')];
@@ -181,6 +183,13 @@ const { filters, sorts, total, noun, placeholder = 'Filter by name…' } = Astro
       sort.value !== defaultSort ? p.set('sort', sort.value) : p.delete('sort');
       const qs = p.toString();
       history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+    }
+
+    /** Apply filters; animate cards moving, leaving and entering when triggered by the user. */
+    function update(animate = true) {
+      if (!animate) return apply();
+      items.forEach((el, i) => (el.style.viewTransitionName = `filter-item-${i}`));
+      withTransition(apply).then(() => items.forEach((el) => (el.style.viewTransitionName = '')));
     }
 
     function apply() {
@@ -219,25 +228,29 @@ const { filters, sorts, total, noun, placeholder = 'Filter by name…' } = Astro
     segButtons.forEach((b) =>
       b.addEventListener('click', () => {
         state[b.dataset.filter!] = b.dataset.value ?? '';
-        apply();
+        update();
       }),
     );
     selects.forEach((s) =>
       s.addEventListener('change', () => {
         state[s.dataset.filter!] = s.value;
-        apply();
+        update();
       }),
     );
-    q.addEventListener('input', apply);
-    sort.addEventListener('change', apply);
+    let typing: number | undefined;
+    q.addEventListener('input', () => {
+      window.clearTimeout(typing);
+      typing = window.setTimeout(() => update(), 120);
+    });
+    sort.addEventListener('change', () => update());
     reset.addEventListener('click', () => {
       keys.forEach((k) => (state[k] = ''));
       q.value = '';
-      apply();
+      update();
       q.focus();
     });
 
     readUrl();
-    apply();
+    update(false);
   }
 </script>

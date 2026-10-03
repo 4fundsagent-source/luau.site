@@ -32,7 +32,7 @@ const footer =
 ---
 
 <article
-  class="surface card-hover relative flex flex-col p-5"
+  class="surface card-hover relative flex min-w-0 flex-col p-5"
   data-item
   data-f-status={o.status}
   data-f-pricing={d.pricing}
@@ -49,7 +49,7 @@ const footer =
     <Monogram name={d.name} id={o.id} transitionName={`mono-${o.id}`} />
     <div class="min-w-0 flex-1">
       <h3 class="truncate text-[0.9375rem] font-semibold tracking-tight text-fg">
-        <a href={`/obfuscators/${o.id}`} class="card-link focus-visible:outline-none">{d.name}</a>
+        <a href={`/obfuscators/${o.id}`} class="card-link focus-visible:outline-none" style={`view-transition-name:title-${o.id}`}>{d.name}</a>
       </h3>
       <p class="num mt-0.5 truncate text-xs text-muted">
         {formatVersion(o.latest.version)} · {PRICING_LABEL[d.pricing]}

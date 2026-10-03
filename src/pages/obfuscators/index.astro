@@ -62,7 +62,7 @@ const sorts: SortDef[] = [
   />
   <div class="container-page py-10">
     <FilterBar filters={filters} sorts={sorts} total={obfuscators.length} noun={['obfuscator', 'obfuscators']} />
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {obfuscators.map((o, i) => <ObfuscatorCard o={o} index={i} />)}
     </div>
     <div data-empty hidden class="surface mt-4 p-10 text-center">

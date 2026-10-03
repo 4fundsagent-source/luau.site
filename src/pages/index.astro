@@ -61,7 +61,7 @@ const statTiles = [
     </div>
 
     <div class="container-page relative pt-16 pb-14 text-center md:pt-24 md:pb-20">
-      <a href="/timeline" class="chip mx-auto h-7 gap-2 pr-3 pl-2 shadow-card hover:text-fg">
+      <a href="/timeline" class="chip mx-auto h-7 gap-2 pr-3 pl-2 shadow-card hover:text-fg" data-enter style="--i:0">
         <span class="relative flex size-2">
           <span class="absolute inline-flex size-full animate-ping rounded-full opacity-60" style="background:var(--holding)"></span>
           <span class="relative inline-flex size-2 rounded-full" style="background:var(--holding)"></span>
@@ -70,22 +70,26 @@ const statTiles = [
         <Icon name="arrow-right" size={13} />
       </a>
 
-      <h1 class="mx-auto mt-6 max-w-4xl text-[2.6rem] leading-[1.05] font-semibold tracking-[-0.035em] text-fg sm:text-6xl md:text-7xl">
+      <h1
+        class="mx-auto mt-6 max-w-4xl text-[2.6rem] leading-[1.05] font-semibold tracking-[-0.035em] text-fg sm:text-6xl md:text-7xl"
+        data-enter
+        style="--i:1"
+      >
         The independent index of Lua &amp; Luau{' '}
         <span class="relative inline-block">
           <span class="sr-only">obfuscation.</span>
           <span aria-hidden="true" data-scramble="obfuscation." class="hero-word">obfuscation.</span>
         </span>
       </h1>
-      <p class="mx-auto mt-6 max-w-2xl text-[1.0625rem] leading-relaxed text-muted md:text-lg">
+      <p class="mx-auto mt-6 max-w-2xl text-[1.0625rem] leading-relaxed text-muted md:text-lg" data-enter style="--i:2">
         Who protects code, who breaks it, how fast, and with what result. Tracked with sources and scored in the open.
       </p>
 
-      <div class="mx-auto mt-9 flex max-w-xl flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+      <div class="mx-auto mt-9 flex max-w-xl flex-col items-stretch gap-3 sm:flex-row sm:items-center" data-enter style="--i:3">
         <button
           type="button"
           data-search-open
-          class="flex h-11 flex-1 items-center gap-3 rounded-xl border border-line bg-elev px-4 text-left text-[0.9375rem] text-subtle shadow-card transition-colors hover:border-line-strong"
+          class="hero-search flex h-11 flex-1 items-center gap-3 rounded-xl border border-line bg-elev px-4 text-left text-[0.9375rem] text-subtle shadow-card transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-px hover:border-line-strong hover:shadow-lift"
         >
           <Icon name="search" />
           <span class="flex-1">Search Luraph, MoonVeil, v15…</span>
@@ -105,6 +109,8 @@ const statTiles = [
       {
         statTiles.map((s, i) => (
           <div
+            data-enter
+            style={`--i:${i + 4}`}
             class:list={[
               'px-1 py-6 md:px-6',
               i % 2 === 1 && 'border-l border-line pl-5',
@@ -116,7 +122,9 @@ const statTiles = [
               {s.status && <StatusIcon status={s.status} />}
               {s.label}
             </dt>
-            <dd class="mt-1 text-3xl font-semibold tracking-tight text-fg">{s.value}</dd>
+            <dd class="mt-1 text-3xl font-semibold tracking-tight text-fg" data-countup={/^\d+$/.test(s.value) ? s.value : undefined}>
+              {s.value}
+            </dd>
           </div>
         ))
       }
@@ -172,7 +180,7 @@ const statTiles = [
         <p class="eyebrow">Explore</p>
         <h2 class="mt-1 text-xl font-semibold tracking-tight">Everything in one place</h2>
       </div>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {
           tiles.map((t, i) => (
             <a href={t.href} class="surface card-hover group flex flex-col p-5" data-reveal style={`--reveal-i:${i}`}>
@@ -252,15 +260,15 @@ const statTiles = [
 
 <style>
   .hero-texture {
-    mask-image: radial-gradient(70% 60% at 50% 35%, black, transparent 75%);
-    -webkit-mask-image: radial-gradient(70% 60% at 50% 35%, black, transparent 75%);
-    opacity: 0.35;
+    mask-image: radial-gradient(55% 55% at 50% 38%, black, transparent 78%);
+    -webkit-mask-image: radial-gradient(55% 55% at 50% 38%, black, transparent 78%);
+    opacity: 0.2;
     white-space: pre;
     overflow: hidden;
     user-select: none;
   }
   :global([data-theme='dark']) .hero-texture {
-    opacity: 0.28;
+    opacity: 0.16;
   }
   @media (prefers-reduced-motion: no-preference) {
     .hero-texture {
