@@ -1,0 +1,27 @@
+name: Tovek
+author: Kiet1308
+kind: decompiler
+decompiles: [luau]
+tagline: Actively maintained fork of Medal focused on readable Luau output with inferred names.
+description: >-
+  Tovek builds on Medal's decompiler and concentrates on output people can read: names inferred from
+  usage instead of v1, v2, v3, recovered method-call syntax, reversed Luau optimizer inlining, and
+  support for Luau bytecode versions 4 to 14. It ships native builds with checksums, and was still
+  receiving commits in October 2026.
+repo: https://github.com/Kiet1308/Tovek
+access: open-source
+license: MIT
+techniques: [decompilation, ast-cleanup]
+outputLevel: readable
+# Earliest visible release (beta 0.5.2) is June 21, 2024; older releases exist.
+firstSeen: "~2024-06"
+maintenance: active
+verified: false
+lastVerified: 2026-10-04
+sources:
+  - url: https://github.com/Kiet1308/Tovek
+    title: Kiet1308/Tovek — "A high-readability, high-performance Luau decompiler. A fork of medal."
+    accessed: 2026-10-04
+  - url: https://github.com/Kiet1308/Tovek/releases
+    title: Releases — beta 0.5.2 (June 2024) to V2.5.1
+    accessed: 2026-10-04

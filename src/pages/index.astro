@@ -13,7 +13,10 @@ import { issueUrl } from '~/lib/site';
 
 const data = await getSiteData();
 const { stats, obfuscators, events, samples, auth } = data;
-const top = obfuscators.filter((o) => !o.score.unrated).slice(0, 5);
+// The home page follows the commercial, maintained obfuscators; the rest live in the directory.
+const featured = obfuscators.filter((o) => o.segment === 'current');
+const top = featured.filter((o) => !o.score.unrated).slice(0, 5);
+const activity = events.filter((e) => e.segment === 'current').slice(0, 5);
 
 // Deterministic "obfuscated Luau" texture for the hero background.
 let seed = 1337;
@@ -142,7 +145,7 @@ const statTiles = [
           </div>
           <a href="/timeline" class="text-sm text-muted hover:text-fg">All events →</a>
         </div>
-        <EventList events={events.slice(0, 5)} />
+        <EventList events={activity} />
       </section>
 
       <section>
@@ -209,7 +212,7 @@ const statTiles = [
         <a href="/timeline" class="text-sm text-muted hover:text-fg">Open the timeline →</a>
       </div>
       <div class="surface p-4 sm:p-6">
-        <ArmsRaceChart data={data} compact />
+        <ArmsRaceChart data={data} compact only={featured.map((o) => o.id)} />
       </div>
     </section>
 

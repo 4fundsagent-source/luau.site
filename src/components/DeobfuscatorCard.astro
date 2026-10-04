@@ -1,10 +1,12 @@
 ---
 import { formatDate } from '~/lib/dates';
 import { githubStats } from '~/lib/github';
-import { formatVersion, type DeobfuscatorView } from '~/lib/data';
+import { formatVersion, listRuntimes, type DeobfuscatorView } from '~/lib/data';
 import { ACCESS_LABEL, MAINTENANCE_LABEL, OUTPUT_META } from '~/lib/taxonomy';
 import ExternalLinks from './ExternalLinks.astro';
+import Icon from './Icon.astro';
 import Monogram from './Monogram.astro';
+import ScoreBar from './ScoreBar.astro';
 import StatusIcon from './StatusIcon.astro';
 
 interface Props {
@@ -35,8 +37,10 @@ const lines = [...groups.values()].flatMap((g) => [
   data-f-output={x.outputLevel}
   data-f-target={[...groups.keys()].join(' ')}
   data-f-maintenance={x.maintenance}
+  data-f-kind={x.kind}
   data-search={`${x.name} ${x.author} ${x.tagline} ${[...groups.values()].map((g) => g.name).join(' ')}`.toLowerCase()}
   data-s-name={x.name.toLowerCase()}
+  data-s-score={d.score.total}
   data-s-first={d.firstSeen?.date.getTime() ?? 0}
   data-s-coverage={d.coverage.length}
   data-reveal
@@ -50,26 +54,44 @@ const lines = [...groups.values()].flatMap((g) => [
       </h3>
       <p class="mt-0.5 truncate text-xs text-muted">by {x.author} · {ACCESS_LABEL[x.access]}{x.license ? ` (${x.license})` : ''}</p>
     </div>
-    <span class="chip">{MAINTENANCE_LABEL[x.maintenance]}</span>
+    <span class="chip">{x.kind === 'decompiler' ? 'Decompiler' : MAINTENANCE_LABEL[x.maintenance]}</span>
   </div>
 
   <p class="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-muted">{x.tagline}</p>
 
-  <ul class="mt-4 space-y-1.5 text-sm" aria-label="Coverage">
-    {
-      lines.map((l) => (
-        <li class="flex items-start gap-2">
-          <span class="mt-[0.3rem]">
-            <StatusIcon status={l.status} />
-          </span>
-          <span class="min-w-0 break-words text-fg">
-            {l.name} <span class="num text-muted">{l.versions.join(' · ')}</span>
-            <span class="text-subtle"> — {l.note}</span>
-          </span>
-        </li>
-      ))
-    }
-  </ul>
+  <ScoreBar class="mt-4" score={d.score.total} tier={d.score.tier} label="Deobfuscator Score" />
+
+  {
+    x.kind === 'decompiler' && (
+      <p class="mt-4 flex items-start gap-2 text-sm text-fg">
+        <Icon name="code" size={14} class="mt-[0.2rem] shrink-0 text-subtle" />
+        <span>
+          Decompiles {listRuntimes(x.decompiles)} bytecode
+          <span class="text-subtle"> — {MAINTENANCE_LABEL[x.maintenance].toLowerCase()}</span>
+        </span>
+      </p>
+    )
+  }
+
+  {
+    lines.length > 0 && (
+      <ul class="mt-4 space-y-1.5 text-sm" aria-label="Coverage">
+        {
+          lines.map((l) => (
+            <li class="flex items-start gap-2">
+              <span class="mt-[0.3rem]">
+                <StatusIcon status={l.status} />
+              </span>
+              <span class="min-w-0 break-words text-fg">
+                {l.name} <span class="num text-muted">{l.versions.join(' · ')}</span>
+                <span class="text-subtle"> — {l.note}</span>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    )
+  }
 
   <div class="mt-auto pt-4" />
   <div class="flex min-h-8 items-center justify-between gap-3 border-t border-line pt-3">

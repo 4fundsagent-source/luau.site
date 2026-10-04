@@ -1,15 +1,35 @@
 ---
 import DeobfuscatorCard from '~/components/DeobfuscatorCard.astro';
+import DirectoryGroup from '~/components/DirectoryGroup.astro';
 import FilterBar, { type FilterDef, type SortDef } from '~/components/FilterBar.astro';
 import Icon from '~/components/Icon.astro';
 import PageHeader from '~/components/PageHeader.astro';
 import Base from '~/layouts/Base.astro';
-import { getSiteData } from '~/lib/data';
+import { getSiteData, type DeobGroup } from '~/lib/data';
 import { issueUrl } from '~/lib/site';
 import { ACCESS, ACCESS_LABEL, MAINTENANCE, MAINTENANCE_LABEL, OUTPUT_LEVELS, OUTPUT_META } from '~/lib/taxonomy';
 
 const { deobfuscators, obfuscators } = await getSiteData();
 const countBy = (pred: (d: (typeof deobfuscators)[number]) => boolean) => deobfuscators.filter(pred).length;
+
+const GROUPS: { group: DeobGroup; title: string; description: string }[] = [
+  {
+    group: 'current',
+    title: 'Tools for commercial obfuscators',
+    description: 'Deobfuscators that break or partly recover commercial, maintained obfuscators. These matter most.',
+  },
+  {
+    group: 'legacy',
+    title: 'Tools for open-source & legacy obfuscators',
+    description: 'Deobfuscators for open-source projects and discontinued or legacy services. They barely move the rankings.',
+  },
+  {
+    group: 'decompiler',
+    title: 'Decompilers',
+    description: 'General tools that turn standard bytecode back into source. They break no obfuscator on their own, but finish the job once a VM is lifted.',
+  },
+];
+const groups = GROUPS.map((g) => ({ ...g, items: deobfuscators.filter((d) => d.group === g.group) })).filter((g) => g.items.length);
 
 const filters: FilterDef[] = [
   {
@@ -18,7 +38,8 @@ const filters: FilterDef[] = [
     kind: 'select',
     options: obfuscators
       .filter((o) => o.deobfuscators.length)
-      .map((o) => ({ value: o.id, label: o.data.name, count: o.deobfuscators.length })),
+      .map((o) => ({ value: o.id, label: o.data.name, count: o.deobfuscators.length }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
   },
   {
     key: 'access',
@@ -52,6 +73,7 @@ const filters: FilterDef[] = [
   },
 ];
 const sorts: SortDef[] = [
+  { value: 'score', label: 'Deobfuscator Score', dir: 'desc', type: 'number' },
   { value: 'first', label: 'Newest', dir: 'desc', type: 'number' },
   { value: 'coverage', label: 'Coverage', dir: 'desc', type: 'number' },
   { value: 'name', label: 'Name', dir: 'asc', type: 'string' },
@@ -65,13 +87,21 @@ const sorts: SortDef[] = [
   <PageHeader
     eyebrow="Directory"
     title="Deobfuscators"
-    description="Devirtualizers, dumpers and lifters, along with what they target, how much they recover, and whether they still work. We link to these tools but never host them."
+    description="Devirtualizers, dumpers, lifters and decompilers, ranked by how much they matter today: what they break, how much they recover, and whether they still work. We link to these tools but never host them."
   />
   <div class="container-page py-10">
     <FilterBar filters={filters} sorts={sorts} total={deobfuscators.length} noun={['tool', 'tools']} />
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {deobfuscators.map((d, i) => <DeobfuscatorCard d={d} index={i} />)}
-    </div>
+    {
+      groups.map(({ group, title, description, items }) => (
+        <DirectoryGroup id={group} title={title} description={description} count={items.length} noun={['tool', 'tools']}>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((d, i) => (
+              <DeobfuscatorCard d={d} index={i} />
+            ))}
+          </div>
+        </DirectoryGroup>
+      ))
+    }
     <div data-empty hidden class="surface mt-4 p-10 text-center">
       <p class="text-fg">No tools match these filters.</p>
     </div>

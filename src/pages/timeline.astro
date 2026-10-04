@@ -1,190 +1,81 @@
 ---
 import ArmsRaceChart from '~/components/ArmsRaceChart.astro';
 import EventList from '~/components/EventList.astro';
-import Icon from '~/components/Icon.astro';
 import PageHeader from '~/components/PageHeader.astro';
 import Section from '~/components/Section.astro';
 import Base from '~/layouts/Base.astro';
 import { formatDate, formatDuration } from '~/lib/dates';
 import { formatVersion, getSiteData } from '~/lib/data';
+import { median as medianOf } from '~/lib/status';
 
 const data = await getSiteData();
-const { stats, events, standing, obf, builtAt } = data;
+const { stats, events, obf, builtAt } = data;
 const DAY = 86_400_000;
 const since90 = builtAt.getTime() - 90 * DAY;
 
-const recentBreaks = events.filter((e) => e.kind === 'break' && e.date.date.getTime() >= since90).length;
-const recentTools = data.deobfuscators.filter((d) => d.firstSeen && d.firstSeen.date.getTime() >= since90).length;
+// The timeline follows the commercial, maintained obfuscators; the log can reveal the rest.
+const featured = data.obfuscators.filter((o) => o.segment === 'current');
+const featuredIds = featured.map((o) => o.id);
+const standing = data.standing.filter((s) => featuredIds.includes(s.obfuscator));
+const featuredEvents = events.filter((e) => e.segment === 'current');
 
-// The longest-standing unbroken item leads the page; the rest follow as a short list.
-const [lead, ...others] = standing;
-const leadObf = lead ? obf.get(lead.obfuscator)! : undefined;
-const c = lead?.challenge;
-const median = stats.medianDaysToBreak;
-// Track scale: the stretch so far fills the track unless the median break lies beyond it.
-const span = lead ? Math.max(lead.days, (median ?? 0) * 1.12, 14) : 1;
-const pct = (days: number) => `${Math.min(100, (days / span) * 100).toFixed(2)}%`;
+const recentBreaks = featuredEvents.filter((e) => e.kind === 'break' && e.date.date.getTime() >= since90).length;
+const recentTools = data.deobfuscators.filter(
+  (d) => d.group === 'current' && d.firstSeen && d.firstSeen.date.getTime() >= since90,
+).length;
+const ttb = featured.flatMap((o) => o.versions.filter((v) => v.s.daysToBreak !== undefined).map((v) => v.s));
+const median = medianOf(ttb.map((v) => v.daysToBreak!));
+const medianFuzzy = ttb.some((v) => v.fuzzy);
+
+// Unbroken latest versions, longest-standing first (an open public challenge counts from its posting date).
 const named = (name: string, version: string) => (/^\d/.test(version) ? `${name} ${formatVersion(version)}` : name);
 const reasonText = (s: (typeof standing)[number]) =>
   s.reason === 'challenge'
-    ? `public challenge since ${formatDate(s.since)}`
+    ? `${s.challenge?.platform ?? 'public'} challenge since ${formatDate(s.since)}${s.challenge?.bounty ? ` · ${s.challenge.bounty} bounty` : ''}`
     : s.reason === 'release'
       ? `released ${formatDate(s.since)}`
       : `watched since ${formatDate(s.since)}`;
 ---
 
-<Base title="Timeline" description="The arms race between Lua obfuscators and deobfuscators: what is still standing, every release and every public break.">
+<Base title="Timeline" description="The arms race between Lua obfuscators and deobfuscators: every release, every public break, and the tools behind them.">
   <PageHeader
     eyebrow="Analysis"
     title="The Arms Race"
-    description="What is still standing, what fell, and when the tools that broke it appeared. Releases and breaks are derived from the data, so this page updates itself."
+    description="Every release, every public break, and when the tools that broke them appeared. Releases and breaks are derived from the data, so this page updates itself."
   />
 
   <div class="container-page space-y-14 py-10">
-    <!-- Still standing -->
+    <!-- Unbroken right now -->
     {
-      lead && leadObf && (
-        <section aria-labelledby="standing-title" class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]" data-enter style="--i:4">
-          <div class="surface relative overflow-hidden p-5 sm:p-7">
-            <div class="pointer-events-none absolute inset-0" style="background:radial-gradient(70% 90% at 100% 0%, color-mix(in oklab, var(--holding) 12%, transparent), transparent 70%)" aria-hidden="true" />
-            <div class="relative">
-              <p id="standing-title" class="eyebrow flex items-center gap-2">
-                <span class="live-dot relative inline-block size-2 rounded-full" style="background:var(--holding)" aria-hidden="true" />
-                Still standing
-              </p>
-              <h2 class="mt-3 text-2xl font-semibold tracking-tight text-fg sm:text-[1.75rem]">
-                {c ? (
-                  <>
-                    <a href={`/obfuscators/${leadObf.id}`} class="hover:underline">
-                      {leadObf.data.name}
-                    </a>
-                    ’s {c.platform} challenge is still uncracked
-                  </>
-                ) : (
-                  <>
-                    <a href={`/obfuscators/${leadObf.id}`} class="hover:underline">
-                      {named(leadObf.data.name, lead.version)}
-                    </a>{' '}
-                    has no public deobfuscator
-                  </>
-                )}
-              </h2>
-
-              <div class="mt-5 flex flex-wrap items-end gap-x-6 gap-y-3">
-                <p class="flex items-baseline gap-2">
-                  <span class="num text-6xl leading-none font-semibold tracking-tight text-fg" data-countup={lead.days}>
-                    {lead.days}
-                  </span>
-                  <span class="text-sm text-muted">days unbroken</span>
-                </p>
-                <dl class="flex flex-wrap gap-x-5 gap-y-1 pb-1 text-sm">
-                  <div class="flex gap-1.5">
-                    <dt class="text-subtle">Since</dt>
-                    <dd class="text-fg">{formatDate(lead.since)}</dd>
-                  </div>
-                  {c?.bounty && (
-                    <div class="flex gap-1.5">
-                      <dt class="text-subtle">Bounty</dt>
-                      <dd class="text-fg">{c.bounty}</dd>
-                    </div>
-                  )}
-                  {c?.difficulty !== undefined && (
-                    <div class="flex gap-1.5">
-                      <dt class="text-subtle">Difficulty</dt>
-                      <dd class="num text-fg">
-                        {c.difficulty}/{c.difficultyScale}
-                      </dd>
-                    </div>
-                  )}
-                  {c?.downloads !== undefined && (
-                    <div class="flex gap-1.5">
-                      <dt class="text-subtle">Downloads</dt>
-                      <dd class="num text-fg">{c.downloads}</dd>
-                    </div>
-                  )}
-                  {c?.writeups !== undefined && (
-                    <div class="flex gap-1.5">
-                      <dt class="text-subtle">Writeups</dt>
-                      <dd class="num text-fg">{c.writeups}</dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-
-              <!-- How long it has stood, against the median time to break -->
-              <div class="mt-7" data-reveal>
-                <div class="relative h-2 rounded-full bg-sunken">
-                  <div class="score-fill absolute inset-y-0 left-0 rounded-full" style={`width:${pct(lead.days)};background:var(--holding)`} />
-                  {median !== undefined && (
-                    <span class="absolute -top-1 h-4 w-px bg-fg/60" style={`left:${pct(median)}`} aria-hidden="true" />
-                  )}
-                </div>
-                <div class="relative mt-2 h-4 text-xs text-subtle">
-                  <span class="absolute left-0">{formatDate(lead.since)}</span>
-                  {median !== undefined && (
-                    <span class="absolute hidden -translate-x-1/2 whitespace-nowrap sm:inline" style={`left:${pct(median)}`}>
-                      median break · {formatDuration(median, stats.medianFuzzy)}
-                    </span>
-                  )}
-                  <span class="absolute -translate-x-full whitespace-nowrap text-fg" style={`left:${pct(lead.days)}`}>
-                    Today
-                  </span>
-                </div>
-                {median !== undefined && (
-                  <p class="mt-3 text-sm text-muted">
-                    {lead.days > median
-                      ? `Already outlasted the median tracked version, which was broken ${formatDuration(median, stats.medianFuzzy)} after release.`
-                      : `The median tracked version was broken ${formatDuration(median, stats.medianFuzzy)} after release.`}
-                  </p>
-                )}
-              </div>
-
-              <div class="mt-6 flex flex-wrap gap-2">
-                {c && (
-                  <a href={c.url} rel="noopener nofollow" target="_blank" class="btn btn-primary">
-                    <Icon name="trophy" size={15} />
-                    View the challenge
-                    <Icon name="external" size={14} />
-                  </a>
-                )}
-                <a href={`/obfuscators/${leadObf.id}`} class="btn">
-                  {leadObf.data.name} profile
-                  <Icon name="arrow-right" size={14} />
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div class="surface flex flex-col p-5">
-            <p class="eyebrow">Also unbroken</p>
-            {others.length ? (
-              <ul class="mt-3 flex-1 divide-y divide-line text-sm">
-                {others.map((s) => {
-                  const o = obf.get(s.obfuscator)!;
-                  return (
-                    <li>
-                      <a href={`/obfuscators/${o.id}`} class="group flex items-center justify-between gap-3 py-2.5">
-                        <span class="min-w-0">
-                          <span class="block truncate font-medium text-fg group-hover:underline">
-                            {named(o.data.name, s.version)}
-                          </span>
-                          <span class="block truncate text-xs text-subtle">{reasonText(s)}</span>
-                        </span>
-                        <span class="num shrink-0 text-right text-xs text-muted">
-                          <span class="text-base font-semibold text-fg">{s.days}</span> d
-                        </span>
-                      </a>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p class="mt-3 flex-1 text-sm text-muted">Nothing else is unbroken right now.</p>
-            )}
-            <a href="/rankings" class="mt-3 text-sm text-muted hover:text-fg">
+      standing.length > 0 && (
+        <section aria-labelledby="unbroken-title" data-enter style="--i:4">
+          <div class="mb-3 flex items-end justify-between gap-4">
+            <h2 id="unbroken-title" class="eyebrow">
+              Unbroken right now
+            </h2>
+            <a href="/rankings" class="text-sm text-muted hover:text-fg">
               See rankings →
             </a>
           </div>
+          <ol class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+            {standing.map((s, i) => {
+              const o = obf.get(s.obfuscator)!;
+              return (
+                <li class="bg-elev">
+                  <a href={s.reason === 'challenge' ? `/obfuscators/${o.id}#challenges` : `/obfuscators/${o.id}`} class="group flex h-full items-start gap-3 px-5 py-4 hover:bg-hover">
+                    <span class="num pt-0.5 text-xs text-subtle">#{i + 1}</span>
+                    <span class="min-w-0 flex-1">
+                      <span class="block truncate font-medium text-fg group-hover:underline">{named(o.data.name, s.version)}</span>
+                      <span class="mt-0.5 block text-xs text-subtle">{reasonText(s)}</span>
+                    </span>
+                    <span class="num shrink-0 text-right text-xs text-muted">
+                      <span class="text-xl font-semibold tracking-tight text-fg">{s.days}</span> d
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
         </section>
       )
     }
@@ -195,10 +86,10 @@ const reasonText = (s: (typeof standing)[number]) =>
         [
           { label: 'Breaks, last 90 days', value: recentBreaks },
           { label: 'New tools, last 90 days', value: recentTools },
-          { label: 'Still unbroken', value: standing.length },
+          { label: 'Obfuscators tracked', value: stats.obfuscators },
           {
             label: 'Median time to break',
-            text: median !== undefined ? formatDuration(median, stats.medianFuzzy) : '—',
+            text: median !== undefined ? formatDuration(median, medianFuzzy) : '—',
           },
         ].map((s) => (
           <div class="bg-elev px-5 py-4">
@@ -211,15 +102,18 @@ const reasonText = (s: (typeof standing)[number]) =>
       }
     </dl>
 
-    <Section title="The last few months" description="Still-standing lanes first, longest-standing on top. Hover or focus any mark for details.">
+    <Section
+      title="The last few months"
+      description="Commercial and maintained obfuscators only, still-standing lanes first. Open-source and legacy events are in the log below. Hover or focus any mark for details."
+    >
       <div class="surface p-4 sm:p-6">
-        <ArmsRaceChart data={data} />
+        <ArmsRaceChart data={data} only={featuredIds} />
       </div>
     </Section>
 
     <Section id="log" title="Event log" description="Every release, break, new tool and challenge, newest first. Releases and breaks are derived from the data; other events are added by hand with a source.">
       <a slot="action" href="/feed.xml" class="text-sm text-muted hover:text-fg">RSS feed →</a>
-      <EventList events={events} grouped filterable />
+      <EventList events={events} grouped filterable segmentToggle />
     </Section>
   </div>
 </Base>

@@ -7,10 +7,21 @@ import { compareDates, daysBetween, formatDuration, parseDate, type PartialDate 
 import { daysOpen } from './challenges';
 import { checkIntegrity } from './integrity';
 import { loadLab, recovered, type Sample } from './lab';
+import { computeDeobScore, type DeobScore } from './deobScore';
 import { compareScores, computeScore, provingDay, type LabSummary, type Score } from './score';
 import { SITE } from './site';
 import { collectHits, deriveVersionStatus, median, type DeobfuscatorLike, type VersionStatus } from './status';
-import { BYPASS_TO_STATUS, CODEBASE_CRITERIA, type DisplayStatus, type EventKind, type Status } from './taxonomy';
+import {
+  BYPASS_TO_STATUS,
+  CODEBASE_CRITERIA,
+  RUNTIME_LABEL,
+  segmentOf,
+  type DisplayStatus,
+  type EventKind,
+  type Runtime,
+  type Segment,
+  type Status,
+} from './taxonomy';
 
 type ObfData = CollectionEntry<'obfuscators'>['data'];
 type DeobData = CollectionEntry<'deobfuscators'>['data'];
@@ -34,6 +45,8 @@ export interface ObfuscatorView {
   latest: VersionView;
   /** Project-level status: open-source projects never show as "holding". */
   status: DisplayStatus;
+  /** Commercial & maintained, or open source & legacy. */
+  segment: Segment;
   openSource: boolean;
   /** Codebase rubric total for open-source projects. */
   codebase?: number;
@@ -54,11 +67,15 @@ export interface CoverageView {
   obfuscator: string;
   obfuscatorName: string;
   version: string;
+  segment: Segment;
   support: DeobData['targets'][number]['support'];
   effect: 'break' | 'partial';
   isLatest: boolean;
   notes?: string;
 }
+
+/** Directory group of a tool: what it is useful against. */
+export type DeobGroup = 'current' | 'legacy' | 'decompiler';
 
 export interface DeobfuscatorView {
   id: string;
@@ -66,6 +83,9 @@ export interface DeobfuscatorView {
   firstSeen?: PartialDate;
   coverage: CoverageView[];
   breaksLatest: boolean;
+  /** Tools for commercial obfuscators, tools for legacy ones, or decompilers. */
+  group: DeobGroup;
+  score: DeobScore;
   stale: boolean;
 }
 
@@ -76,6 +96,7 @@ export interface AuthView {
   status: Status;
   /** Deobfuscation status of scripts protected by the service, if known. */
   protection?: Status;
+  segment: Segment;
   stale: boolean;
 }
 
@@ -100,6 +121,8 @@ export interface TimelineEvent {
   obfuscator?: string;
   deobfuscator?: string;
   sources: SourceRef[];
+  /** Whether the event concerns a commercial & maintained obfuscator (or the site itself). */
+  segment: Segment;
 }
 
 export interface SiteData {
@@ -206,6 +229,7 @@ async function build(): Promise<SiteData> {
       versions,
       latest,
       status: openSource && latest.s.status === 'holding' ? 'open' : latest.s.status,
+      segment: segmentOf(o.data),
       openSource,
       codebase,
       observedSince: latest.s.observedSince,
@@ -238,6 +262,7 @@ async function build(): Promise<SiteData> {
           obfuscator: o.id,
           obfuscatorName: o.data.name,
           version,
+          segment: o.segment,
           support: t.support,
           effect: hit.effect,
           isLatest: o.latest.version === version,
@@ -245,18 +270,45 @@ async function build(): Promise<SiteData> {
         };
       });
     });
+    const score = computeDeobScore({
+      kind: d.data.kind,
+      access: d.data.access,
+      outputLevel: d.data.outputLevel,
+      maintenance: d.data.maintenance,
+      now,
+      coverage: coverage.map((c) => {
+        const o = obf.get(c.obfuscator)!;
+        const i = o.versions.findIndex((v) => v.version === c.version);
+        const hit = o.versions[i]!.s.hits.find((h) => h.deobfuscator === d.id);
+        return {
+          obfuscator: c.obfuscator,
+          version: c.version,
+          segment: c.segment,
+          latest: c.isLatest,
+          supersededOn: o.versions[i + 1]?.s.released,
+          effect: c.effect,
+          difficulty: hit?.difficulty,
+        };
+      }),
+    });
     return {
       id: d.id,
       data: d.data,
       firstSeen: d.data.firstSeen ? parseDate(d.data.firstSeen) : undefined,
       coverage,
       breaksLatest: coverage.some((c) => c.isLatest && c.effect === 'break'),
+      group: (d.data.kind === 'decompiler'
+        ? 'decompiler'
+        : coverage.some((c) => c.segment === 'current')
+          ? 'current'
+          : 'legacy') as DeobGroup,
+      score,
       stale: isStale(d.data.lastVerified, now),
     };
   });
   deobfuscators.sort(
     (a, b) =>
-      Number(b.breaksLatest) - Number(a.breaksLatest) ||
+      b.score.total - a.score.total ||
       (b.firstSeen?.date.getTime() ?? 0) - (a.firstSeen?.date.getTime() ?? 0) ||
       a.data.name.localeCompare(b.data.name),
   );
@@ -271,6 +323,7 @@ async function build(): Promise<SiteData> {
       data: a.data,
       status: BYPASS_TO_STATUS[a.data.bypass.status],
       protection: a.data.protection?.status,
+      segment: segmentOf(a.data),
       stale: isStale(a.data.lastVerified, now),
     }))
     .sort((a, b) => a.data.name.localeCompare(b.data.name));
@@ -333,7 +386,7 @@ function deriveEvents(
   manual: CollectionEntry<'events'>[],
   now: Date,
 ): TimelineEvent[] {
-  const events: TimelineEvent[] = [];
+  const events: Omit<TimelineEvent, 'segment'>[] = [];
   const breakDates = new Set<string>();
 
   for (const o of obfuscators) {
@@ -421,7 +474,10 @@ function deriveEvents(
       date: d.firstSeen,
       kind: 'deobfuscator',
       title: `${d.data.name} published`,
-      summary: `Targets ${targets}.`,
+      summary:
+        d.data.kind === 'decompiler'
+          ? `Decompiles ${listRuntimes(d.data.decompiles)} bytecode.`
+          : `Targets ${targets}.`,
       href: `/deobfuscators/${d.id}`,
       deobfuscator: d.id,
       sources: d.data.sources,
@@ -446,7 +502,24 @@ function deriveEvents(
     });
   }
 
-  return events.sort((a, b) => compareDates(b.date, a.date));
+  // An event belongs to the commercial segment when its obfuscator does, or when its tool is
+  // aimed at a commercial obfuscator. Site-wide notes stay visible everywhere.
+  const obfSegment = new Map(obfuscators.map((o) => [o.id, o.segment]));
+  const segmentFor = (e: Omit<TimelineEvent, 'segment'>): Segment =>
+    e.obfuscator
+      ? (obfSegment.get(e.obfuscator) ?? 'current')
+      : e.deobfuscator
+        ? deob.get(e.deobfuscator)?.group === 'current'
+          ? 'current'
+          : 'legacy'
+        : 'current';
+  return events.map((e) => ({ ...e, segment: segmentFor(e) })).sort((a, b) => compareDates(b.date, a.date));
+}
+
+/** ["luau", "lua51"] → "Luau and Lua 5.1". */
+export function listRuntimes(runtimes: readonly Runtime[]): string {
+  const r = runtimes.map((x) => RUNTIME_LABEL[x]);
+  return r.length < 3 ? r.join(' and ') : `${r.slice(0, -1).join(', ')} and ${r.at(-1)}`;
 }
 
 /** ["14.8", "14.9"] → "v14.8 and v14.9"; three or more get commas. */

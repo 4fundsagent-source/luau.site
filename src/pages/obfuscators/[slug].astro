@@ -16,6 +16,7 @@ import { formatVersion, getSiteData, versionPhrase, type ObfuscatorView } from '
 import { issueUrl } from '~/lib/site';
 import { PROVING_DAYS } from '~/lib/score';
 import {
+  SEGMENT_META,
   AVAILABILITY_LABEL,
   CODEBASE_CRITERIA,
   CODEBASE_MAX,
@@ -39,7 +40,8 @@ const { o } = Astro.props;
 const { deob, samples, obfuscators, builtAt } = await getSiteData();
 const d = o.data;
 const s = o.latest.s;
-const rated = obfuscators.filter((x) => !x.score.unrated);
+// Ranks are within a segment: commercial obfuscators are ranked against each other.
+const rated = obfuscators.filter((x) => !x.score.unrated && x.segment === o.segment);
 const rank = rated.indexOf(o) + 1;
 
 const phrase = versionPhrase(o.latest.version);
@@ -95,6 +97,7 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
             <span class="chip">{PRICING_LABEL[d.pricing]}</span>
             {d.targets.length ? d.targets.map((t) => <span class="chip">{RUNTIME_LABEL[t]}</span>) : <span class="chip">Runtime unknown</span>}
             {d.discontinued && <span class="chip">Discontinued</span>}
+            {o.segment === 'legacy' && <span class="chip">{SEGMENT_META.legacy.label}</span>}
             {d.availability !== 'public' && <span class="chip">{AVAILABILITY_LABEL[d.availability]}</span>}
             {d.beta && <span class="chip">Beta</span>}
           </div>
@@ -288,7 +291,11 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
       <ScoreCard score={o.score} />
       <Facts
         items={[
-          { label: 'Rank', value: rank ? `#${rank} of ${rated.length}` : 'Unrated', href: '/rankings' },
+          {
+            label: 'Rank',
+            value: rank ? `#${rank} of ${rated.length} ${o.segment === 'current' ? 'commercial' : 'open source & legacy'}` : 'Unrated',
+            href: '/rankings',
+          },
           { label: 'Vendor', value: d.vendor },
           { label: 'Based on', value: parent?.data.name, href: parent && `/obfuscators/${parent.id}` },
           { label: 'Since', value: d.since },

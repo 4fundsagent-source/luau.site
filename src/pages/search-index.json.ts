@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { formatVersion, getSiteData } from '~/lib/data';
+import { formatVersion, getSiteData, listRuntimes } from '~/lib/data';
 import { NAV } from '~/lib/site';
 import { DEOB_TECHNIQUES, DEOB_TECHNIQUE_META, STATUS_META, TECHNIQUES, TECHNIQUE_META } from '~/lib/taxonomy';
 
@@ -27,9 +27,12 @@ export const GET: APIRoute = async () => {
       })),
     ),
     ...deobfuscators.map((d) => ({
-      kind: 'Deobfuscator',
+      kind: d.data.kind === 'decompiler' ? 'Decompiler' : 'Deobfuscator',
       title: d.data.name,
-      subtitle: `by ${d.data.author} · targets ${[...new Set(d.coverage.map((c) => c.obfuscatorName))].join(', ')}`,
+      subtitle:
+        d.data.kind === 'decompiler'
+          ? `by ${d.data.author} · decompiles ${listRuntimes(d.data.decompiles)} bytecode`
+          : `by ${d.data.author} · targets ${[...new Set(d.coverage.map((c) => c.obfuscatorName))].join(', ')}`,
       href: `/deobfuscators/${d.id}`,
       keywords: d.data.tagline,
     })),

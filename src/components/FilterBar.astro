@@ -197,6 +197,11 @@ const { filters, sorts, total, noun, placeholder = 'Filter by name…' } = Astro
       });
       sorted.forEach((el, i) => (el.style.order = String(i)));
 
+      // Groups (e.g. commercial vs legacy) disappear when every item in them is filtered out.
+      for (const g of scope.querySelectorAll<HTMLElement>('[data-group]')) {
+        g.hidden = !g.querySelector('[data-item]:not([hidden])');
+      }
+
       count.textContent = String(shown);
       noun.textContent = shown === 1 ? bar.dataset.nounOne! : bar.dataset.nounMany!;
       if (empty) empty.hidden = shown > 0;

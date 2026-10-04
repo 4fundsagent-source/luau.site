@@ -6,6 +6,7 @@ description: >-
   32-bit mixer, and runtime tuple swaps that permute indices. In August 2026 that toolkit recovered
   readable scripts from all three levels of Luast v1.0.1 statically, with ground-truth samples that
   match the originals. Luast's own website and pricing are not documented yet.
+segment: legacy
 pricing: unknown
 targets: [luau]
 techniques: [const-encryption, string-encryption]

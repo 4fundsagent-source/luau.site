@@ -6,6 +6,7 @@ description: >-
   2026 a public static devirtualizer appeared that recovers the VM, expands the super-instructions,
   lowers the program back to Lua 5.1 bytecode and decompiles it to readable Lua. The vendor's
   current status, pricing and website are not documented yet.
+segment: legacy
 pricing: unknown
 targets: [lua51]
 techniques: [vm]

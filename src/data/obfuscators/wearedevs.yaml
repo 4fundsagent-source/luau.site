@@ -6,6 +6,7 @@ description: >-
   An open-source trace-based tool has recovered readable Lua and string constants from WeAreDevs
   scripts since December 2025. Versions are not published, so it is tracked as a single current version.
 website: https://wearedevs.net/obfuscator
+segment: legacy
 pricing: free
 basedOn: prometheus
 targets: [luau]

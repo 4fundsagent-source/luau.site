@@ -9,13 +9,15 @@ interface Props {
   /** Too little data to rate: show a placeholder instead of a number. */
   unrated?: boolean;
   size?: 'sm' | 'lg';
+  /** Name of the score in the tooltip. */
+  label?: string;
   class?: string;
 }
-const { score, tier, confidence, provisional = false, unrated = false, size = 'sm', class: className } = Astro.props;
+const { score, tier, confidence, provisional = false, unrated = false, size = 'sm', label = 'Security Score', class: className } = Astro.props;
 const backed = confidence !== undefined ? ` · ${Math.round(confidence * 100)}% backed by data` : '';
 const title = unrated
   ? `Not enough data to rate${backed}`
-  : `Security Score ${score}/100 · tier ${tier}${backed}${provisional ? ' · provisional' : ''}`;
+  : `${label} ${score}/100 · tier ${tier}${backed}${provisional ? ' · provisional' : ''}`;
 const track = size === 'sm' ? 'h-1.5' : 'h-2';
 ---
 

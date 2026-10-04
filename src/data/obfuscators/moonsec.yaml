@@ -5,6 +5,7 @@ description: >-
   MoonSec v3, from constant dumpers and an open-source devirtualizer that lifts it back to Lua 5.1
   bytecode, to a deobfuscation service that also claims v2 support. An older open-source tool
   devirtualizes v2. Pricing, supported runtimes and current version are not yet documented here.
+segment: legacy
 pricing: unknown
 targets: []
 techniques: [vm]

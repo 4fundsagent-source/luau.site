@@ -8,8 +8,9 @@ import StatusBadge from '~/components/StatusBadge.astro';
 import Base from '~/layouts/Base.astro';
 import { formatDate } from '~/lib/dates';
 import { githubStats } from '~/lib/github';
-import { formatVersion, getSiteData, type DeobfuscatorView } from '~/lib/data';
-import { ACCESS_LABEL, DEOB_TECHNIQUE_META, MAINTENANCE_LABEL, OUTPUT_META } from '~/lib/taxonomy';
+import { formatVersion, getSiteData, listRuntimes, type DeobfuscatorView } from '~/lib/data';
+import { DEOB_WEIGHTS } from '~/lib/deobScore';
+import { ACCESS_LABEL, DEOB_TECHNIQUE_META, MAINTENANCE_LABEL, OUTPUT_META, RUNTIME_LABEL } from '~/lib/taxonomy';
 
 export async function getStaticPaths() {
   const { deobfuscators } = await getSiteData();
@@ -20,9 +21,17 @@ interface Props {
   d: DeobfuscatorView;
 }
 const { d } = Astro.props;
-const { samples } = await getSiteData();
+const { samples, deobfuscators, obf } = await getSiteData();
 const x = d.data;
 const gh = githubStats(x.repo);
+const rank = deobfuscators.indexOf(d) + 1;
+const best = d.score.best ? obf.get(d.score.best.obfuscator) : undefined;
+const impactDetail =
+  x.kind === 'decompiler'
+    ? 'A decompiler breaks no obfuscator on its own, so it gets a fixed, low relevance.'
+    : best && d.score.best
+      ? `Strongest target: ${best.data.name} ${formatVersion(d.score.best.version)}${d.score.best.latest ? ' (current version)' : ''}, a ${best.segment === 'current' ? 'commercial, maintained' : 'open-source or legacy'} obfuscator.`
+      : 'No coverage counts toward impact.';
 const runs = samples.flatMap((s) =>
   s.runs.flatMap((r) => r.deob.filter((dr) => dr.deobfuscator === d.id).map((dr) => ({ sample: s, run: r, dr }))),
 );
@@ -44,6 +53,7 @@ const runs = samples.flatMap((s) =>
           <p class="mt-1 text-sm text-muted">by {x.author}</p>
           <p class="mt-3 max-w-2xl text-[1.0625rem] leading-relaxed text-muted" data-enter style="--i:2">{x.tagline}</p>
           <div class="mt-4 flex flex-wrap gap-1.5" data-enter style="--i:3">
+            {x.kind === 'decompiler' && <span class="chip">Decompiler</span>}
             <span class="chip">{ACCESS_LABEL[x.access]}</span>
             {x.license && <span class="chip">{x.license}</span>}
             <span class="chip">{OUTPUT_META[x.outputLevel].label}</span>
@@ -59,36 +69,59 @@ const runs = samples.flatMap((s) =>
 
   <div class="container-page grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
     <div class="min-w-0 space-y-12">
-      <Section
-        id="coverage"
-        title="Coverage"
-        description="Which obfuscator versions this tool targets. Only full support with readable output counts as a break."
-      >
-        <ul class="surface divide-y divide-line text-sm">
-          {
-            d.coverage.map((c) => (
-              <li class="grid grid-cols-[1fr_auto] items-start gap-x-4 gap-y-1 px-4 py-3 sm:grid-cols-[10rem_6rem_1fr_auto]">
-                <a href={`/obfuscators/${c.obfuscator}`} class="link w-fit">
-                  {c.obfuscatorName}
-                </a>
-                <span class="num text-fg sm:order-none">
-                  {formatVersion(c.version)}
-                  {c.isLatest && (
-                    <span class="ml-2 rounded bg-accent-soft px-1.5 py-px font-sans text-[0.6875rem] font-medium text-accent">latest</span>
-                  )}
-                </span>
-                <span class="text-muted">
-                  <span class="capitalize">{c.support}</span> support
-                  {c.notes && <span class="block text-xs text-subtle">{c.notes}</span>}
-                </span>
-                <span class="justify-self-end">
-                  <StatusBadge status={c.effect === 'break' ? 'broken' : 'partial'} label={c.effect === 'break' ? 'Breaks' : 'Partial'} />
-                </span>
-              </li>
-            ))
-          }
-        </ul>
-      </Section>
+      {
+        x.kind === 'decompiler' && (
+          <Section
+            id="decompiles"
+            title="What it decompiles"
+            description="Decompilers read standard bytecode, not obfuscated scripts, so they never break an obfuscator by themselves."
+          >
+            <ul class="surface divide-y divide-line text-sm">
+              {x.decompiles.map((r) => (
+                <li class="flex items-center justify-between gap-4 px-4 py-3">
+                  <span class="text-fg">{RUNTIME_LABEL[r]} bytecode</span>
+                  <span class="text-muted">{OUTPUT_META[x.outputLevel].label}</span>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )
+      }
+
+      {
+        d.coverage.length > 0 && (
+          <Section
+            id="coverage"
+            title="Coverage"
+            description="Which obfuscator versions this tool targets. Only full support with readable output counts as a break."
+          >
+            <ul class="surface divide-y divide-line text-sm">
+              {
+                d.coverage.map((c) => (
+                  <li class="grid grid-cols-[1fr_auto] items-start gap-x-4 gap-y-1 px-4 py-3 sm:grid-cols-[10rem_6rem_1fr_auto]">
+                    <a href={`/obfuscators/${c.obfuscator}`} class="link w-fit">
+                      {c.obfuscatorName}
+                    </a>
+                    <span class="num text-fg sm:order-none">
+                      {formatVersion(c.version)}
+                      {c.isLatest && (
+                        <span class="ml-2 rounded bg-accent-soft px-1.5 py-px font-sans text-[0.6875rem] font-medium text-accent">latest</span>
+                      )}
+                    </span>
+                    <span class="text-muted">
+                      <span class="capitalize">{c.support}</span> support
+                      {c.notes && <span class="block text-xs text-subtle">{c.notes}</span>}
+                    </span>
+                    <span class="justify-self-end">
+                      <StatusBadge status={c.effect === 'break' ? 'broken' : 'partial'} label={c.effect === 'break' ? 'Breaks' : 'Partial'} />
+                    </span>
+                  </li>
+                ))
+              }
+            </ul>
+          </Section>
+        )
+      }
 
       <Section id="how" title="How it works">
         <p class="max-w-prose leading-relaxed text-muted">{x.description}</p>
@@ -142,15 +175,57 @@ const runs = samples.flatMap((s) =>
     </div>
 
     <aside class="space-y-4 lg:sticky lg:top-20 lg:self-start">
+      <div class="surface p-5" data-reveal>
+        <div class="flex items-center justify-between">
+          <p class="eyebrow">Deobfuscator Score</p>
+          <a href="/methodology#deobfuscator-score" class="text-xs text-subtle hover:text-fg">How it works</a>
+        </div>
+        <div class="mt-3 flex items-end gap-3">
+          <span class="text-5xl leading-none font-semibold tracking-tight text-fg" data-countup={d.score.total}>{d.score.total}</span>
+          <span class="pb-1 text-sm text-subtle">/ 100</span>
+          <span class="num ml-auto grid size-10 place-items-center rounded-lg border border-line text-lg font-semibold" aria-label={`Tier ${d.score.tier}`}>
+            {d.score.tier}
+          </span>
+        </div>
+        <ul class="mt-5 space-y-4">
+          {
+            [
+              { label: 'Impact', points: d.score.impact, weight: DEOB_WEIGHTS.impact, detail: impactDetail },
+              {
+                label: 'Craft',
+                points: d.score.craft,
+                weight: DEOB_WEIGHTS.craft,
+                detail: `${OUTPUT_META[x.outputLevel].label}, ${MAINTENANCE_LABEL[x.maintenance].toLowerCase()}, ${ACCESS_LABEL[x.access].toLowerCase()}; scaled by how relevant its targets are.`,
+              },
+            ].map((c) => (
+              <li>
+                <div class="flex items-baseline justify-between text-sm">
+                  <span class="text-fg">{c.label}</span>
+                  <span class="num text-xs text-muted">
+                    {c.points}
+                    <span class="text-subtle">/{c.weight}</span>
+                  </span>
+                </div>
+                <div class="mt-1.5 h-1 overflow-hidden rounded-full bg-sunken">
+                  <div class="score-fill h-full rounded-full" style={`width:${(c.points / c.weight) * 100}%;background:var(--fg)`} />
+                </div>
+                <p class="mt-1.5 text-xs leading-relaxed text-subtle">{c.detail}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
       <Facts
         items={[
+          { label: 'Rank', value: `#${rank} of ${deobfuscators.length}`, href: '/rankings#deobfuscators' },
+          { label: 'Kind', value: x.kind === 'decompiler' ? `Decompiler (${listRuntimes(x.decompiles)})` : undefined },
           { label: 'Author', value: x.author },
           { label: 'Access', value: ACCESS_LABEL[x.access] },
           { label: 'License', value: x.license },
           { label: 'Output', value: OUTPUT_META[x.outputLevel].label },
           { label: 'First seen', value: d.firstSeen ? formatDate(d.firstSeen) : 'Unknown' },
           { label: 'Maintenance', value: MAINTENANCE_LABEL[x.maintenance] },
-          { label: 'Versions covered', value: d.coverage.length },
+          { label: 'Versions covered', value: x.kind === 'decompiler' ? undefined : d.coverage.length },
           { label: 'GitHub stars', value: gh?.stars.toLocaleString() },
           { label: 'Last push', value: gh?.pushedAt },
           { label: 'Repository', value: gh?.archived ? 'Archived' : undefined },

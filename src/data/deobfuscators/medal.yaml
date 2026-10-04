@@ -1,0 +1,22 @@
+name: Medal
+author: shrimp-nz
+kind: decompiler
+decompiles: [luau, lua51]
+tagline: Rust decompiler for Luau and Lua 5.1 bytecode with real control-flow restructuring; archived in 2024.
+description: >-
+  Medal lifts Luau and Lua 5.1 bytecode into an intermediate form, analyses its control-flow graph and
+  restructures it into readable source. It became one of the most widely forked decompilers in the
+  Roblox scene and still powers many tools and forks, including Tovek. The repository was archived on
+  November 26, 2024, with a dedication to two of its developers.
+repo: https://github.com/shrimp-nz/medal
+access: open-source
+license: MIT
+techniques: [decompilation]
+outputLevel: readable
+maintenance: archived
+verified: false
+lastVerified: 2026-10-04
+sources:
+  - url: https://github.com/shrimp-nz/medal
+    title: shrimp-nz/medal — Luau decompiler (archived November 26, 2024)
+    accessed: 2026-10-04
