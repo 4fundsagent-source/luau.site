@@ -17,7 +17,7 @@
  */
 import { formatDate, formatDuration, formatPlainDate, parseDate } from '~/lib/dates';
 import { formatVersion, type SiteData } from '~/lib/data';
-import { STATUS_META, type DisplayStatus, type Status } from '~/lib/taxonomy';
+import { STATUS_META, type Access, type DisplayStatus, type Status } from '~/lib/taxonomy';
 import StatusIcon from './StatusIcon.astro';
 
 interface Props {
@@ -77,6 +77,20 @@ interface Lane {
 }
 
 const anchor = (id: string, version: string) => `/obfuscators/${id}#v-${version.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
+// Tooltips stay short: the full notes live on the obfuscator's page.
+const MANUAL_HOW: Record<Access, string> = {
+  private: 'Sample-specific, no public tool',
+  paid: 'Paid service, no public tool',
+  free: 'No tool needed: anyone can repeat it',
+  'open-source': 'No dedicated tool',
+};
+type VersionOf = SiteData['obfuscators'][number]['versions'][number];
+/** How a version was broken, in a few words: the tool's name, or how a manual break happened. */
+const howBroken = (v: VersionOf): string | undefined => {
+  if (v.s.manual) return v.s.exposure ? MANUAL_HOW[v.s.exposure] : 'No public tool';
+  const d = v.s.decisive[0];
+  return d ? `With ${data.deob.get(d.deobfuscator)?.data.name ?? d.deobfuscator}` : undefined;
+};
 const rank = new Map(data.standing.map((s, i) => [s.obfuscator, i]));
 const lanes: Lane[] = [];
 
@@ -102,15 +116,11 @@ for (const o of data.obfuscators) {
       live,
       clipped: start < t0,
       href: `/obfuscators/${o.id}#versions`,
-      tip: [
-        `${o.data.name} · rolling builds`,
-        'Unnumbered builds, updated continuously',
-        live ? 'Current builds: no deobfuscation known' : 'Current builds: broken',
-      ],
+      tip: [`${o.data.name} · rolling builds`, live ? 'Current builds: not deobfuscated' : 'Current builds: broken'],
     });
     for (const v of o.versions) {
       if (v.s.status !== 'broken') continue;
-      const shown = v.s.brokenOn ? ` · shown ${formatDate(v.s.brokenOn)}` : '';
+      const how = howBroken(v);
       if (v.s.released && v.until) {
         items.push({
           ...blank,
@@ -123,9 +133,9 @@ for (const o of data.obfuscators) {
           clipped: v.s.released.date.getTime() < t0,
           href: anchor(o.id, v.version),
           tip: [
-            `${o.data.name} ${v.version}`,
-            `Builds from ${formatDate(v.s.released)} to ${formatDate(v.until)} deobfuscated${shown}`,
-            ...(v.s.statusNote ? [v.s.statusNote] : []),
+            `${o.data.name} · ${v.version}`,
+            v.s.brokenOn ? `Deobfuscated, shown ${formatDate(v.s.brokenOn)}` : 'Deobfuscated',
+            ...(how ? [how] : []),
           ],
         });
       } else if (v.s.brokenOn) {
@@ -139,7 +149,7 @@ for (const o of data.obfuscators) {
           endKind: 'broken',
           clipped: false,
           href: anchor(o.id, v.version),
-          tip: [`${o.data.name} ${v.version}`, `Deobfuscated${shown}`, ...(v.s.statusNote ? [v.s.statusNote] : [])],
+          tip: [`${o.data.name} · ${v.version}`, `Deobfuscated ${formatDate(v.s.brokenOn)}`, ...(how ? [how] : [])],
         });
       }
     }
@@ -173,17 +183,18 @@ for (const o of data.obfuscators) {
       live: broken === undefined && !next && v.s.status === 'holding',
       clipped: start < t0,
       href: anchor(o.id, v.version),
+      // The second line is shown bold, so it carries the status.
       tip: [
         `${o.data.name} ${formatVersion(v.version)}`,
-        STATUS_META[v.s.status].label,
-        v.s.released ? `Released ${formatDate(v.s.released)}` : `Out by ${formatDate(v.seen)} · release date unknown`,
         broken
           ? `Broken ${formatDate(v.s.brokenOn)}${v.s.daysToBreak !== undefined ? ` · held ${formatDuration(v.s.daysToBreak, v.s.fuzzy)}` : ''}`
           : endKind === 'superseded'
-            ? `Superseded ${formatDate(startOf(dated[i + 1]!))}`
-            : 'Still current',
-        ...(broken !== undefined ? ['Scripts protected with it stay breakable'] : []),
-        ...(v.s.manual && v.s.statusNote ? [v.s.statusNote] : []),
+            ? `Unbroken · replaced ${formatDate(startOf(dated[i + 1]!))}`
+            : v.s.status === 'holding'
+              ? 'Current · unbroken'
+              : STATUS_META[v.s.status].label,
+        v.s.released ? `Released ${formatDate(v.s.released)}` : `Out by ${formatDate(v.seen)}`,
+        ...(broken !== undefined && howBroken(v) ? [howBroken(v)!] : []),
       ],
     });
   });
@@ -207,12 +218,9 @@ for (const o of data.obfuscators) {
       trophy: Boolean(c),
       row: 0,
       href: c ? `/obfuscators/${o.id}#challenges` : `/obfuscators/${o.id}`,
-      tip: [
-        `${o.data.name} ${formatVersion(st.version)}`,
-        `Unbroken for ${st.days} days`,
-        c ? `Public ${c.platform} challenge posted ${formatDate(watchStart)}` : `Watched since ${formatDate(st.since)}`,
-        ...(c ? [`Still unsolved${c.bounty ? ` · ${c.bounty} bounty` : ''}`] : []),
-      ],
+      tip: c
+        ? [`${o.data.name} · ${c.platform} challenge`, `Unsolved${c.bounty ? ` · ${c.bounty} bounty` : ''}`, `Posted ${formatDate(watchStart)}`]
+        : [`${o.data.name} ${formatVersion(st.version)}`, `Watched since ${formatDate(st.since)} · ${st.days} days`],
       from: 0,
       to: 0,
     });
@@ -242,8 +250,7 @@ for (const o of data.obfuscators) {
       href: anchor(o.id, group[0]!.version),
       tip: [
         `${o.data.name} ${group.map((v) => formatVersion(v.version)).join(', ')}`,
-        'Broken',
-        `${formatDate(when)}${tool ? ` · ${tool.data.name}` : ''}`,
+        `Broken ${formatDate(when)}${tool ? ` · with ${tool.data.name}` : ''}`,
         'Release date unknown',
       ],
       from: 0,
@@ -265,12 +272,7 @@ for (const o of data.obfuscators) {
       trophy: false,
       row: 0,
       href: anchor(o.id, latest.version),
-      tip: [
-        `${o.data.name} ${formatVersion(latest.version)}`,
-        'Broken',
-        `${tool ? `${tool.data.name} · ` : ''}date of the break unknown`,
-        'Release date unknown',
-      ],
+      tip: [`${o.data.name} ${formatVersion(latest.version)}`, `Broken${tool ? ` with ${tool.data.name}` : ''} · date unknown`],
       from: 0,
       to: 0,
     });
@@ -599,7 +601,7 @@ const STATUS_DOT: Record<DisplayStatus, string> = {
         [
           ['holding', 'Protected'],
           ['partial', STATUS_META.partial.label],
-          ['broken', 'Broken: red from the deobfuscation on, since its scripts stay breakable'],
+          ['broken', 'Broken (red from the deobfuscation on)'],
         ] as const
       ).map(([s, label]) => (
         <span class="inline-flex items-center gap-1.5">
@@ -624,7 +626,7 @@ const STATUS_DOT: Record<DisplayStatus, string> = {
       lanes.some((l) => data.obf.get(l.id)?.data.rolling) && (
         <span class="inline-flex items-center gap-1.5">
           <span class="inline-block h-2.5 w-4 rounded-[3px]" style="background:linear-gradient(90deg, var(--holding) 0 35%, var(--broken) 35% 65%, var(--holding) 65%)" />
-          Rolling builds: one bar, red over builds that were deobfuscated
+          Rolling builds (red where builds were deobfuscated)
         </span>
       )
     }
