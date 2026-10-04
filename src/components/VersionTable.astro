@@ -38,6 +38,7 @@ const toolName = (id: string) => deob.get(id)?.data.name ?? id;
             <td class="text-right whitespace-nowrap text-muted md:px-4 md:py-3 md:text-left">
               <span class="md:hidden text-subtle">Released </span>
               {formatDate(v.s.released)}
+              {v.until && <span> – {formatDate(v.until)}</span>}
             </td>
             <td class="md:px-4 md:py-3">
               <StatusBadge status={openSource && v.s.status === 'holding' ? 'open' : v.s.status} />

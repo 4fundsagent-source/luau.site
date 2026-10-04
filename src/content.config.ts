@@ -58,6 +58,8 @@ const version = z
     released: date.optional(),
     /** Release date unknown: the version was already out by this date. Only places it on the timeline. */
     seen: date.optional(),
+    /** Rolling builds: the last build this group covers (`released` is the first). */
+    until: date.optional(),
     notes: z.string().optional(),
     /** Manual override of the derived status. Requires a note and sources. */
     status: z.enum(STATUSES).optional(),
@@ -78,6 +80,9 @@ const version = z
   })
   .refine((v) => !(v.seen && v.released), {
     message: 'Use seen only when the release date is unknown',
+  })
+  .refine((v) => !v.until || v.released, {
+    message: 'until needs released (the first build of the range)',
   });
 
 const grade = z.number().int().min(0).max(4);
@@ -132,6 +137,8 @@ const obfuscators = defineCollection({
       targets: z.array(z.enum(RUNTIMES)),
       techniques: z.array(z.enum(TECHNIQUES)),
       discontinued: z.boolean().default(false),
+      /** Ships unnumbered builds continuously: the timeline draws one bar, red where builds were deobfuscated. */
+      rolling: z.boolean().default(false),
       availability: z.enum(AVAILABILITY).default('public'),
       beta: z.boolean().default(false),
       /** Does the vendor publish versions and changelogs? Omit when unknown. */

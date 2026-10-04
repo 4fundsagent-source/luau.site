@@ -2,8 +2,11 @@
 /**
  * The Arms Race over a recent window (the last few months up to today).
  * One lane per obfuscator with activity in the window:
- *   - solid bars:  dated versions, from release until superseded or today (extended to a later
- *                  break). Green while protected, red from the day a deobfuscation appeared.
+ *   - solid bars:  dated versions. Green from release while protected; once broken, red from the
+ *                  deobfuscation up to today (its scripts stay breakable). Unbroken bars end when
+ *                  the next version replaces them.
+ *   - rolling:     obfuscators with unnumbered builds get one bar, red over the span of builds
+ *                  that were deobfuscated and a red dot for a single deobfuscated build.
  *   - dashed bars: undated versions still standing, from an open public
  *                  challenge (or the start of observation) until today
  *   - crosses:     undated versions broken in the window
@@ -42,7 +45,7 @@ const CHAR = 6.3;
 const x = (t: number) => LEFT + ((Math.min(Math.max(t, t0), t1) - t0) / (t1 - t0)) * (W - LEFT - RIGHT);
 
 interface Item {
-  kind: 'bar' | 'watch' | 'cross' | 'note';
+  kind: 'bar' | 'watch' | 'cross' | 'note' | 'range' | 'dot';
   label: string;
   start: number;
   end: number;
@@ -50,6 +53,8 @@ interface Item {
   endKind: 'broken' | 'superseded' | 'ongoing';
   /** When a dated bar was broken: green before this point, red after. */
   breakAt?: number;
+  /** The current, unbroken version: gets the pulsing end marker. */
+  live?: boolean;
   clipped: boolean;
   trophy: boolean;
   row: number;
@@ -78,21 +83,85 @@ const lanes: Lane[] = [];
 for (const o of data.obfuscators) {
   if (only && !only.includes(o.id)) continue;
   const items: Item[] = [];
+  const blank = { trophy: false, row: 0, from: 0, to: 0 };
+
+  if (o.data.rolling) {
+    // Unnumbered rolling builds: one bar from the first tracked build to today, red over the span
+    // of builds that were deobfuscated, and a red dot where a single build was.
+    const starts = o.versions.map((v) => (v.s.released ?? v.seen)?.date.getTime()).filter((t): t is number => t !== undefined);
+    const start = starts.length ? Math.min(...starts) : (o.observedSince?.date.getTime() ?? t0);
+    const live = o.latest.s.status === 'holding';
+    items.push({
+      ...blank,
+      kind: 'bar',
+      label: 'rolling builds',
+      start,
+      end: now,
+      status: 'holding',
+      endKind: 'ongoing',
+      live,
+      clipped: start < t0,
+      href: `/obfuscators/${o.id}#versions`,
+      tip: [
+        `${o.data.name} · rolling builds`,
+        'Unnumbered builds, updated continuously',
+        live ? 'Current builds: no deobfuscation known' : 'Current builds: broken',
+      ],
+    });
+    for (const v of o.versions) {
+      if (v.s.status !== 'broken') continue;
+      const shown = v.s.brokenOn ? ` · shown ${formatDate(v.s.brokenOn)}` : '';
+      if (v.s.released && v.until) {
+        items.push({
+          ...blank,
+          kind: 'range',
+          label: '',
+          start: v.s.released.date.getTime(),
+          end: Math.max(v.until.date.getTime(), v.s.released.date.getTime() + DAY),
+          status: 'broken',
+          endKind: 'broken',
+          clipped: v.s.released.date.getTime() < t0,
+          href: anchor(o.id, v.version),
+          tip: [
+            `${o.data.name} ${v.version}`,
+            `Builds from ${formatDate(v.s.released)} to ${formatDate(v.until)} deobfuscated${shown}`,
+            ...(v.s.statusNote ? [v.s.statusNote] : []),
+          ],
+        });
+      } else if (v.s.brokenOn) {
+        items.push({
+          ...blank,
+          kind: 'dot',
+          label: '',
+          start: v.s.brokenOn.date.getTime(),
+          end: v.s.brokenOn.date.getTime(),
+          status: 'broken',
+          endKind: 'broken',
+          clipped: false,
+          href: anchor(o.id, v.version),
+          tip: [`${o.data.name} ${v.version}`, `Deobfuscated${shown}`, ...(v.s.statusNote ? [v.s.statusNote] : [])],
+        });
+      }
+    }
+  }
+
   // Dated versions, plus undated ones known to have been out by some date ("seen").
-  const dated = o.versions.filter((v) => v.s.released || v.seen);
+  const dated = o.data.rolling ? [] : o.versions.filter((v) => v.s.released || v.seen);
   const startOf = (v: (typeof o.versions)[number]) => (v.s.released ?? v.seen)!;
 
   dated.forEach((v, i) => {
     const start = startOf(v).date.getTime();
     const next = dated[i + 1] ? startOf(dated[i + 1]!).date.getTime() : undefined;
     const broken = v.s.status === 'broken' && v.s.brokenOn ? v.s.brokenOn.date.getTime() : undefined;
-    // A bar runs until the next version replaces it (or today); a break after that extends it,
-    // so the green stretch always shows how long the version stayed protected.
-    const until = next ?? now;
-    const end = Math.max(broken !== undefined ? Math.max(broken, until) : until, start + DAY);
+    // An unbroken bar runs until the next version replaces it (or today). A broken one stays red from
+    // the break up to today, because scripts protected with it stay breakable; the green stretch
+    // before the break shows how long it held. Versions broken and replaced before the window are left out.
+    if (broken !== undefined && broken < t0 && (next ?? now) < t0) return;
+    const end = Math.max(broken !== undefined ? now : (next ?? now), start + DAY);
     if (end < t0) return;
-    const endKind = broken !== undefined && broken >= until ? 'broken' : next ? 'superseded' : 'ongoing';
+    const endKind = next && broken === undefined ? 'superseded' : 'ongoing';
     items.push({
+      ...blank,
       kind: 'bar',
       label: formatVersion(v.version),
       start,
@@ -101,29 +170,27 @@ for (const o of data.obfuscators) {
       status: broken !== undefined ? 'holding' : v.s.status,
       breakAt: broken,
       endKind,
+      live: broken === undefined && !next && v.s.status === 'holding',
       clipped: start < t0,
-      trophy: false,
-      row: 0,
       href: anchor(o.id, v.version),
       tip: [
         `${o.data.name} ${formatVersion(v.version)}`,
         STATUS_META[v.s.status].label,
         v.s.released ? `Released ${formatDate(v.s.released)}` : `Out by ${formatDate(v.seen)} · release date unknown`,
         broken
-          ? `Broken ${formatDate(v.s.brokenOn)}${v.s.daysToBreak !== undefined ? ` · ${formatDuration(v.s.daysToBreak, v.s.fuzzy)}` : ''}`
+          ? `Broken ${formatDate(v.s.brokenOn)}${v.s.daysToBreak !== undefined ? ` · held ${formatDuration(v.s.daysToBreak, v.s.fuzzy)}` : ''}`
           : endKind === 'superseded'
             ? `Superseded ${formatDate(startOf(dated[i + 1]!))}`
             : 'Still current',
+        ...(broken !== undefined ? ['Scripts protected with it stay breakable'] : []),
         ...(v.s.manual && v.s.statusNote ? [v.s.statusNote] : []),
       ],
-      from: 0,
-      to: 0,
     });
   });
 
   // An open public challenge (on any current version), or an undated version being watched:
   // a dashed bar from the challenge or observation start to today.
-  const st = data.standing.find((s) => s.obfuscator === o.id && (s.challenge || s.reason === 'observation'));
+  const st = o.data.rolling ? undefined : data.standing.find((s) => s.obfuscator === o.id && (s.challenge || s.reason === 'observation'));
   if (st) {
     const c = st.challenge;
     const watchStart = c ? parseDate(c.posted) : st.since;
@@ -153,7 +220,7 @@ for (const o of data.obfuscators) {
 
   // Undated versions broken inside the window, grouped by day.
   const crosses = new Map<string, typeof o.versions>();
-  for (const v of o.versions) {
+  for (const v of o.data.rolling ? [] : o.versions) {
     if (v.s.released || v.seen || v.s.status !== 'broken' || !v.s.brokenOn) continue;
     if (v.s.brokenOn.date.getTime() < t0) continue;
     crosses.set(v.s.brokenOn.raw, [...(crosses.get(v.s.brokenOn.raw) ?? []), v]);
@@ -185,7 +252,7 @@ for (const o of data.obfuscators) {
   }
   // The current version is broken but nobody knows when: say so instead of leaving the lane empty.
   const latest = o.latest;
-  if (latest.s.status === 'broken' && !latest.s.brokenOn && !latest.s.released) {
+  if (!o.data.rolling && latest.s.status === 'broken' && !latest.s.brokenOn && !latest.s.released) {
     const tool = latest.s.decisive[0] ? data.deob.get(latest.s.decisive[0].deobfuscator) : undefined;
     items.push({
       kind: 'note',
@@ -230,16 +297,19 @@ for (const o of data.obfuscators) {
       it.to = Math.max(x(it.end) + (it.endKind === 'broken' ? 8 : 4), x0 + lw) + 10;
     }
   }
-  items.sort((a, b) => a.from - b.from);
-  const rowEnds: number[] = [];
-  for (const it of items) {
-    let r = rowEnds.findIndex((e) => e <= it.from);
-    if (r === -1) r = rowEnds.length;
-    rowEnds[r] = it.to;
-    it.row = r;
+  // A rolling lane is a single bar with its breaks drawn on top, in item order.
+  const rowEnds: number[] = o.data.rolling ? [W] : [];
+  if (!o.data.rolling) {
+    items.sort((a, b) => a.from - b.from);
+    for (const it of items) {
+      let r = rowEnds.findIndex((e) => e <= it.from);
+      if (r === -1) r = rowEnds.length;
+      rowEnds[r] = it.to;
+      it.row = r;
+    }
   }
 
-  const ongoing = items.some((it) => it.endKind === 'ongoing' && it.status === 'holding' && it.breakAt === undefined);
+  const ongoing = items.some((it) => it.live);
   lanes.push({
     id: o.id,
     name: o.data.name,
@@ -247,7 +317,8 @@ for (const o of data.obfuscators) {
     items,
     rows: rowEnds.length,
     standing: ongoing ? (rank.get(o.id) ?? 999) : Infinity,
-    last: Math.max(...items.map((it) => (it.endKind === 'ongoing' ? 0 : it.end))),
+    // Most recent break first among lanes that are not standing.
+    last: Math.max(0, ...items.map((it) => it.breakAt ?? (it.kind === 'range' || it.kind === 'dot' || it.kind === 'cross' ? it.start : 0))),
   });
 }
 // Still standing first (longest-standing on top), then by most recent break.
@@ -379,6 +450,25 @@ const STATUS_DOT: Record<DisplayStatus, string> = {
                     </a>
                   );
                 }
+                if (it.kind === 'range') {
+                  return (
+                    <a href={it.href} class="bar" data-tip={it.tip.join('\n')} data-status="broken" aria-label={it.tip.join(', ')}>
+                      <rect x={x0 - 2} y={yTop - 8} width={Math.max(x1 - x0, 3) + 4} height={BAR_H + 16} fill="transparent" />
+                      <path d={barPath(x0, x1, yTop, !it.clipped, true)} fill="var(--broken)" class="bar-fill" style={delay} />
+                    </a>
+                  );
+                }
+                if (it.kind === 'dot') {
+                  return (
+                    <a href={it.href} class="bar" data-tip={it.tip.join('\n')} aria-label={it.tip.join(', ')}>
+                      <rect x={x0 - 9} y={yTop - 8} width="18" height={BAR_H + 16} fill="transparent" />
+                      <g class="marker" style={delay}>
+                        <circle cx={x0} cy={cy} r="6.5" fill="var(--broken)" stroke="var(--bg-elev)" stroke-width="2" />
+                        <path d={`M${x0 - 2.4},${cy - 2.4}l4.8,4.8M${x0 + 2.4},${cy - 2.4}l-4.8,4.8`} stroke="var(--bg-elev)" stroke-width="1.5" stroke-linecap="round" />
+                      </g>
+                    </a>
+                  );
+                }
                 if (it.kind === 'note') {
                   const nx = x0 + 9;
                   return (
@@ -427,7 +517,7 @@ const STATUS_DOT: Record<DisplayStatus, string> = {
                         />
                       </g>
                     )}
-                    {it.endKind === 'ongoing' && it.status === 'holding' && it.breakAt === undefined && (
+                    {it.live && (
                       <g class="marker" style={delay}>
                         <circle cx={x1} cy={cy} r="7" fill="var(--holding)" class="live-ring" />
                         <circle cx={x1} cy={cy} r="4" fill="var(--holding)" stroke="var(--bg-elev)" stroke-width="1.5" />
@@ -509,7 +599,7 @@ const STATUS_DOT: Record<DisplayStatus, string> = {
         [
           ['holding', 'Protected'],
           ['partial', STATUS_META.partial.label],
-          ['broken', 'Broken, from the day a deobfuscation appeared'],
+          ['broken', 'Broken: red from the deobfuscation on, since its scripts stay breakable'],
         ] as const
       ).map(([s, label]) => (
         <span class="inline-flex items-center gap-1.5">
@@ -528,8 +618,16 @@ const STATUS_DOT: Record<DisplayStatus, string> = {
         <circle cx="6" cy="6" r="6" fill="var(--broken)" />
         <path d="M3.8,3.8l4.4,4.4M8.2,3.8l-4.4,4.4" stroke="var(--bg-elev)" stroke-width="1.4" stroke-linecap="round" />
       </svg>
-      Deobfuscated (on a bar, or an undated version)
+      Deobfuscated
     </span>
+    {
+      lanes.some((l) => data.obf.get(l.id)?.data.rolling) && (
+        <span class="inline-flex items-center gap-1.5">
+          <span class="inline-block h-2.5 w-4 rounded-[3px]" style="background:linear-gradient(90deg, var(--holding) 0 35%, var(--broken) 35% 65%, var(--holding) 65%)" />
+          Rolling builds: one bar, red over builds that were deobfuscated
+        </span>
+      )
+    }
     {
       tools.length > 0 && (
         <span class="inline-flex items-center gap-1.5">
