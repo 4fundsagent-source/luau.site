@@ -13,13 +13,15 @@ techniques: [vm]
 versions:
   - version: "4.0"
   - version: "4.5"
-    notes: Also seen as "4.5.A".
+    notes: >-
+      Also seen as "4.5.A". Release date unknown; it was already named in a repository created in May
+      2023.
 verified: false
-lastVerified: 2026-10-03
+lastVerified: 2026-10-04
 sources:
   - url: https://github.com/memcpython/PSU-Deobfuscator
     title: memcpython/PSU-Deobfuscator — "Deobfuscator for the PSU 4.0 / 4.5 Obfuscator"
     accessed: 2026-10-03
   - url: https://github.com/Federal9999/Luarmor
-    title: Federal9999/Luarmor — references PSU v4.5A
-    accessed: 2026-10-03
+    title: Federal9999/Luarmor — references PSU v4.5A (repository created May 15, 2023)
+    accessed: 2026-10-04

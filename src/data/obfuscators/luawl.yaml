@@ -6,15 +6,23 @@ description: >-
   hook, and replayed responses are rejected. Code runs on a highly polymorphic stack VM, every user and
   execution gets a different build, the vendor says it updates daily, and it uses white-box
   cryptography plus server-side tracking of tamper flags. It also claims self-attestable,
-  enclave-based servers. These are the vendor's claims from its release post. luawl is in heavy beta
-  and access is by request only (a demo is requested by email). Its static protections can be tested
-  with a public crackmes.one challenge (luawl-challenge-v1.2, run with Lune), rated 5.4/6 for
-  difficulty and unsolved with a $150 bounty as of October 4, 2026, after 541 downloads and no
-  writeups. The challenge's labels, set by luawl's own uploader account, list string encryption,
-  runtime decryption, a VM, control-flow obfuscation and a state-machine dispatcher.
+  enclave-based servers. These are the vendor's claims from its release post and website, where luawl
+  says each run goes through a custom Lua VM on a non-standard instruction set and returns a new,
+  uniquely obfuscated build. luawl is in heavy beta and access starts with a demo request. Plans are a
+  free Starter tier with credit-based obfuscations, Basic at $4 a month and Pro at $11 a month (both
+  billed yearly). A public changelog has dated updates rather than version numbers, from the
+  protected execution model (January 20, 2026) to verification records for each run (July 23,
+  2026). Its static protections can be tested with a public crackmes.one challenge
+  (luawl-challenge-v1.2, run with Lune), rated 5.4/6 for difficulty and unsolved with a $150 bounty
+  as of October 4, 2026, after 541 downloads and no writeups. The challenge's labels, set by luawl's
+  own uploader account, list string encryption, runtime decryption, a VM, control-flow obfuscation
+  and a state-machine dispatcher.
 website: https://luawl.org
+vendor: Luawl, Inc.
 since: 2026
-pricing: unknown
+pricing: freemium
+# Dated changelog entries, but no version numbers.
+disclosure: public
 availability: request-only
 beta: true
 targets: [luau]
@@ -41,13 +49,23 @@ challenges:
         accessed: 2026-10-04
 versions:
   - version: current
-    notes: Heavy beta, updated daily per the vendor; no numbered versions are published.
+    notes: >-
+      Heavy beta, updated daily per the vendor; no numbered versions are published. The changelog
+      lists dated updates on January 20, March 12, May 14 and July 23, 2026.
 verified: false
 lastVerified: 2026-10-04
+# luawl.org opts out of AI input in robots.txt; luau.site has the owner's permission to use it
+# (reported by a maintainer, 2026-10-04).
 sources:
   - url: https://luawl.org
-    title: luawl — "pushing the limits of luau obfuscation"
-    accessed: 2026-10-03
+    title: luawl — "Unique obfuscation built on server-streaming"
+    accessed: 2026-10-04
+  - url: https://luawl.org/pricing
+    title: luawl — Pricing (Starter free, Basic $4 a month, Pro $11 a month, billed yearly)
+    accessed: 2026-10-04
+  - url: https://luawl.org/changelog
+    title: luawl — Changelog (January 20 to July 23, 2026)
+    accessed: 2026-10-04
   - url: https://crackmes.one/crackme/6a84e079184836c0dbe7d836
     title: luawl-challenge-v1.2 on crackmes.one — description and labels
     accessed: 2026-10-04

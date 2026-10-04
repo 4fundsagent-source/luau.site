@@ -12,10 +12,15 @@ techniques: [vm]
 versions:
   - version: "2"
   - version: "3"
-    notes: Most widely targeted version.
+    notes: >-
+      Most widely targeted version. Release date unknown; it was already named in a repository created
+      in May 2023, and a deobfuscation service for it was announced in September 2023.
 verified: false
-lastVerified: 2026-10-03
+lastVerified: 2026-10-04
 sources:
+  - url: https://github.com/Federal9999/Luarmor
+    title: Federal9999/Luarmor — lists MoonSec v3 (repository created May 15, 2023)
+    accessed: 2026-10-04
   - url: https://github.com/tr4ash/moonsec-v3-deobfuscator
     title: tr4ash/moonsec-v3-deobfuscator — targets MoonSec v3 and v2
     accessed: 2026-10-03
