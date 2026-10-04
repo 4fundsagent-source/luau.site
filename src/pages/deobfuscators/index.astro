@@ -32,7 +32,7 @@ const GROUPS: { group: DeobGroup; title: string; description: string }[] = [
     group: 'env-logger',
     title: 'Environment loggers',
     description:
-      'Tools that run a protected script in a hooked environment and log what it does — services, remotes, URLs and constants — without recovering its source. They work against any obfuscator that does not detect them.',
+      'Tools that run a protected script in a hooked environment and log what it does — services, remotes, URLs and constants — without recovering its source. They count as anti-tamper bypasses, not breaks, so they never change an obfuscator\'s status, but they are ranked for how useful they are for reversing.',
   },
 ];
 const groups = GROUPS.map((g) => ({ ...g, items: deobfuscators.filter((d) => d.group === g.group) })).filter((g) => g.items.length);

@@ -164,6 +164,15 @@ const deobfuscators = defineCollection({
           }),
         )
         .default([]),
+      /**
+       * Env loggers only: obfuscators whose anti-tamper the tool claims to get past. Listed on the
+       * obfuscator's page for information; it never changes a status.
+       */
+      bypasses: z.array(z.object({ obfuscator: reference('obfuscators'), note: z.string().optional() })).default([]),
+    })
+    .refine((d) => d.kind === 'env-logger' || d.bypasses.length === 0, {
+      message: 'Only env loggers list anti-tamper bypasses',
+      path: ['bypasses'],
     })
     .refine((d) => d.kind !== 'deobfuscator' || d.targets.length > 0, {
       message: 'A deobfuscator needs at least one target (decompilers list `decompiles` instead; env loggers need none)',

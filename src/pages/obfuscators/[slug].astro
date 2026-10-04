@@ -70,6 +70,7 @@ const explainer =
           : "That means none we know of, not that it's unbreakable.";
 
 const tools = o.deobfuscators.map((id) => deob.get(id)!);
+const bypassers = o.envLoggers.map((b) => ({ ...b, d: deob.get(b.id)! }));
 const parent = o.basedOn ? obfuscators.find((x) => x.id === o.basedOn) : undefined;
 const derivatives = o.derivatives.map((id) => obfuscators.find((x) => x.id === id)!);
 const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id).map((r) => ({ sample: sm, run: r })));
@@ -160,6 +161,27 @@ const runs = samples.flatMap((sm) => sm.runs.filter((r) => r.obfuscator === o.id
           )
         }
       </Section>
+
+      {
+        bypassers.length > 0 && (
+          <Section
+            id="env-loggers"
+            title="Anti-tamper bypasses"
+            description={`Env loggers that claim to run ${d.name}-protected scripts and log what they do. They get past its anti-tamper, not its obfuscation, so they never change its status.`}
+          >
+            <ul class="surface divide-y divide-line text-sm">
+              {bypassers.map((b) => (
+                <li class="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                  <a href={`/deobfuscators/${b.id}`} class="link w-fit">
+                    {b.d.data.name}
+                  </a>
+                  <span class="text-muted">{b.note ?? 'Claimed by the tool, not verified by luau.site.'}</span>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )
+      }
 
       {
         o.openSource && d.codebase && (

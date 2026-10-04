@@ -220,8 +220,9 @@ const toc = [
         for a legacy one, times {VERSION_WEIGHT.latest} for the current version, {VERSION_WEIGHT.recent} for a version replaced in the last{' '}
         {RECENT_DAYS} days, and {VERSION_WEIGHT.older} for anything older. Decompilers break no obfuscator on their own and get a flat relevance of{' '}
         {DECOMPILER_RELEVANCE}. Env loggers, which run a protected script in a hooked environment and record what it does instead of
-        recovering its source, get a flat relevance of {ENV_LOGGER_RELEVANCE}; their logs rate as constants-level output, so they never
-        break a version on their own, and the access weight below ranks a paid logger under a free or open-source one.
+        recovering its source, get a flat relevance of {ENV_LOGGER_RELEVANCE}, and the access weight below ranks a paid logger under a free or
+        open-source one. They count as anti-tamper bypasses, not breaks: an obfuscator an env logger claims to get past lists it on its page,
+        but its status never changes because of it.
       </p>
       <table>
         <thead><tr><th>Component</th><th>Weight</th><th>Basis</th></tr></thead>

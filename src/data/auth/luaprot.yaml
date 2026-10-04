@@ -1,0 +1,27 @@
+name: LuaProt
+tagline: Roblox whitelist and key service with obfuscation allowances and execution logs; paid plans from $10 a month (as of 2025).
+description: >-
+  LuaProt bills itself as the "#1 Lua authentication service" for Roblox scripts. Authors buy a plan
+  through its Sellix store, upload a script to get a loader, then whitelist users or mass-create and
+  export keys; every plan includes a monthly obfuscation allowance and execution logs. As archived in
+  March 2025, the plans were Basic ($10 a month, 20 obfuscations, up to 300 users), Premium ($20, 60
+  obfuscations, 1,000 users) and Enterprise ($30, 100 obfuscations, unlimited users). The site credits
+  Brizzy and Leon and carries a 2024 copyright. The live site now sits behind a bot check, so newer
+  plans are not documented here, and its obfuscator is not documented separately. No public bypass of
+  the key system is tracked.
+website: https://luaprot.net
+pricing: paid
+features: [key-system, whitelist, obfuscation, loader, analytics]
+bypass:
+  status: none-known
+  note: No public bypass of the key system is tracked.
+verified: false
+lastVerified: 2026-10-04
+sources:
+  - url: https://luaprot.net/home
+    title: LuaProt — "#1 Whitelisting Service", how it works and plans (archived March 17, 2025)
+    accessed: 2026-10-04
+    archive: https://web.archive.org/web/20250317194244/https://luaprot.net/home
+  - url: https://rdap.org/domain/luaprot.net
+    title: RDAP — luaprot.net registered March 17, 2025
+    accessed: 2026-10-04

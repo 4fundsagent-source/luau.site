@@ -71,6 +71,7 @@ export function apiCollections(data: SiteData) {
     firstSeen: v(d.firstSeen),
     links: { website: d.data.website ?? null, repo: d.data.repo ?? null },
     coverage: d.coverage.map(({ obfuscator, version, support, effect }) => ({ obfuscator, version, support, effect })),
+    bypasses: d.data.bypasses.map((b) => ({ obfuscator: b.obfuscator.id, note: b.note ?? null })),
     score: {
       total: d.score.total,
       tier: d.score.tier,
