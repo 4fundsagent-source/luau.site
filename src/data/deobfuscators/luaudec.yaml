@@ -1,0 +1,22 @@
+name: luauDec
+author: xgladius
+kind: decompiler
+decompiles: [luau]
+tagline: Dependency-free C++ Luau decompiler that rebuilds an AST without running the VM.
+description: >-
+  luauDec decompiles Luau bytecode using Luau's own tooling to build a syntax tree, which it then
+  prints as readable code. It needs no dependencies beyond Luau and never invokes the Luau VM. Its last
+  commits date from August 2022.
+repo: https://github.com/xgladius/luauDec
+access: open-source
+techniques: [decompilation]
+outputLevel: readable
+# Commits visible from August 2022.
+firstSeen: "~2022-08"
+maintenance: stale
+verified: false
+lastVerified: 2026-10-04
+sources:
+  - url: https://github.com/xgladius/luauDec
+    title: xgladius/luauDec (README)
+    accessed: 2026-10-04

@@ -6,16 +6,26 @@ import Section from '~/components/Section.astro';
 import Base from '~/layouts/Base.astro';
 import { formatDate, formatDuration } from '~/lib/dates';
 import { formatVersion, getSiteData } from '~/lib/data';
+import { median as medianOf } from '~/lib/status';
 
 const data = await getSiteData();
-const { stats, events, standing, obf, builtAt } = data;
+const { stats, events, obf, builtAt } = data;
 const DAY = 86_400_000;
 const since90 = builtAt.getTime() - 90 * DAY;
 
-const recentBreaks = events.filter((e) => e.kind === 'break' && e.date.date.getTime() >= since90).length;
-const recentTools = data.deobfuscators.filter((d) => d.firstSeen && d.firstSeen.date.getTime() >= since90).length;
+// The timeline follows the commercial, maintained obfuscators; the log can reveal the rest.
+const featured = data.obfuscators.filter((o) => o.segment === 'current');
+const featuredIds = featured.map((o) => o.id);
+const standing = data.standing.filter((s) => featuredIds.includes(s.obfuscator));
+const featuredEvents = events.filter((e) => e.segment === 'current');
 
-const median = stats.medianDaysToBreak;
+const recentBreaks = featuredEvents.filter((e) => e.kind === 'break' && e.date.date.getTime() >= since90).length;
+const recentTools = data.deobfuscators.filter(
+  (d) => d.group === 'current' && d.firstSeen && d.firstSeen.date.getTime() >= since90,
+).length;
+const ttb = featured.flatMap((o) => o.versions.filter((v) => v.s.daysToBreak !== undefined).map((v) => v.s));
+const median = medianOf(ttb.map((v) => v.daysToBreak!));
+const medianFuzzy = ttb.some((v) => v.fuzzy);
 
 // Unbroken latest versions, longest-standing first (an open public challenge counts from its posting date).
 const named = (name: string, version: string) => (/^\d/.test(version) ? `${name} ${formatVersion(version)}` : name);
@@ -79,7 +89,7 @@ const reasonText = (s: (typeof standing)[number]) =>
           { label: 'Obfuscators tracked', value: stats.obfuscators },
           {
             label: 'Median time to break',
-            text: median !== undefined ? formatDuration(median, stats.medianFuzzy) : '—',
+            text: median !== undefined ? formatDuration(median, medianFuzzy) : '—',
           },
         ].map((s) => (
           <div class="bg-elev px-5 py-4">
@@ -92,15 +102,18 @@ const reasonText = (s: (typeof standing)[number]) =>
       }
     </dl>
 
-    <Section title="The last few months" description="Still-standing lanes first, longest-standing on top. Hover or focus any mark for details.">
+    <Section
+      title="The last few months"
+      description="Commercial and maintained obfuscators only, still-standing lanes first. Open-source and legacy events are in the log below. Hover or focus any mark for details."
+    >
       <div class="surface p-4 sm:p-6">
-        <ArmsRaceChart data={data} />
+        <ArmsRaceChart data={data} only={featuredIds} />
       </div>
     </Section>
 
     <Section id="log" title="Event log" description="Every release, break, new tool and challenge, newest first. Releases and breaks are derived from the data; other events are added by hand with a source.">
       <a slot="action" href="/feed.xml" class="text-sm text-muted hover:text-fg">RSS feed →</a>
-      <EventList events={events} grouped filterable />
+      <EventList events={events} grouped filterable segmentToggle />
     </Section>
   </div>
 </Base>

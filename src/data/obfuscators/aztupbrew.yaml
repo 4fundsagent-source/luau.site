@@ -5,6 +5,7 @@ description: >-
   numbering. It keeps the IronBrew-style Lua 5.1 VM, so tools built for IronBrew handle it with small
   changes: one open-source deobfuscator recovers readable source from it, and an older one lifts it
   back to Lua bytecode. Pricing and distribution are not documented yet.
+segment: legacy
 pricing: unknown
 basedOn: ironbrew-2
 targets: [lua51]

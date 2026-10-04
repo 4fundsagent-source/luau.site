@@ -12,8 +12,20 @@ import {
   UNRATED_BELOW,
   WEIGHTS,
 } from '~/lib/score';
+import {
+  ACCESS_WEIGHT,
+  DECOMPILER_RELEVANCE,
+  DEOB_WEIGHTS,
+  DIFFICULTY_WEIGHT,
+  EFFECT_WEIGHT,
+  OUTPUT_WEIGHT,
+  RECENT_DAYS,
+  SEGMENT_WEIGHT,
+  UPKEEP_WEIGHT,
+  VERSION_WEIGHT,
+} from '~/lib/deobScore';
 import { SITE } from '~/lib/site';
-import { CODEBASE_CRITERIA, CODEBASE_MAX, CODEBASE_META, TECHNIQUES, TECHNIQUE_META } from '~/lib/taxonomy';
+import { CODEBASE_CRITERIA, CODEBASE_MAX, CODEBASE_META, SEGMENT_META, TECHNIQUES, TECHNIQUE_META } from '~/lib/taxonomy';
 
 const toc = [
   { id: 'principles', label: 'Principles' },
@@ -23,6 +35,8 @@ const toc = [
   { id: 'proving', label: 'Proving & earned credit' },
   { id: 'transparency', label: 'Transparency & difficulty' },
   { id: 'challenges', label: 'Public challenges' },
+  { id: 'segments', label: 'Commercial vs legacy' },
+  { id: 'deobfuscator-score', label: 'Deobfuscator Score' },
   { id: 'evidence', label: 'Evidence rules' },
   { id: 'lab', label: 'The Lab' },
   { id: 'outputs', label: 'What we host' },
@@ -182,6 +196,54 @@ const toc = [
         downloads, writeups and bounty. An <strong>open</strong> challenge starts the earned-credit clock. A <strong>solved</strong> challenge is
         shown on the timeline, but it only counts as a break once a matching deobfuscator or public writeup is recorded, because one solved
         sample doesn't mean every script can be recovered.
+      </p>
+
+      <h2 id="segments">Commercial vs legacy</h2>
+      <p>
+        Every obfuscator and auth service sits in one of two groups. <strong>{SEGMENT_META.current.label}</strong>: {SEGMENT_META.current.description.toLowerCase()}
+        <strong> {SEGMENT_META.legacy.label}</strong>: {SEGMENT_META.legacy.description.toLowerCase()}
+      </p>
+      <p>
+        Open-source and discontinued entries are legacy by default, and maintainers can place any entry explicitly. The two groups are ranked
+        separately, the timeline chart follows only the commercial group, and the event log hides legacy events until you ask for them. Scores
+        themselves don't change with the group.
+      </p>
+
+      <h2 id="deobfuscator-score">Deobfuscator Score</h2>
+      <p>
+        Deobfuscators and decompilers are ranked by how much they matter to the scene today. What a tool breaks counts most; a tool for a dead or
+        open-source obfuscator ranks low however polished it is.
+      </p>
+      <p>
+        Each version a tool covers has a <strong>relevance</strong>: {SEGMENT_WEIGHT.current} for a commercial obfuscator and {SEGMENT_WEIGHT.legacy}{' '}
+        for a legacy one, times {VERSION_WEIGHT.latest} for the current version, {VERSION_WEIGHT.recent} for a version replaced in the last{' '}
+        {RECENT_DAYS} days, and {VERSION_WEIGHT.older} for anything older. Decompilers break no obfuscator on their own and get a flat relevance of{' '}
+        {DECOMPILER_RELEVANCE}.
+      </p>
+      <table>
+        <thead><tr><th>Component</th><th>Weight</th><th>Basis</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Impact</strong></td><td>{DEOB_WEIGHTS.impact}</td>
+            <td>
+              The best covered version: relevance × effect (break {EFFECT_WEIGHT.break}, partial {EFFECT_WEIGHT.partial}) × difficulty (hard{' '}
+              {DIFFICULTY_WEIGHT.hard}, moderate {DIFFICULTY_WEIGHT.moderate}, unknown {DIFFICULTY_WEIGHT.unknown}, easy {DIFFICULTY_WEIGHT.easy}).
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Craft</strong></td><td>{DEOB_WEIGHTS.craft}</td>
+            <td>
+              Half output quality (near-original {OUTPUT_WEIGHT['near-original']}, readable {OUTPUT_WEIGHT.readable}, bytecode {OUTPUT_WEIGHT.bytecode},
+              constants {OUTPUT_WEIGHT.constants}), three tenths upkeep (active {UPKEEP_WEIGHT.active}, stale {UPKEEP_WEIGHT.stale}, archived{' '}
+              {UPKEEP_WEIGHT.archived}), one fifth availability (open source {ACCESS_WEIGHT['open-source']}, free {ACCESS_WEIGHT.free}, paid{' '}
+              {ACCESS_WEIGHT.paid}, private {ACCESS_WEIGHT.private}). The whole component is scaled by the best relevance.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Decompilers are listed alongside deobfuscators because they finish the job once a VM has been lifted back to standard bytecode, but they
+        never change an obfuscator's status by themselves.
       </p>
 
       <h2 id="evidence">Evidence rules</h2>

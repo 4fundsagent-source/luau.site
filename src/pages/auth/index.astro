@@ -1,12 +1,16 @@
 ---
 import AuthCard from '~/components/AuthCard.astro';
+import DirectoryGroup from '~/components/DirectoryGroup.astro';
 import Icon from '~/components/Icon.astro';
 import PageHeader from '~/components/PageHeader.astro';
 import Base from '~/layouts/Base.astro';
 import { getSiteData } from '~/lib/data';
 import { issueUrl } from '~/lib/site';
+import { SEGMENTS, SEGMENT_META } from '~/lib/taxonomy';
 
 const { auth } = await getSiteData();
+// Both groups always show, so the split between commercial and legacy services stays visible.
+const groups = SEGMENTS.map((seg) => ({ seg, items: auth.filter((a) => a.segment === seg) }));
 ---
 
 <Base title="Auth services" description="Key systems, whitelists and licensing services for Lua scripts, and whether they've been publicly bypassed.">
@@ -16,9 +20,21 @@ const { auth } = await getSiteData();
     description="Key systems, whitelists and loaders that decide who can run a script, often bundled with obfuscation. We track their features and whether a public bypass exists."
   />
   <div class="container-page py-10">
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {auth.map((a, i) => <AuthCard a={a} index={i} />)}
-    </div>
+    {
+      groups.map(({ seg, items }) => (
+        <DirectoryGroup id={seg} title={SEGMENT_META[seg].label} description={SEGMENT_META[seg].description} count={items.length} noun={['service', 'services']}>
+          {items.length ? (
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {items.map((a, i) => (
+                <AuthCard a={a} index={i} />
+              ))}
+            </div>
+          ) : (
+            <div class="surface p-6 text-sm text-muted">No open-source or discontinued auth services are tracked yet.</div>
+          )}
+        </DirectoryGroup>
+      ))
+    }
     <p class="mt-8 flex items-center gap-2 text-sm text-muted">
       <Icon name="plus" size={15} />
       Missing a service?

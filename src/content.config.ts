@@ -7,6 +7,7 @@ import {
   AVAILABILITY,
   CHALLENGE_STATUS,
   CODEBASE_CRITERIA,
+  DEOB_KINDS,
   DIFFICULTY,
   DISCLOSURE,
   AUTH_FEATURES,
@@ -17,6 +18,7 @@ import {
   OUTPUT_LEVELS,
   PRICING,
   RUNTIMES,
+  SEGMENTS,
   STATUSES,
   SUPPORT,
   TECHNIQUES,
@@ -105,6 +107,8 @@ const obfuscators = defineCollection({
     .object({
       ...common,
       vendor: z.string().optional(),
+      /** Commercial & maintained vs open source & legacy. Defaults from pricing and `discontinued`. */
+      segment: z.enum(SEGMENTS).optional(),
       /** The tracked obfuscator this one is a fork of or built on. Informational; it doesn't affect scores. */
       basedOn: reference('obfuscators').optional(),
       since: z.number().int().min(2000).optional(),
@@ -133,29 +137,42 @@ const obfuscators = defineCollection({
 
 const deobfuscators = defineCollection({
   loader: glob({ pattern: '*.yaml', base: './src/data/deobfuscators' }),
-  schema: z.object({
-    ...common,
-    author: z.string(),
-    access: z.enum(ACCESS),
-    license: z.string().optional(),
-    techniques: z.array(z.enum(DEOB_TECHNIQUES)).min(1),
-    outputLevel: z.enum(OUTPUT_LEVELS),
-    firstSeen: date.optional(),
-    maintenance: z.enum(MAINTENANCE),
-    targets: z
-      .array(
-        z.object({
-          obfuscator: reference('obfuscators'),
-          versions: z.array(z.string()).min(1),
-          support: z.enum(SUPPORT).default('full'),
-          since: z.union([z.literal('unknown'), date]).optional(),
-          /** How hard the break was; omit when unknown. */
-          difficulty: z.enum(DIFFICULTY).optional(),
-          notes: z.string().optional(),
-        }),
-      )
-      .min(1),
-  }),
+  schema: z
+    .object({
+      ...common,
+      author: z.string(),
+      kind: z.enum(DEOB_KINDS).default('deobfuscator'),
+      /** Bytecode formats a decompiler reads. */
+      decompiles: z.array(z.enum(RUNTIMES)).default([]),
+      access: z.enum(ACCESS),
+      license: z.string().optional(),
+      techniques: z.array(z.enum(DEOB_TECHNIQUES)).min(1),
+      outputLevel: z.enum(OUTPUT_LEVELS),
+      firstSeen: date.optional(),
+      maintenance: z.enum(MAINTENANCE),
+      /** Decompilers target bytecode formats, not obfuscators, so they leave this empty. */
+      targets: z
+        .array(
+          z.object({
+            obfuscator: reference('obfuscators'),
+            versions: z.array(z.string()).min(1),
+            support: z.enum(SUPPORT).default('full'),
+            since: z.union([z.literal('unknown'), date]).optional(),
+            /** How hard the break was; omit when unknown. */
+            difficulty: z.enum(DIFFICULTY).optional(),
+            notes: z.string().optional(),
+          }),
+        )
+        .default([]),
+    })
+    .refine((d) => d.kind === 'decompiler' || d.targets.length > 0, {
+      message: 'A deobfuscator needs at least one target (decompilers list `decompiles` instead)',
+      path: ['targets'],
+    })
+    .refine((d) => d.kind !== 'decompiler' || d.decompiles.length > 0, {
+      message: 'A decompiler needs at least one runtime in `decompiles`',
+      path: ['decompiles'],
+    }),
 });
 
 const auth = defineCollection({
@@ -163,6 +180,9 @@ const auth = defineCollection({
   schema: z.object({
     ...common,
     pricing: z.enum(PRICING),
+    /** Commercial & maintained vs open source & legacy. Defaults from pricing. */
+    segment: z.enum(SEGMENTS).optional(),
+    discontinued: z.boolean().default(false),
     features: z.array(z.enum(AUTH_FEATURES)).min(1),
     bundledObfuscator: reference('obfuscators').optional(),
     /** Whether the key system / whitelist itself has been bypassed. */

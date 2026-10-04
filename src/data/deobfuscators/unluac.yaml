@@ -1,0 +1,24 @@
+name: unluac
+author: tehtmi
+kind: decompiler
+decompiles: [lua51, lua52, lua53, lua54]
+tagline: The long-running Java decompiler for standard Lua 5.0–5.4 bytecode.
+description: >-
+  unluac decompiles standard Lua chunks back to source. Support is strongest for Lua 5.0 and 5.1, and
+  later versions work well unless code leans on goto. It needs debugging information in the chunk. It
+  is the decompiler several Lua 5.1 devirtualizers hand their output to, including PSU-Deobfuscator.
+  The project was registered in 2012 and its latest build is dated December 2025.
+website: https://unluac.sourceforge.io
+access: open-source
+license: MIT
+techniques: [decompilation]
+outputLevel: readable
+# SourceForge project registered April 15, 2012.
+firstSeen: 2012-04-15
+maintenance: active
+verified: false
+lastVerified: 2026-10-04
+sources:
+  - url: https://sourceforge.net/projects/unluac/
+    title: unluac on SourceForge — Lua 5.0–5.4, MIT, latest build unluac_2025_12_23
+    accessed: 2026-10-04

@@ -1,0 +1,23 @@
+name: Konstant
+author: plusgiant5
+kind: decompiler
+decompiles: [luau]
+tagline: Free, closed-source Luau decompiler run as a Discord bot, written in Luau.
+description: >-
+  Konstant decompiles and disassembles Luau bytecode through Discord commands (/decompile,
+  /disassemble and their file variants). Its author describes V2.1 as a single-file decompiler without
+  an IR, dominator trees or SSA, and says a properly engineered V3 is in progress. The project started
+  in August 2024 and its Discord community has more than 10,000 members.
+discord: https://discord.com/servers/konstant-tm-luau-decompiler-1277806964356939837
+access: free
+techniques: [decompilation]
+outputLevel: readable
+# Created August 27, 2024.
+firstSeen: 2024-08-27
+maintenance: active
+verified: false
+lastVerified: 2026-10-04
+sources:
+  - url: https://discord.com/servers/konstant-tm-luau-decompiler-1277806964356939837
+    title: Konstant™ | Luau Decompiler — Discord server listing
+    accessed: 2026-10-04

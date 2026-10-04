@@ -1,0 +1,28 @@
+name: Unluau
+author: valencefun
+kind: decompiler
+decompiles: [luau]
+tagline: Open-source Luau bytecode decompiler in C#; still alpha after years of releases.
+description: >-
+  Unluau turns compiled Luau bytecode back into source. It covers most Luau opcodes and language
+  features, but the README warns it is "still in very early alpha" and will hit bugs on complex
+  scripts. Releases ran from v0.0.1-alpha (March 2022) to v1.0.9-alpha (January 2023); a v2.0.0 beta
+  was announced and the last commits landed in August 2025. Like every decompiler here, it only helps
+  once an obfuscator's VM has been lifted back to standard bytecode.
+repo: https://github.com/valencefun/unluau
+access: open-source
+license: Apache-2.0
+techniques: [decompilation]
+outputLevel: readable
+# First release v0.0.1-alpha on March 6, 2022.
+firstSeen: 2022-03-06
+maintenance: stale
+verified: false
+lastVerified: 2026-10-04
+sources:
+  - url: https://github.com/valencefun/unluau
+    title: valencefun/unluau (README)
+    accessed: 2026-10-04
+  - url: https://github.com/valencefun/unluau/releases
+    title: Releases — v0.0.1-alpha (March 2022) to v1.0.9-alpha (January 2023)
+    accessed: 2026-10-04

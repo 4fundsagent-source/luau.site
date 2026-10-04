@@ -1,0 +1,30 @@
+---
+/**
+ * A titled group inside a directory page ("Commercial & maintained", …). The
+ * FilterBar hides a group whose items are all filtered out.
+ */
+interface Props {
+  id: string;
+  title: string;
+  description?: string;
+  count: number;
+  noun: [singular: string, plural: string];
+}
+const { id, title, description, count, noun } = Astro.props;
+---
+
+<section data-group aria-labelledby={`group-${id}`} class="group-section">
+  <div class="mb-4 flex flex-wrap items-end gap-x-3 gap-y-1">
+    <h2 id={`group-${id}`} class="text-lg font-semibold tracking-tight text-fg">{title}</h2>
+    <span class="num pb-0.5 text-xs text-subtle">{count} {count === 1 ? noun[0] : noun[1]}</span>
+    <span class="mb-2 hidden h-px flex-1 bg-line sm:block" aria-hidden="true"></span>
+    {description && <p class="w-full text-sm text-muted">{description}</p>}
+  </div>
+  <slot />
+</section>
+
+<style>
+  .group-section + .group-section {
+    margin-top: 3rem;
+  }
+</style>

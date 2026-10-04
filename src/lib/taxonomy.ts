@@ -34,6 +34,28 @@ export const STATUS_META: Record<DisplayStatus, { label: string; description: st
   },
 };
 
+/**
+ * Which part of the scene an entry belongs to. Commercial, maintained services are the
+ * focus of the site; open-source projects and legacy services are listed separately.
+ */
+export const SEGMENTS = ['current', 'legacy'] as const;
+export type Segment = (typeof SEGMENTS)[number];
+export const SEGMENT_META: Record<Segment, { label: string; description: string }> = {
+  current: {
+    label: 'Commercial & maintained',
+    description: 'Actively maintained services the scene relies on today.',
+  },
+  legacy: {
+    label: 'Open source & legacy',
+    description: 'Open-source projects, discontinued services, and ones the scene has moved past.',
+  },
+};
+
+/** An explicit segment wins; otherwise open-source or discontinued entries are legacy. */
+export function segmentOf(entry: { segment?: Segment; pricing: string; discontinued?: boolean }): Segment {
+  return entry.segment ?? (entry.pricing === 'open-source' || entry.discontinued ? 'legacy' : 'current');
+}
+
 export const PRICING = ['free', 'freemium', 'paid', 'open-source', 'unknown'] as const;
 export type Pricing = (typeof PRICING)[number];
 export const PRICING_LABEL: Record<Pricing, string> = {
@@ -180,6 +202,10 @@ export const TECHNIQUE_META: Record<Technique, { label: string; points: number; 
   },
 };
 
+/** A deobfuscator targets specific obfuscators; a decompiler turns standard bytecode back into source. */
+export const DEOB_KINDS = ['deobfuscator', 'decompiler'] as const;
+export type DeobKind = (typeof DEOB_KINDS)[number];
+
 export const ACCESS = ['open-source', 'free', 'paid', 'private'] as const;
 export type Access = (typeof ACCESS)[number];
 export const ACCESS_LABEL: Record<Access, string> = {
@@ -208,6 +234,7 @@ export const DEOB_TECHNIQUES = [
   'constant-dump',
   'ast-cleanup',
   'ai-assisted',
+  'decompilation',
 ] as const;
 export type DeobTechnique = (typeof DEOB_TECHNIQUES)[number];
 export const DEOB_TECHNIQUE_META: Record<DeobTechnique, { label: string; description: string }> = {
@@ -234,6 +261,10 @@ export const DEOB_TECHNIQUE_META: Record<DeobTechnique, { label: string; descrip
   'ai-assisted': {
     label: 'AI-assisted',
     description: 'Uses language models to lift, rename or restructure recovered code.',
+  },
+  decompilation: {
+    label: 'Decompilation',
+    description: 'Rebuilds source from standard bytecode using control-flow and data-flow analysis.',
   },
 };
 

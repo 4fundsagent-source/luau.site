@@ -1,4 +1,5 @@
 ---
+import DirectoryGroup from '~/components/DirectoryGroup.astro';
 import FilterBar, { type FilterDef, type SortDef } from '~/components/FilterBar.astro';
 import Icon from '~/components/Icon.astro';
 import ObfuscatorCard from '~/components/ObfuscatorCard.astro';
@@ -6,10 +7,11 @@ import PageHeader from '~/components/PageHeader.astro';
 import Base from '~/layouts/Base.astro';
 import { getSiteData } from '~/lib/data';
 import { issueUrl } from '~/lib/site';
-import { DISPLAY_STATUSES, PRICING, PRICING_LABEL, RUNTIMES, RUNTIME_LABEL, STATUS_META } from '~/lib/taxonomy';
+import { DISPLAY_STATUSES, PRICING, PRICING_LABEL, RUNTIMES, RUNTIME_LABEL, SEGMENTS, SEGMENT_META, STATUS_META } from '~/lib/taxonomy';
 
 const { obfuscators } = await getSiteData();
 const countBy = (pred: (o: (typeof obfuscators)[number]) => boolean) => obfuscators.filter(pred).length;
+const groups = SEGMENTS.map((seg) => ({ seg, items: obfuscators.filter((o) => o.segment === seg) })).filter((g) => g.items.length);
 
 const filters: FilterDef[] = [
   {
@@ -62,9 +64,17 @@ const sorts: SortDef[] = [
   />
   <div class="container-page py-10">
     <FilterBar filters={filters} sorts={sorts} total={obfuscators.length} noun={['obfuscator', 'obfuscators']} />
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {obfuscators.map((o, i) => <ObfuscatorCard o={o} index={i} />)}
-    </div>
+    {
+      groups.map(({ seg, items }) => (
+        <DirectoryGroup id={seg} title={SEGMENT_META[seg].label} description={SEGMENT_META[seg].description} count={items.length} noun={['obfuscator', 'obfuscators']}>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((o, i) => (
+              <ObfuscatorCard o={o} index={i} />
+            ))}
+          </div>
+        </DirectoryGroup>
+      ))
+    }
     <div data-empty hidden class="surface mt-4 p-10 text-center">
       <p class="text-fg">No obfuscators match these filters.</p>
       <p class="mt-1 text-sm text-muted">Clear a filter, or tell us about one we're missing.</p>

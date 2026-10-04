@@ -9,18 +9,34 @@ import { formatDate, formatDuration } from '~/lib/dates';
 import { formatVersion, getSiteData } from '~/lib/data';
 import { settledSurvivals, TIERS } from '~/lib/score';
 import { median } from '~/lib/status';
+import { MAINTENANCE_LABEL, OUTPUT_META, SEGMENTS, SEGMENT_META } from '~/lib/taxonomy';
 
-const { obfuscators, deob, builtAt } = await getSiteData();
+const { obfuscators, deobfuscators, deob, obf, builtAt } = await getSiteData();
 
-const rows = obfuscators.filter((o) => !o.score.unrated).map((o, i) => {
-  // Open source can't hold, so survival is not meaningful for it.
-  const { days, fuzzy } = o.openSource ? { days: [], fuzzy: false } : settledSurvivals(o.versions.map((v) => v.s), builtAt);
-  return { o, rank: i + 1, med: median(days), fuzzy };
-});
+// Commercial and legacy obfuscators are ranked separately, each from #1.
+const boards = SEGMENTS.map((segment) => ({
+  segment,
+  rows: obfuscators
+    .filter((o) => !o.score.unrated && o.segment === segment)
+    .map((o, i) => {
+      // Open source can't hold, so survival is not meaningful for it.
+      const { days, fuzzy } = o.openSource ? { days: [], fuzzy: false } : settledSurvivals(o.versions.map((v) => v.s), builtAt);
+      return { o, rank: i + 1, med: median(days), fuzzy };
+    }),
+})).filter((b) => b.rows.length);
+
+const bestTarget = (d: (typeof deobfuscators)[number]) => {
+  if (d.data.kind === 'decompiler') return 'Decompiler';
+  const b = d.score.best;
+  if (!b) return '—';
+  const c = d.coverage.find((x) => x.obfuscator === b.obfuscator && x.version === b.version);
+  return `${obf.get(b.obfuscator)!.data.name} ${formatVersion(b.version)}${c?.effect === 'partial' ? ' · partial' : ''}`;
+};
 
 const unrated = obfuscators.filter((o) => o.score.unrated);
 
 const fastest = obfuscators
+  .filter((o) => o.segment === 'current')
   .flatMap((o) => o.versions.filter((v) => v.s.daysToBreak !== undefined).map((v) => ({ o, v })))
   .sort((a, b) => a.v.s.daysToBreak! - b.v.s.daysToBreak!);
 ---
@@ -29,7 +45,7 @@ const fastest = obfuscators
   <PageHeader
     eyebrow="Analysis"
     title="Rankings"
-    description="Every obfuscator ranked by Security Score. Scores are computed from sourced data, and a dashed tier means the score is provisional because too little data backs it."
+    description="Obfuscators ranked by Security Score, commercial ones first, and deobfuscators ranked by how much they matter today. Scores are computed from sourced data; a dashed tier means the score is provisional."
   >
     <div class="mt-6 flex flex-wrap gap-2 text-xs">
       {
@@ -45,82 +61,94 @@ const fastest = obfuscators
   </PageHeader>
 
   <div class="container-page space-y-14 py-10">
-    <Section title="Leaderboard" description="Ranked by Security Score.">
-      <ol class="surface divide-y divide-line md:hidden">
-        {
-          rows.map(({ o, rank, med, fuzzy }, i) => (
-            <li class="relative px-4 py-3.5" data-reveal style={`--reveal-i:${i}`}>
-              <div class="flex items-center gap-3">
-                <span class="num w-4 text-sm text-subtle">{rank}</span>
-                <Monogram name={o.data.name} id={o.id} size="sm" />
-                <div class="min-w-0 flex-1">
-                  <a href={`/obfuscators/${o.id}`} class="card-link block truncate text-sm font-medium text-fg">
-                    {o.data.name}
-                  </a>
-                  <span class="num text-xs text-subtle">
-                    {formatVersion(o.latest.version)} · {med !== undefined ? `held ${formatDuration(med, fuzzy)}` : 'no dated versions'}
-                  </span>
-                </div>
-                <StatusBadge status={o.status} />
-              </div>
-              <ScoreBar class="mt-3 pl-7" score={o.score.total} tier={o.score.tier} confidence={o.score.confidence} provisional={o.score.provisional} />
-            </li>
-          ))
-        }
-      </ol>
-      <div class="surface hidden overflow-x-auto md:block">
-        <table class="w-full min-w-[46rem] text-left text-sm" data-sortable>
-          <thead class="border-b border-line bg-sunken text-xs text-subtle">
-            <tr>
-              <th scope="col" class="w-12 px-4 py-2.5 font-medium"><button type="button" data-key="rank" data-type="number">#</button></th>
-              <th scope="col" class="px-4 py-2.5 font-medium"><button type="button" data-key="name" data-type="string">Obfuscator</button></th>
-              <th scope="col" class="w-64 px-4 py-2.5 font-medium"><button type="button" data-key="score" data-type="number">Score</button></th>
-              <th scope="col" class="px-4 py-2.5 font-medium"><button type="button" data-key="status" data-type="number">Status</button></th>
-              <th scope="col" class="px-4 py-2.5 font-medium whitespace-nowrap"><button type="button" data-key="survival" data-type="number">Median survival</button></th>
-              <th scope="col" class="px-4 py-2.5 text-right font-medium"><button type="button" data-key="confidence" data-type="number">Data</button></th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-line">
+    {
+      boards.map(({ segment, rows }) => (
+        <Section
+          id={segment === 'current' ? 'leaderboard' : 'legacy'}
+          title={segment === 'current' ? 'Leaderboard' : SEGMENT_META.legacy.label}
+          description={
+            segment === 'current'
+              ? `${SEGMENT_META.current.label} obfuscators, ranked by Security Score.`
+              : `${SEGMENT_META.legacy.description} Ranked separately.`
+          }
+        >
+          <ol class="surface divide-y divide-line md:hidden">
             {
               rows.map(({ o, rank, med, fuzzy }, i) => (
-                <tr
-                  data-reveal
-                  style={`--reveal-i:${i}`}
-                  class="transition-colors hover:bg-hover"
-                  data-rank={rank}
-                  data-name={o.data.name.toLowerCase()}
-                  data-score={o.score.total}
-                  data-status={{ holding: 4, open: 3, partial: 2, broken: 1 }[o.status]}
-                  data-survival={med ?? -1}
-                  data-confidence={o.score.confidence}
-                >
-                  <td class="num px-4 py-3 text-muted">{rank}</td>
-                  <td class="px-4 py-3">
-                    <a href={`/obfuscators/${o.id}`} class="flex items-center gap-3">
-                      <Monogram name={o.data.name} id={o.id} size="sm" />
-                      <span>
-                        <span class="block font-medium text-fg hover:underline">{o.data.name}</span>
-                        <span class="num block text-xs text-subtle">{formatVersion(o.latest.version)}</span>
+                <li class="relative px-4 py-3.5" data-reveal style={`--reveal-i:${i}`}>
+                  <div class="flex items-center gap-3">
+                    <span class="num w-4 text-sm text-subtle">{rank}</span>
+                    <Monogram name={o.data.name} id={o.id} size="sm" />
+                    <div class="min-w-0 flex-1">
+                      <a href={`/obfuscators/${o.id}`} class="card-link block truncate text-sm font-medium text-fg">
+                        {o.data.name}
+                      </a>
+                      <span class="num text-xs text-subtle">
+                        {formatVersion(o.latest.version)} · {med !== undefined ? `held ${formatDuration(med, fuzzy)}` : 'no dated versions'}
                       </span>
-                    </a>
-                  </td>
-                  <td class="px-4 py-3">
-                    <ScoreBar score={o.score.total} tier={o.score.tier} confidence={o.score.confidence} provisional={o.score.provisional} />
-                  </td>
-                  <td class="px-4 py-3">
+                    </div>
                     <StatusBadge status={o.status} />
-                  </td>
-                  <td class="num px-4 py-3 whitespace-nowrap text-muted">{med !== undefined ? formatDuration(med, fuzzy) : '—'}</td>
-                  <td class="num px-4 py-3 text-right whitespace-nowrap text-muted">
-                    {Math.round(o.score.confidence * 100)}%{o.score.provisional && <span class="text-subtle"> · prov.</span>}
-                  </td>
-                </tr>
+                  </div>
+                  <ScoreBar class="mt-3 pl-7" score={o.score.total} tier={o.score.tier} confidence={o.score.confidence} provisional={o.score.provisional} />
+                </li>
               ))
             }
-          </tbody>
-        </table>
-      </div>
-    </Section>
+          </ol>
+          <div class="surface hidden overflow-x-auto md:block">
+            <table class="w-full min-w-[46rem] text-left text-sm" data-sortable>
+              <thead class="border-b border-line bg-sunken text-xs text-subtle">
+                <tr>
+                  <th scope="col" class="w-12 px-4 py-2.5 font-medium"><button type="button" data-key="rank" data-type="number">#</button></th>
+                  <th scope="col" class="px-4 py-2.5 font-medium"><button type="button" data-key="name" data-type="string">Obfuscator</button></th>
+                  <th scope="col" class="w-64 px-4 py-2.5 font-medium"><button type="button" data-key="score" data-type="number">Score</button></th>
+                  <th scope="col" class="px-4 py-2.5 font-medium"><button type="button" data-key="status" data-type="number">Status</button></th>
+                  <th scope="col" class="px-4 py-2.5 font-medium whitespace-nowrap"><button type="button" data-key="survival" data-type="number">Median survival</button></th>
+                  <th scope="col" class="px-4 py-2.5 text-right font-medium"><button type="button" data-key="confidence" data-type="number">Data</button></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-line">
+                {
+                  rows.map(({ o, rank, med, fuzzy }, i) => (
+                    <tr
+                      data-reveal
+                      style={`--reveal-i:${i}`}
+                      class="transition-colors hover:bg-hover"
+                      data-rank={rank}
+                      data-name={o.data.name.toLowerCase()}
+                      data-score={o.score.total}
+                      data-status={{ holding: 4, open: 3, partial: 2, broken: 1 }[o.status]}
+                      data-survival={med ?? -1}
+                      data-confidence={o.score.confidence}
+                    >
+                      <td class="num px-4 py-3 text-muted">{rank}</td>
+                      <td class="px-4 py-3">
+                        <a href={`/obfuscators/${o.id}`} class="flex items-center gap-3">
+                          <Monogram name={o.data.name} id={o.id} size="sm" />
+                          <span>
+                            <span class="block font-medium text-fg hover:underline">{o.data.name}</span>
+                            <span class="num block text-xs text-subtle">{formatVersion(o.latest.version)}</span>
+                          </span>
+                        </a>
+                      </td>
+                      <td class="px-4 py-3">
+                        <ScoreBar score={o.score.total} tier={o.score.tier} confidence={o.score.confidence} provisional={o.score.provisional} />
+                      </td>
+                      <td class="px-4 py-3">
+                        <StatusBadge status={o.status} />
+                      </td>
+                      <td class="num px-4 py-3 whitespace-nowrap text-muted">{med !== undefined ? formatDuration(med, fuzzy) : '—'}</td>
+                      <td class="num px-4 py-3 text-right whitespace-nowrap text-muted">
+                        {Math.round(o.score.confidence * 100)}%{o.score.provisional && <span class="text-subtle"> · prov.</span>}
+                      </td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      ))
+    }
 
  {
       unrated.length > 0 && (
@@ -146,7 +174,39 @@ const fastest = obfuscators
       )
     }
 
-    <Section title="Fastest broken" description="Versions with known release and break dates, ordered by how long they held.">
+    <Section
+      id="deobfuscators"
+      title="Deobfuscators"
+      description="Ranked by Deobfuscator Score: what a tool breaks matters most, and breaking a current commercial obfuscator counts far more than an open-source or legacy one."
+    >
+      <a slot="action" href="/methodology#deobfuscator-score" class="text-sm text-muted hover:text-fg">How it works →</a>
+      <ol class="surface divide-y divide-line">
+        {
+          deobfuscators.map((d, i) => (
+            <li class="relative grid grid-cols-[1.25rem_minmax(0,1fr)_5.5rem] items-center gap-3 px-4 py-3 transition-colors hover:bg-hover sm:grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,14rem)_11rem]" data-reveal style={`--reveal-i:${Math.min(i, 6)}`}>
+              <span class="num text-sm text-subtle">{i + 1}</span>
+              <span class="flex min-w-0 items-center gap-3">
+                <span class="hidden sm:block">
+                  <Monogram name={d.data.name} id={d.id} size="sm" />
+                </span>
+                <span class="min-w-0">
+                  <a href={`/deobfuscators/${d.id}`} class="card-link block truncate text-sm font-medium text-fg">
+                    {d.data.name}
+                  </a>
+                  <span class="block truncate text-xs text-subtle">
+                    by {d.data.author} · {OUTPUT_META[d.data.outputLevel].label.toLowerCase()} · {MAINTENANCE_LABEL[d.data.maintenance].toLowerCase()}
+                  </span>
+                </span>
+              </span>
+              <span class="hidden truncate text-sm text-muted sm:block">{bestTarget(d)}</span>
+              <ScoreBar score={d.score.total} tier={d.score.tier} label="Deobfuscator Score" />
+            </li>
+          ))
+        }
+      </ol>
+    </Section>
+
+    <Section title="Fastest broken" description="Commercial obfuscator versions with known release and break dates, ordered by how long they held.">
       {
         fastest.length ? (
           <div class="surface overflow-x-auto">
