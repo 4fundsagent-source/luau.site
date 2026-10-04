@@ -1,22 +1,47 @@
 name: IronBrew1
-tagline: Hosted obfuscation service under the IronBrew name. Details pending verification.
+tagline: Paid hosted Lua obfuscator with a generated VM, control-flow scrambling, SSA optimization and anti-tamper, from $10 a month.
 description: >-
-  Added at a maintainer's request. The site could not be reached from our build environment, so its
-  relation to the original IronBrew, pricing, runtimes and techniques are not documented yet. No
-  public deobfuscator or deobfuscation service is known, so it earns credit for every day it stays that way.
+  IronBrew1 (styled Ironbrew1) is an account-based obfuscation service. Scripts are compiled into a
+  custom instruction format and run on a generated virtual machine, branches and VM paths are
+  scrambled, an SSA optimizer simplifies code before the protection passes, and runtime checks stop
+  execution if the VM has been modified. Premium adds "intense VM scrambling" and VM compression.
+  Macros such as IB_ENCSTR (encrypted strings), IB_NO_VIRTUALIZE, IB_INLINE and IB_CRASH control
+  protection per function or string. Plans are Basic ($10 a month, 600 builds, platform lock and
+  anti-tamper), Premium ($20 a month, 1,500 builds) and Premium + API (from $35 a month, required to
+  obfuscate scripts for third parties). The web uploader takes .lua and .luau files, but the site
+  publishes no runtime list or changelog and does not describe a link to the original IronBrew or
+  IronBrew 2. No public deobfuscator or deobfuscation service is known, so it earns credit for every
+  day it stays that way.
 website: https://ironbrew1.com
-pricing: unknown
-targets: []
-techniques: []
+docs: https://ironbrew1.com/settings
+discord: https://discord.ironbrew1.com/
+since: 2026
+pricing: paid
+# Inferred, not published: the uploader accepts .lua/.luau files and the site benchmarks itself
+# against Wynfuscate, a Roblox obfuscator.
+targets: [luau]
+techniques: [vm, cff, string-encryption, anti-tamper, compression, macros]
 observation:
   since: 2026-10-03
   note: GitHub and known deobfuscation services checked; no public deobfuscator found.
 versions:
   - version: current
-    notes: Version history not yet documented.
+    notes: No numbered versions or changelog are published on the website.
 verified: false
-lastVerified: 2026-10-03
+lastVerified: 2026-10-04
 sources:
   - url: https://ironbrew1.com
-    title: IronBrew1
-    accessed: 2026-10-03
+    title: Ironbrew1 — "Lua obfuscator" (features and benchmark)
+    accessed: 2026-10-04
+  - url: https://ironbrew1.com/pricing
+    title: Ironbrew1 — Plans and limits
+    accessed: 2026-10-04
+  - url: https://ironbrew1.com/settings
+    title: Ironbrew1 — Protection settings guide
+    accessed: 2026-10-04
+  - url: https://ironbrew1.com/macros
+    title: Ironbrew1 — Macro reference
+    accessed: 2026-10-04
+  - url: https://rdap.org/domain/ironbrew1.com
+    title: RDAP — ironbrew1.com registered February 19, 2026
+    accessed: 2026-10-04

@@ -8,6 +8,7 @@ description: >-
   The README warns that others have rebranded Clyde as their own product, and says a V3 is in
   development.
 repo: https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection
+since: 2026
 pricing: open-source
 license: MIT
 targets: [luau]
@@ -27,7 +28,7 @@ versions:
   - version: main
     notes: Rolling releases from the main branch. V3 is announced as in development.
 verified: false
-lastVerified: 2026-10-03
+lastVerified: 2026-10-04
 sources:
   - url: https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection
     title: sfr-development/Lua-Obfuscator-Clyde-Protection (README)

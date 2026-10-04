@@ -6,7 +6,9 @@ tagline: Long-running commercial VM obfuscator for Lua and Luau, with API bindin
 description: >-
   Luraph describes itself as the longest-standing Lua obfuscation service, active since 2017.
   It compiles scripts to a per-build virtual machine, and offers macros, a VS Code extension and
-  API bindings for .NET and Node.js. In 2026 the v14.7–v14.9 line was publicly devirtualized, and
+  API bindings for .NET and Node.js. It guarantees support for the latest patches of every major Lua
+  release since 5.1, LuaJIT and Luau, with extra handling for platforms such as Roblox and FiveM, and
+  pricing starts at $1 per obfuscation. In 2026 the v14.7–v14.9 line was publicly devirtualized, and
   two open-source deobfuscators for v15 appeared about six weeks after its August release. Luraph
   shipped v15.1 on October 2, 2026.
 website: https://lura.ph
@@ -15,7 +17,8 @@ repo: https://github.com/Luraph
 pricing: paid
 # Ships numbered releases (v14.7 … v15.1) that the community can track.
 disclosure: public
-targets: [luau, lua51]
+# Per the FAQ: "the latest patches of all major Lua releases after v5.1, LuaJIT, and Luau".
+targets: [luau, lua51, lua52, lua53, lua54, luajit]
 techniques: [vm, polymorphic-vm, const-encryption, string-encryption, cff, anti-tamper, macros]
 versions:
   # TODO(verify): exact release dates for the 14.x line.
@@ -29,11 +32,14 @@ versions:
     released: 2026-10-02
     notes: Reported by the luau.site maintainers; changelog link pending.
 verified: false
-lastVerified: 2026-10-03
+lastVerified: 2026-10-04
 sources:
   - url: https://github.com/Luraph
     title: Luraph on GitHub — "committed to Lua obfuscation since 2017"
     accessed: 2026-10-03
+  - url: https://lura.ph/dashboard/faq
+    title: Luraph FAQ — supported Lua versions, "9 years of development", pricing from $1 per obfuscation
+    accessed: 2026-10-04
   - url: https://github.com/Luraph/macrosdk
     title: Luraph macro SDK
     accessed: 2026-10-03

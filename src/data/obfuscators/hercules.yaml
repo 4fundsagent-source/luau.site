@@ -7,7 +7,10 @@ description: >-
   Discord bot are also available.
 website: https://hercules-obfuscator.xyz
 repo: https://github.com/zeusssz/hercules-obfuscator
+since: 2024
 pricing: open-source
+# Versions are announced in the README and commit history, not in a changelog.
+disclosure: partial
 license: Apache-2.0
 targets: [lua54, luau]
 techniques: [vm, string-encryption, renaming, cff, junk-code, opaque-predicates, anti-tamper, compression, watermarking]
@@ -21,8 +24,21 @@ codebase:
   assessedOn: 2026-10-03
 versions:
   - version: "1.6.x"
-    notes: Watermarked "Hercules v1.6.2" in obfuscated output.
+    released: "~2024-12"
+    notes: >-
+      The README listed v1.6 by December 2024, then v1.6.1 (March 21, 2025) and v1.6.2 (April 16,
+      2025). Watermarked "Hercules v1.6.2" in obfuscated output.
+    sources:
+      - url: https://github.com/zeusssz/hercules-obfuscator/commits/main
+        title: Commit history — README version bumps, December 2024 to April 2025
+        accessed: 2026-10-04
   - version: "2.0.0"
+    released: 2026-04-30
+    notes: Version bump in the README and watermark module on April 30, 2026.
+    sources:
+      - url: https://github.com/zeusssz/hercules-obfuscator/commits/main
+        title: "Commit history — \"update version number in README and watermark module to 2.0.0\", April 30, 2026"
+        accessed: 2026-10-04
   - version: "2.0.1"
     released: 2026-06-17
     notes: Version bump in the README and VM generator on June 17, 2026.
@@ -31,8 +47,8 @@ versions:
         title: "Commit history — \"chore: update version to 2.0.1\", June 17, 2026"
         accessed: 2026-10-03
 verified: false
-lastVerified: 2026-10-03
+lastVerified: 2026-10-04
 sources:
   - url: https://github.com/zeusssz/hercules-obfuscator
-    title: zeusssz/hercules-obfuscator
-    accessed: 2026-10-03
+    title: zeusssz/hercules-obfuscator — repository created August 25, 2024
+    accessed: 2026-10-04
