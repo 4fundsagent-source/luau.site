@@ -2,7 +2,8 @@
 /**
  * The Arms Race over a recent window (the last few months up to today).
  * One lane per obfuscator with activity in the window:
- *   - solid bars:  dated versions, from release until broken, superseded or today
+ *   - solid bars:  dated versions, from release until superseded or today (extended to a later
+ *                  break). Green while protected, red from the day a deobfuscation appeared.
  *   - dashed bars: undated versions still standing, from an open public
  *                  challenge (or the start of observation) until today
  *   - crosses:     undated versions broken in the window
@@ -47,6 +48,8 @@ interface Item {
   end: number;
   status: Status;
   endKind: 'broken' | 'superseded' | 'ongoing';
+  /** When a dated bar was broken: green before this point, red after. */
+  breakAt?: number;
   clipped: boolean;
   trophy: boolean;
   row: number;
@@ -83,15 +86,20 @@ for (const o of data.obfuscators) {
     const start = startOf(v).date.getTime();
     const next = dated[i + 1] ? startOf(dated[i + 1]!).date.getTime() : undefined;
     const broken = v.s.status === 'broken' && v.s.brokenOn ? v.s.brokenOn.date.getTime() : undefined;
-    const end = Math.max(broken ?? next ?? now, start + DAY);
+    // A bar runs until the next version replaces it (or today); a break after that extends it,
+    // so the green stretch always shows how long the version stayed protected.
+    const until = next ?? now;
+    const end = Math.max(broken !== undefined ? Math.max(broken, until) : until, start + DAY);
     if (end < t0) return;
-    const endKind = broken ? 'broken' : next ? 'superseded' : 'ongoing';
+    const endKind = broken !== undefined && broken >= until ? 'broken' : next ? 'superseded' : 'ongoing';
     items.push({
       kind: 'bar',
       label: formatVersion(v.version),
       start,
       end,
-      status: v.s.status,
+      // Dated breaks are drawn as a green-then-red bar; the rest keep their status colour.
+      status: broken !== undefined ? 'holding' : v.s.status,
+      breakAt: broken,
       endKind,
       clipped: start < t0,
       trophy: false,
@@ -231,7 +239,7 @@ for (const o of data.obfuscators) {
     it.row = r;
   }
 
-  const ongoing = items.some((it) => it.endKind === 'ongoing' && it.status === 'holding');
+  const ongoing = items.some((it) => it.endKind === 'ongoing' && it.status === 'holding' && it.breakAt === undefined);
   lanes.push({
     id: o.id,
     name: o.data.name,
@@ -399,14 +407,27 @@ const STATUS_DOT: Record<DisplayStatus, string> = {
                       class="bar-fill"
                       style={delay}
                     />
+                    {it.breakAt !== undefined && x1 - x(it.breakAt) > 0.5 && (
+                      <path
+                        d={barPath(x(it.breakAt), x1, yTop, false, it.endKind !== 'superseded')}
+                        fill="var(--broken)"
+                        class="bar-fill"
+                        style={delay}
+                      />
+                    )}
                     {it.clipped && <rect x={x0} y={yTop - 1} width="22" height={BAR_H + 2} fill={`url(#${uid}-fade)`} />}
-                    {it.endKind === 'broken' && (
+                    {it.breakAt !== undefined && (
                       <g class="marker" style={delay}>
-                        <circle cx={x1} cy={cy} r="6.5" fill="var(--broken)" stroke="var(--bg-elev)" stroke-width="2" />
-                        <path d={`M${x1 - 2.4},${cy - 2.4}l4.8,4.8M${x1 + 2.4},${cy - 2.4}l-4.8,4.8`} stroke="var(--bg-elev)" stroke-width="1.5" stroke-linecap="round" />
+                        <circle cx={x(it.breakAt)} cy={cy} r="6.5" fill="var(--broken)" stroke="var(--bg-elev)" stroke-width="2" />
+                        <path
+                          d={`M${x(it.breakAt) - 2.4},${cy - 2.4}l4.8,4.8M${x(it.breakAt) + 2.4},${cy - 2.4}l-4.8,4.8`}
+                          stroke="var(--bg-elev)"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                        />
                       </g>
                     )}
-                    {it.endKind === 'ongoing' && it.status === 'holding' && (
+                    {it.endKind === 'ongoing' && it.status === 'holding' && it.breakAt === undefined && (
                       <g class="marker" style={delay}>
                         <circle cx={x1} cy={cy} r="7" fill="var(--holding)" class="live-ring" />
                         <circle cx={x1} cy={cy} r="4" fill="var(--holding)" stroke="var(--bg-elev)" stroke-width="1.5" />
@@ -484,11 +505,17 @@ const STATUS_DOT: Record<DisplayStatus, string> = {
 
   <figcaption class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted">
     {
-      (['holding', 'partial', 'broken'] as const).map((s) => (
+      (
+        [
+          ['holding', 'Protected'],
+          ['partial', STATUS_META.partial.label],
+          ['broken', 'Broken, from the day a deobfuscation appeared'],
+        ] as const
+      ).map(([s, label]) => (
         <span class="inline-flex items-center gap-1.5">
           <span class="inline-block h-2.5 w-4 rounded-[3px]" style={`background:var(--${s})`} />
           <StatusIcon status={s} />
-          {STATUS_META[s].label}
+          {label}
         </span>
       ))
     }
@@ -501,7 +528,7 @@ const STATUS_DOT: Record<DisplayStatus, string> = {
         <circle cx="6" cy="6" r="6" fill="var(--broken)" />
         <path d="M3.8,3.8l4.4,4.4M8.2,3.8l-4.4,4.4" stroke="var(--bg-elev)" stroke-width="1.4" stroke-linecap="round" />
       </svg>
-      Undated version broken
+      Deobfuscated (on a bar, or an undated version)
     </span>
     {
       tools.length > 0 && (
