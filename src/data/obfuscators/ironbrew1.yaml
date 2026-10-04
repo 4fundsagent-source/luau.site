@@ -10,8 +10,10 @@ description: >-
   anti-tamper), Premium ($20 a month, 1,500 builds) and Premium + API (from $35 a month, required to
   obfuscate scripts for third parties). The web uploader takes .lua and .luau files, but the site
   publishes no runtime list or changelog and does not describe a link to the original IronBrew or
-  IronBrew 2. No public deobfuscator or deobfuscation service is known, so it earns credit for every
-  day it stays that way.
+  IronBrew 2. There is no public deobfuscator, and unlike some obfuscators its scripts cannot simply be
+  handed to an AI model, but sample-specific deobfuscations have been shown on v3rm: builds from May
+  18 to June 4, 2026 on June 13, and a September build on September 22. No deobfuscation of later
+  builds is known.
 website: https://ironbrew1.com
 docs: https://ironbrew1.com/settings
 discord: https://discord.ironbrew1.com/
@@ -22,11 +24,36 @@ pricing: paid
 targets: [luau]
 techniques: [vm, cff, string-encryption, anti-tamper, compression, macros]
 observation:
-  since: 2026-10-03
-  note: GitHub and known deobfuscation services checked; no public deobfuscator found.
+  since: 2026-09-22
+  note: >-
+    Maintainers have tracked IronBrew1 builds since the September 22, 2026 deobfuscation; no later
+    sample-specific or tool-based deobfuscation is known.
+# IronBrew1 publishes no version numbers, so builds are grouped by when they were deobfuscated.
 versions:
+  - version: May–June 2026 builds
+    released: 2026-05-18
+    status: broken
+    statusNote: >-
+      Sample-specific deobfuscation of builds from May 18 to June 4, 2026, shown in a v3rm thread on
+      June 13, 2026; no public tool.
+    brokenOn: 2026-06-13
+    breakAccess: private
+    sources:
+      - url: https://v3rm.net/threads/ib1-ironbrew1-deobfuscation.30118/
+        title: v3rm — "IB1 / IronBrew1 deobfuscation", posted June 13, 2026 (reported by luau.site maintainers)
+        accessed: 2026-10-04
+  - version: September 2026 build
+    released: "2026-09"
+    status: broken
+    statusNote: Sample-specific deobfuscation of a September 2026 build, shown in a v3rm thread on September 22, 2026; no public tool.
+    brokenOn: 2026-09-22
+    breakAccess: private
+    sources:
+      - url: https://v3rm.net/threads/ironbrew1-antitamper-and-deobfuscation.33199/
+        title: v3rm — "IronBrew1 anti-tamper and deobfuscation", September 22, 2026 (reported by luau.site maintainers)
+        accessed: 2026-10-04
   - version: current
-    notes: No numbered versions or changelog are published on the website.
+    notes: Builds after September 22, 2026. No numbered versions or changelog are published on the website.
 verified: false
 lastVerified: 2026-10-04
 sources:

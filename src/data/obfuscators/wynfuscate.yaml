@@ -7,21 +7,36 @@ description: >-
   unlimited at $10 or $20 a month. Wynfuscate's own site announced it in 2025 as a Luau and Lua
   obfuscator for Roblox in which every protected script runs on its own custom virtual machine, with
   "metamorphic code generation", proprietary encryption and anti-tamper. Those are the vendor's
-  pre-launch claims; the current site sits behind a bot check and publishes no version history. No
-  public deobfuscator or deobfuscation service is known, so it earns credit for every day it stays
-  that way.
+  pre-launch claims; its current site sits behind a bot check. No dedicated deobfuscator exists, but
+  from about August 1, 2026 frontier AI models could deobfuscate v4 scripts without any tooling. v5
+  followed on August 7 with a staged roll-out (beta testers, then Enterprise, Pro and Basic; free
+  users stayed on v4), and no deobfuscation of v5 is known.
 website: https://wynfuscate.com
 since: 2025
 pricing: freemium
 targets: [luau]
 # As claimed on the vendor's 2025 pre-launch page.
 techniques: [vm, polymorphic-vm, anti-tamper]
-observation:
-  since: 2026-10-03
-  note: GitHub and known deobfuscation services checked; no public deobfuscator found.
 versions:
-  - version: current
-    notes: No numbered versions or changelog are published.
+  - version: "4"
+    # Release date unknown; maintainers report v4 was already out at the start of the timeline.
+    seen: 2026-06-01
+    status: broken
+    statusNote: >-
+      From about August 1, 2026, frontier AI models could deobfuscate v4 scripts sample by sample with no
+      tooling, so anyone could repeat it. No generic v4 deobfuscator exists.
+    brokenOn: 2026-08-01
+    breakAccess: free
+    sources:
+      - url: https://wynfuscate.com
+        title: Wynfuscate v4 deobfuscated with frontier AI models from August 1, 2026 (reported by luau.site maintainers; no public write-up yet)
+        accessed: 2026-10-04
+  - version: "5"
+    released: 2026-08-07
+    notes: >-
+      Announced August 7, 2026 with a staged roll-out: beta testers first, then Enterprise, Pro and
+      Basic users. Free users stayed on v4, which was also updated that day. No deobfuscation of v5 is
+      known.
 verified: false
 lastVerified: 2026-10-04
 sources:
