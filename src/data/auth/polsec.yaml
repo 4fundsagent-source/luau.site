@@ -1,0 +1,26 @@
+name: PolSec
+tagline: Paid Lua whitelist and script-protection platform with HWID-locked keys, a loader, obfuscation, analytics and ad monetization.
+description: >-
+  PolSec is a whitelist service for Roblox scripts: authors create a project, upload a Lua script and
+  ship the generated loader URL, and PolSec handles the whitelist and protection layer. Its dashboard
+  combines keys with HWID locking (users can redeem keys and reset their HWID from Discord), script
+  delivery, obfuscation, analytics, optional ad monetization and an API. Plans run from Premium at $5
+  a month (60 obfuscations) and a $20 tier (150 obfuscations) to Enterprise at $80 a month (unlimited
+  obfuscations under fair use). The original free service at getpolsec.com was shut down in favour of
+  polsec.sh. Its obfuscator is not documented separately, and no public bypass of the key system is
+  tracked.
+website: https://polsec.sh
+pricing: paid
+features: [key-system, hwid-lock, whitelist, obfuscation, loader, analytics, api]
+bypass:
+  status: none-known
+  note: No public bypass of the key system is tracked.
+verified: false
+lastVerified: 2026-10-04
+sources:
+  - url: https://polsec.sh
+    title: PolSec — Lua Whitelist & Script Protection (dashboard text and plans)
+    accessed: 2026-10-04
+  - url: https://getpolsec.com
+    title: PolSec — "The free version of PolSec is no longer available"
+    accessed: 2026-10-04

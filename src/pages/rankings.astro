@@ -9,7 +9,7 @@ import { formatDate, formatDuration } from '~/lib/dates';
 import { formatVersion, getSiteData } from '~/lib/data';
 import { settledSurvivals, TIERS } from '~/lib/score';
 import { median } from '~/lib/status';
-import { MAINTENANCE_LABEL, OUTPUT_META, SEGMENTS, SEGMENT_META } from '~/lib/taxonomy';
+import { DEOB_KIND_LABEL, MAINTENANCE_LABEL, OUTPUT_META, SEGMENTS, SEGMENT_META } from '~/lib/taxonomy';
 
 const { obfuscators, deobfuscators, deob, obf, builtAt } = await getSiteData();
 
@@ -26,7 +26,7 @@ const boards = SEGMENTS.map((segment) => ({
 })).filter((b) => b.rows.length);
 
 const bestTarget = (d: (typeof deobfuscators)[number]) => {
-  if (d.data.kind === 'decompiler') return 'Decompiler';
+  if (d.data.kind !== 'deobfuscator') return DEOB_KIND_LABEL[d.data.kind];
   const b = d.score.best;
   if (!b) return '—';
   const c = d.coverage.find((x) => x.obfuscator === b.obfuscator && x.version === b.version);

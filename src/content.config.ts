@@ -150,7 +150,7 @@ const deobfuscators = defineCollection({
       outputLevel: z.enum(OUTPUT_LEVELS),
       firstSeen: date.optional(),
       maintenance: z.enum(MAINTENANCE),
-      /** Decompilers target bytecode formats, not obfuscators, so they leave this empty. */
+      /** Decompilers target bytecode formats and env loggers any script, so they usually leave this empty. */
       targets: z
         .array(
           z.object({
@@ -165,8 +165,8 @@ const deobfuscators = defineCollection({
         )
         .default([]),
     })
-    .refine((d) => d.kind === 'decompiler' || d.targets.length > 0, {
-      message: 'A deobfuscator needs at least one target (decompilers list `decompiles` instead)',
+    .refine((d) => d.kind !== 'deobfuscator' || d.targets.length > 0, {
+      message: 'A deobfuscator needs at least one target (decompilers list `decompiles` instead; env loggers need none)',
       path: ['targets'],
     })
     .refine((d) => d.kind !== 'decompiler' || d.decompiles.length > 0, {

@@ -2,7 +2,7 @@
 import { formatDate } from '~/lib/dates';
 import { githubStats } from '~/lib/github';
 import { formatVersion, listRuntimes, type DeobfuscatorView } from '~/lib/data';
-import { ACCESS_LABEL, MAINTENANCE_LABEL, OUTPUT_META } from '~/lib/taxonomy';
+import { ACCESS_LABEL, DEOB_KIND_LABEL, MAINTENANCE_LABEL, OUTPUT_META } from '~/lib/taxonomy';
 import ExternalLinks from './ExternalLinks.astro';
 import Icon from './Icon.astro';
 import Monogram from './Monogram.astro';
@@ -54,7 +54,7 @@ const lines = [...groups.values()].flatMap((g) => [
       </h3>
       <p class="mt-0.5 truncate text-xs text-muted">by {x.author} · {ACCESS_LABEL[x.access]}{x.license ? ` (${x.license})` : ''}</p>
     </div>
-    <span class="chip">{x.kind === 'decompiler' ? 'Decompiler' : MAINTENANCE_LABEL[x.maintenance]}</span>
+    <span class="chip">{x.kind === 'deobfuscator' ? MAINTENANCE_LABEL[x.maintenance] : DEOB_KIND_LABEL[x.kind]}</span>
   </div>
 
   <p class="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-muted">{x.tagline}</p>
@@ -67,6 +67,18 @@ const lines = [...groups.values()].flatMap((g) => [
         <Icon name="code" size={14} class="mt-[0.2rem] shrink-0 text-subtle" />
         <span>
           Decompiles {listRuntimes(x.decompiles)} bytecode
+          <span class="text-subtle"> — {MAINTENANCE_LABEL[x.maintenance].toLowerCase()}</span>
+        </span>
+      </p>
+    )
+  }
+
+  {
+    x.kind === 'env-logger' && (
+      <p class="mt-4 flex items-start gap-2 text-sm text-fg">
+        <Icon name="code" size={14} class="mt-[0.2rem] shrink-0 text-subtle" />
+        <span>
+          Logs what a script does at runtime
           <span class="text-subtle"> — {MAINTENANCE_LABEL[x.maintenance].toLowerCase()}</span>
         </span>
       </p>

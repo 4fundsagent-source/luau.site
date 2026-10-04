@@ -202,9 +202,17 @@ export const TECHNIQUE_META: Record<Technique, { label: string; points: number; 
   },
 };
 
-/** A deobfuscator targets specific obfuscators; a decompiler turns standard bytecode back into source. */
-export const DEOB_KINDS = ['deobfuscator', 'decompiler'] as const;
+/**
+ * A deobfuscator targets specific obfuscators; a decompiler turns standard bytecode back into source;
+ * an env logger runs a protected script in a hooked environment and records what it does.
+ */
+export const DEOB_KINDS = ['deobfuscator', 'decompiler', 'env-logger'] as const;
 export type DeobKind = (typeof DEOB_KINDS)[number];
+export const DEOB_KIND_LABEL: Record<DeobKind, string> = {
+  deobfuscator: 'Deobfuscator',
+  decompiler: 'Decompiler',
+  'env-logger': 'Env logger',
+};
 
 export const ACCESS = ['open-source', 'free', 'paid', 'private'] as const;
 export type Access = (typeof ACCESS)[number];
