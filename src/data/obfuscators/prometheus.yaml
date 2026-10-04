@@ -6,7 +6,10 @@ description: >-
   Luau support is basic. Its license allows commercial use with attribution.
 website: https://prometheus-lua.github.io/Prometheus/
 repo: https://github.com/prometheus-lua/Prometheus
+since: 2021
 pricing: open-source
+# Tagged GitHub releases with notes.
+disclosure: public
 license: Prometheus License (MIT-style, attribution required)
 targets: [lua51, luau]
 techniques: [vm, const-encryption, string-encryption, cff, renaming]
@@ -20,10 +23,15 @@ codebase:
   assessedOn: 2026-10-03
 versions:
   - version: main
-    notes: Rolling releases from the main branch.
+    notes: >-
+      Rolling releases from the main branch. Tagged GitHub releases date back to early 2022 (Alpha
+      v0.1.6, January 15, 2022); the latest is v0.2.11.1, published May 6, 2026.
 verified: false
-lastVerified: 2026-10-03
+lastVerified: 2026-10-04
 sources:
   - url: https://github.com/prometheus-lua/Prometheus
-    title: prometheus-lua/Prometheus
-    accessed: 2026-10-03
+    title: prometheus-lua/Prometheus — repository created December 27, 2021
+    accessed: 2026-10-04
+  - url: https://github.com/prometheus-lua/Prometheus/releases
+    title: Prometheus releases — v0.2.11.1, May 6, 2026
+    accessed: 2026-10-04

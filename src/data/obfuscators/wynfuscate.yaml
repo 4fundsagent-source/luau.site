@@ -1,27 +1,44 @@
 name: Wynfuscate
-tagline: Hosted Lua obfuscation service. Details pending verification.
+tagline: Luau obfuscator for Roblox that powers KeyForge's hosted protection; 20 free obfuscations a month, unlimited from $10.
 description: >-
-  Added at a maintainer's request. Wynfuscate is the obfuscation engine hosted on KeyForge, a Roblox
-  key-system and licensing platform: scripts saved to a KeyForge dashboard are obfuscated server-side,
-  with allowances set by plan. The site could not be reached from our build environment, so pricing,
-  supported runtimes, techniques and version history are not documented yet. No public deobfuscator or
-  deobfuscation service is known, so it earns credit for every day it stays that way.
+  Wynfuscate (styled wYnFuscate) is the obfuscator behind KeyForge, a Roblox key-system and licensing
+  platform: scripts saved to a KeyForge dashboard are obfuscated on save and served through its
+  loader. KeyForge's plans include 20 Wynfuscate obfuscations a month free, 50 at $3, 70 at $5 and
+  unlimited at $10 or $20 a month. Wynfuscate's own site announced it in 2025 as a Luau and Lua
+  obfuscator for Roblox in which every protected script runs on its own custom virtual machine, with
+  "metamorphic code generation", proprietary encryption and anti-tamper. Those are the vendor's
+  pre-launch claims; the current site sits behind a bot check and publishes no version history. No
+  public deobfuscator or deobfuscation service is known, so it earns credit for every day it stays
+  that way.
 website: https://wynfuscate.com
-pricing: unknown
-targets: []
-techniques: []
+since: 2025
+pricing: freemium
+targets: [luau]
+# As claimed on the vendor's 2025 pre-launch page.
+techniques: [vm, polymorphic-vm, anti-tamper]
 observation:
   since: 2026-10-03
   note: GitHub and known deobfuscation services checked; no public deobfuscator found.
 versions:
   - version: current
-    notes: Version history not yet documented.
+    notes: No numbered versions or changelog are published.
 verified: false
-lastVerified: 2026-10-03
+lastVerified: 2026-10-04
 sources:
   - url: https://wynfuscate.com
-    title: Wynfuscate
-    accessed: 2026-10-03
+    title: wYnFuscate — "Advanced Luau & Lua Obfuscator for Roblox" (pre-launch page, July 2025)
+    accessed: 2026-10-04
+    archive: https://web.archive.org/web/20250710020315/http://wynfuscate.com/
+  - url: https://www.keyforge.win
+    title: KeyForge pricing — wYnFuscate obfuscations per plan (archived September 8, 2026)
+    accessed: 2026-10-04
+    archive: https://web.archive.org/web/20260908125725/https://www.keyforge.win/
+  - url: https://github.com/timmytim12354-png/free-luau-obfuscator/blob/main/docs/hosted-obfuscation.md
+    title: KeyForge docs — Hosted Luau obfuscation (wYnFuscate)
+    accessed: 2026-10-04
   - url: https://github.com/timmytim12354-png/free-luau-obfuscator
     title: KeyForge SDK docs — "Hosted wYnFuscate runs on KeyForge"
     accessed: 2026-10-03
+  - url: https://rdap.org/domain/wynfuscate.com
+    title: RDAP — wynfuscate.com registered May 18, 2025
+    accessed: 2026-10-04

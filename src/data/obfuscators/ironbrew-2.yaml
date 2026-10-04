@@ -5,6 +5,7 @@ description: >-
   is widely cited as an ancestor of many obfuscators seen in the wild. Public deobfuscation work
   exists for v2.7.0 and v2.7.1, including a 2026 tool that also handles its AztupBrew fork.
 repo: https://github.com/Trollicus/ironbrew-2
+since: 2019
 pricing: open-source
 license: MIT
 targets: [lua51]
@@ -21,8 +22,8 @@ versions:
   - version: "2.7.0"
   - version: "2.7.1"
 verified: false
-lastVerified: 2026-10-03
+lastVerified: 2026-10-04
 sources:
   - url: https://github.com/Trollicus/ironbrew-2
-    title: Trollicus/ironbrew-2
-    accessed: 2026-10-03
+    title: Trollicus/ironbrew-2 — published November 18, 2019; four commits, the last on September 21, 2023
+    accessed: 2026-10-04

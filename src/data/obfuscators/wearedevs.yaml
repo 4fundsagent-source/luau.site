@@ -1,24 +1,27 @@
 name: WeAreDevs Obfuscator
-tagline: Free hosted Lua obfuscator from the WeAreDevs exploit community, built on Prometheus.
+tagline: Free hosted Lua obfuscator from the WeAreDevs exploit community, running unmodified Prometheus.
 description: >-
-  WeAreDevs offers a free web obfuscator for Roblox scripts. Public deobfuscators describe its output
-  as a Prometheus fork ("supports wearedevs fork + latest version"), and several of them handle both.
-  An open-source trace-based tool has recovered readable Lua and string constants from WeAreDevs
-  scripts since December 2025. Versions are not published, so it is tracked as a single current version.
+  WeAreDevs offers a free web obfuscator for Roblox scripts. Its page says obfuscation is handled by
+  the open-source Prometheus obfuscator, used as a backend without modifying its source code; which
+  Prometheus preset or settings it applies is not published. Deobfuscator authors still refer to its
+  output as a "wearedevs fork" of Prometheus, and several tools handle both. An open-source
+  trace-based tool has recovered readable Lua and string constants from WeAreDevs scripts since
+  December 2025. Versions are not published, so it is tracked as a single current version.
 website: https://wearedevs.net/obfuscator
 segment: legacy
 pricing: free
 basedOn: prometheus
 targets: [luau]
+# Unmodified Prometheus, but the preset WeAreDevs runs is not published, so no techniques are claimed.
 techniques: []
 versions:
   - version: current
 verified: false
-lastVerified: 2026-10-03
+lastVerified: 2026-10-04
 sources:
   - url: https://wearedevs.net/obfuscator
-    title: WeAreDevs Obfuscator
-    accessed: 2026-10-03
+    title: WeAreDevs — LuaU Obfuscator ("handled … using Prometheus Lua Obfuscator … we have not modified its source code")
+    accessed: 2026-10-04
   - url: https://github.com/hutaoshusband/Prometheus-WeAre-Devs-Dumper
     title: hutaoshusband/Prometheus-WeAre-Devs-Dumper — deobfuscator for WeAreDevs-obfuscated scripts
     accessed: 2026-10-03
