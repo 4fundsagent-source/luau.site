@@ -1,17 +1,17 @@
 name: 25ms
 author: 25ms
 kind: env-logger
-tagline: Discord-run Roblox env logger community (about 44,000 members) with a paid $10 logger and a MoonSec deobfuscation bot.
+tagline: Free, Discord-run Roblox env logger community (about 44,000 members) that also runs a MoonSec deobfuscation bot.
 description: >-
   25ms is a Discord community that bills itself as "the FIRST env logger of its kind" and says it
   offers "a lot of stuff for free". An environment logger runs a protected script inside a hooked
   Roblox Luau environment and records what it does — the services, remotes, URLs and constants it
-  touches — instead of recovering its source, so it works against any obfuscator that does not detect
-  the hooks. luau.site maintainers report a paid env logger ($10) and a MoonSec deobfuscation bot
-  alongside the free tools. None of this is documented outside Discord, so its output has not been
-  checked here, and the MoonSec bot is not tracked as a break.
+  touches — instead of recovering its source, so it gets past the anti-tamper of any obfuscator that
+  does not detect the hooks. luau.site maintainers report that its tools are free, including a MoonSec
+  deobfuscation bot. None of this is documented outside Discord, so its output has not been checked
+  here, and the MoonSec bot is not tracked as a break.
 discord: https://discord.gg/25ms
-access: paid
+access: free
 techniques: [dynamic-trace]
 outputLevel: constants
 # The Discord server was created November 14, 2024.

@@ -55,6 +55,8 @@ export interface ObfuscatorView {
   score: Score;
   /** Deobfuscators covering any version, most recent first. */
   deobfuscators: string[];
+  /** Env loggers that claim to get past its anti-tamper. Informational; they never change its status. */
+  envLoggers: { id: string; note?: string }[];
   /** The tracked obfuscator this one is a fork of or built on. */
   basedOn?: string;
   /** Tracked obfuscators that are forks of or built on this one. */
@@ -244,6 +246,9 @@ async function build(): Promise<SiteData> {
         now,
       }),
       deobfuscators: deobs,
+      envLoggers: deobEntries.flatMap((d) =>
+        d.data.bypasses.filter((b) => b.obfuscator.id === o.id).map((b) => ({ id: d.id, note: b.note })),
+      ),
       basedOn: o.data.basedOn?.id,
       derivatives: obfEntries.filter((x) => x.data.basedOn?.id === o.id).map((x) => x.id),
       lab,
@@ -535,10 +540,10 @@ export function formatVersion(v: string): string {
   return /^\d/.test(v) ? `v${v}` : v;
 }
 
-/** Version as it reads mid-sentence: "v15", "the current version", "the main branch". */
+/** Version as it reads mid-sentence: "v15", "the current version", "the main branch", 'the "Execution receipts" release'. */
 export function versionPhrase(v: string): string {
   if (/^\d/.test(v)) return `v${v}`;
   if (v === 'current') return 'the current version';
   if (v === 'main' || v === 'master') return `the ${v} branch`;
-  return v;
+  return `the "${v}" release`;
 }

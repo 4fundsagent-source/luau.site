@@ -102,6 +102,18 @@ const runs = samples.flatMap((s) =>
               its source. That rates as <span class="text-fg">{OUTPUT_META[x.outputLevel].label.toLowerCase()}</span> output here, so an env
               logger never breaks an obfuscator version on its own.
             </div>
+            {x.bypasses.length > 0 && (
+              <ul class="surface mt-4 divide-y divide-line text-sm" aria-label="Claimed anti-tamper bypasses">
+                {x.bypasses.map((b) => (
+                  <li class="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                    <a href={`/obfuscators/${b.obfuscator.id}`} class="link w-fit">
+                      {obf.get(b.obfuscator.id)?.data.name ?? b.obfuscator.id}
+                    </a>
+                    <span class="text-muted">{b.note ?? 'Claims to get past its anti-tamper; not verified by luau.site.'}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Section>
         )
       }

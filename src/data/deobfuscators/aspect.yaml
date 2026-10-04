@@ -1,0 +1,37 @@
+name: Aspect
+author: za1k & fear
+kind: env-logger
+tagline: Free Roblox env logger "made for performance" that audits executor globals and claims to run scripts from most current obfuscators.
+description: >-
+  Aspect is an environment logger for Roblox Luau executors: it runs a script in a hooked environment
+  and records what it does, auditing environment globals, inspecting table functions and tracking
+  calls, rather than recovering its source. Its site says it is trusted by more than 3,100 people,
+  scores 98% on an executor UNC test, and was tested with MoonVeil, MoonSec, older Luraph, Wynfuscate
+  and IronBrew1/2. It also compares itself favourably with other loggers such as Galactic Dumper and
+  reveal.lol. Those are the developers' claims; luau.site has not checked its output. Maintainers
+  report that it is free, and it is distributed through Discord.
+website: https://aspectt.lol
+access: free
+techniques: [dynamic-trace]
+outputLevel: constants
+# The aspectt.lol domain was registered May 24, 2026.
+firstSeen: 2026-05
+maintenance: active
+# As claimed on aspectt.lol ("Tested with moonveil, moonsec, old luraph, wynfuscate, ib1/ib2").
+bypasses:
+  - obfuscator: moonveil
+  - obfuscator: moonsec
+  - obfuscator: luraph
+    note: Claimed for older Luraph versions; which ones is not stated.
+  - obfuscator: wynfuscate
+  - obfuscator: ironbrew1
+  - obfuscator: ironbrew-2
+verified: false
+lastVerified: 2026-10-04
+sources:
+  - url: https://aspectt.lol
+    title: Aspect — "roblox env logger made for performance" (features and tested obfuscators)
+    accessed: 2026-10-04
+  - url: https://rdap.org/domain/aspectt.lol
+    title: RDAP — aspectt.lol registered May 24, 2026
+    accessed: 2026-10-04

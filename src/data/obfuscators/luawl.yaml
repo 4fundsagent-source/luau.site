@@ -10,9 +10,10 @@ description: >-
   says each run goes through a custom Lua VM on a non-standard instruction set and returns a new,
   uniquely obfuscated build. luawl is in heavy beta and access starts with a demo request. Plans are a
   free Starter tier with credit-based obfuscations, Basic at $4 a month and Pro at $11 a month (both
-  billed yearly). A public changelog has dated updates rather than version numbers, from the
-  protected execution model (January 20, 2026) to verification records for each run (July 23,
-  2026). Its static protections can be tested with a public crackmes.one challenge
+  billed yearly). Its public changelog has dated, named releases rather than version numbers, from
+  the protected execution model (January 20, 2026) to verification records for each run (July 23,
+  2026); luau.site tracks each one as a version. Its static protections can be tested with a public
+  crackmes.one challenge
   (luawl-challenge-v1.2, run with Lune), rated 5.4/6 for difficulty and unsolved with a $150 bounty
   as of October 4, 2026, after 541 downloads and no writeups. The challenge's labels, set by luawl's
   own uploader account, list string encryption, runtime decryption, a VM, control-flow obfuscation
@@ -21,7 +22,7 @@ website: https://luawl.org
 vendor: Luawl, Inc.
 since: 2026
 pricing: freemium
-# Dated changelog entries, but no version numbers.
+# Dated, named changelog entries, but no version numbers.
 disclosure: public
 availability: request-only
 beta: true
@@ -47,11 +48,38 @@ challenges:
       - url: https://crackmes.one/crackme/6a84e079184836c0dbe7d836
         title: crackmes.one — luawl-challenge-v1.2 (difficulty, quality, downloads and writeups)
         accessed: 2026-10-04
+# Each dated changelog release is tracked as a version (named after its changelog title).
 versions:
-  - version: current
+  - version: Protected execution model
+    released: 2026-01-20
+    notes: Scripts prepared for the protected execution model; the loader returns protected output only for a valid execution.
+    sources:
+      - url: https://luawl.org/changelog
+        title: luawl changelog — January 20, 2026
+        accessed: 2026-10-04
+  - version: Loader authorization controls
+    released: 2026-03-12
+    notes: Per-project execution requirements checked before protected output is returned; webhooks for completed runs.
+    sources:
+      - url: https://luawl.org/changelog
+        title: luawl changelog — March 12, 2026
+        accessed: 2026-10-04
+  - version: Execution receipts
+    released: 2026-05-14
+    notes: A verification record for every completed run.
+    sources:
+      - url: https://luawl.org/changelog
+        title: luawl changelog — May 14, 2026
+        accessed: 2026-10-04
+  - version: Privacy and transparency
+    released: 2026-07-23
     notes: >-
-      Heavy beta, updated daily per the vendor; no numbered versions are published. The changelog
-      lists dated updates on January 20, March 12, May 14 and July 23, 2026.
+      Run records can be reviewed independently without exposing the protected program. Heavy beta,
+      updated daily per the vendor.
+    sources:
+      - url: https://luawl.org/changelog
+        title: luawl changelog — July 23, 2026
+        accessed: 2026-10-04
 verified: false
 lastVerified: 2026-10-04
 # luawl.org opts out of AI input in robots.txt; luau.site has the owner's permission to use it
