@@ -32,6 +32,8 @@ export interface VersionView {
   version: string;
   /** Release date unknown: already out by this date (timeline placement only). */
   seen?: PartialDate;
+  /** Rolling builds: the last build this group covers. */
+  until?: PartialDate;
   notes?: string;
   sources: SourceRef[];
   s: VersionStatus;
@@ -210,6 +212,7 @@ async function build(): Promise<SiteData> {
       return {
         version: v.version,
         seen: v.seen ? parseDate(v.seen) : undefined,
+        until: v.until ? parseDate(v.until) : undefined,
         notes: v.notes,
         sources: v.sources,
         s,

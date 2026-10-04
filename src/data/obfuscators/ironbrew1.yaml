@@ -12,8 +12,8 @@ description: >-
   publishes no runtime list or changelog and does not describe a link to the original IronBrew or
   IronBrew 2. There is no public deobfuscator, and unlike some obfuscators its scripts cannot simply be
   handed to an AI model, but sample-specific deobfuscations have been shown on v3rm: builds from May
-  18 to June 4, 2026 on June 13, and an early September build on September 22. The builds in between
-  and the current mid-September builds have not been deobfuscated.
+  18 to June 4, 2026 on June 13, and a single September build on September 22. The builds in between
+  and since have not been deobfuscated.
 website: https://ironbrew1.com
 docs: https://ironbrew1.com/settings
 discord: https://discord.ironbrew1.com/
@@ -23,11 +23,19 @@ pricing: paid
 # against Wynfuscate, a Roblox obfuscator.
 targets: [luau]
 techniques: [vm, cff, string-encryption, anti-tamper, compression, macros]
-# IronBrew1 publishes no version numbers, so builds are grouped by what happened to them. The ~ dates
-# are approximate: the exact days new builds went out are not public.
+# One product with unnumbered builds: the timeline draws a single bar, red over deobfuscated builds.
+rolling: true
+observation:
+  since: 2026-09-22
+  note: >-
+    Maintainers have tracked IronBrew1 builds since the September 22, 2026 deobfuscation; no later
+    sample-specific or tool-based deobfuscation is known.
+# Builds are grouped by what happened to them. The ~ date is approximate: the exact day the next
+# build went out is not public.
 versions:
-  - version: May–June 2026 builds
+  - version: May 18 – June 4, 2026 builds
     released: 2026-05-18
+    until: 2026-06-04
     status: broken
     statusNote: >-
       Sample-specific deobfuscation of builds from May 18 to June 4, 2026, shown in a v3rm thread on
@@ -38,16 +46,15 @@ versions:
       - url: https://v3rm.net/threads/ib1-ironbrew1-deobfuscation.30118/
         title: v3rm — "IB1 / IronBrew1 deobfuscation", posted June 13, 2026 (reported by luau.site maintainers)
         accessed: 2026-10-04
-  - version: June–August 2026 builds
+  - version: June – September 2026 builds
     released: "~2026-06-05"
     notes: >-
       Builds after June 4, 2026. They were already out when the June 13 deobfuscation was posted and were
       never deobfuscated (maintainer report).
-  - version: Early September 2026 build
-    released: "~2026-09-01"
+  - version: September 2026 build
     status: broken
     statusNote: >-
-      Sample-specific deobfuscation of an early September 2026 build, shown in a v3rm thread on September
+      Sample-specific deobfuscation of a single September 2026 build, shown in a v3rm thread on September
       22, 2026; no public tool.
     brokenOn: 2026-09-22
     breakAccess: private
@@ -56,10 +63,9 @@ versions:
         title: v3rm — "IronBrew1 anti-tamper and deobfuscation", September 22, 2026 (reported by luau.site maintainers)
         accessed: 2026-10-04
   - version: current
-    released: "~2026-09-15"
     notes: >-
-      Builds since mid-September 2026; no deobfuscation is known (maintainer report). No numbered
-      versions or changelog are published on the website.
+      Builds since the September 22, 2026 deobfuscation; no deobfuscation of them is known (maintainer
+      report). No numbered versions or changelog are published on the website.
 verified: false
 lastVerified: 2026-10-04
 sources:
