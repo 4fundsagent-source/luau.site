@@ -6,7 +6,7 @@
  * last 90 days a little less, and open-source or legacy targets barely at all.
  * Craft (30) — output quality, upkeep and availability — is scaled by that same
  * relevance, so a polished tool for a dead obfuscator still ranks low. Decompilers
- * break nothing on their own and get a flat, low relevance.
+ * and env loggers break nothing on their own and get a flat, low relevance.
  */
 import { daysBetween, type PartialDate } from './dates';
 import { tierFor, type Tier } from './score';
@@ -17,6 +17,8 @@ export const DEOB_WEIGHTS = { impact: 70, craft: 30 } as const;
 export const SEGMENT_WEIGHT: Record<Segment, number> = { current: 1, legacy: 0.2 };
 /** Relevance of a decompiler, which targets bytecode rather than any obfuscator. */
 export const DECOMPILER_RELEVANCE = 0.3;
+/** Relevance of an env logger, which records what any script does instead of recovering its source. */
+export const ENV_LOGGER_RELEVANCE = 0.3;
 export const VERSION_WEIGHT = { latest: 1, recent: 0.85, older: 0.5 } as const;
 /** A version superseded this recently still counts as nearly current. */
 export const RECENT_DAYS = 90;
@@ -75,9 +77,9 @@ export function computeDeobScore(input: DeobScoreInput): DeobScore {
   let relevance = 0;
   let best: DeobCoverageInput | undefined;
 
-  if (input.kind === 'decompiler') {
-    relevance = DECOMPILER_RELEVANCE;
-    impactShare = DECOMPILER_RELEVANCE * DIFFICULTY_WEIGHT.unknown;
+  if (input.kind === 'decompiler' || input.kind === 'env-logger') {
+    relevance = input.kind === 'decompiler' ? DECOMPILER_RELEVANCE : ENV_LOGGER_RELEVANCE;
+    impactShare = relevance * DIFFICULTY_WEIGHT.unknown;
   } else {
     for (const c of input.coverage) {
       const r = relevanceOf(c, input.now);

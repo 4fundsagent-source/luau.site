@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { formatVersion, getSiteData, listRuntimes } from '~/lib/data';
 import { NAV } from '~/lib/site';
-import { DEOB_TECHNIQUES, DEOB_TECHNIQUE_META, STATUS_META, TECHNIQUES, TECHNIQUE_META } from '~/lib/taxonomy';
+import { DEOB_KIND_LABEL, DEOB_TECHNIQUES, DEOB_TECHNIQUE_META, STATUS_META, TECHNIQUES, TECHNIQUE_META } from '~/lib/taxonomy';
 
 export const GET: APIRoute = async () => {
   const { obfuscators, deobfuscators, auth, samples } = await getSiteData();
@@ -27,12 +27,14 @@ export const GET: APIRoute = async () => {
       })),
     ),
     ...deobfuscators.map((d) => ({
-      kind: d.data.kind === 'decompiler' ? 'Decompiler' : 'Deobfuscator',
+      kind: DEOB_KIND_LABEL[d.data.kind],
       title: d.data.name,
       subtitle:
         d.data.kind === 'decompiler'
           ? `by ${d.data.author} · decompiles ${listRuntimes(d.data.decompiles)} bytecode`
-          : `by ${d.data.author} · targets ${[...new Set(d.coverage.map((c) => c.obfuscatorName))].join(', ')}`,
+          : d.data.kind === 'env-logger' && !d.coverage.length
+            ? `by ${d.data.author} · logs what scripts do at runtime`
+            : `by ${d.data.author} · targets ${[...new Set(d.coverage.map((c) => c.obfuscatorName))].join(', ')}`,
       href: `/deobfuscators/${d.id}`,
       keywords: d.data.tagline,
     })),

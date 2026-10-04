@@ -75,7 +75,7 @@ export interface CoverageView {
 }
 
 /** Directory group of a tool: what it is useful against. */
-export type DeobGroup = 'current' | 'legacy' | 'decompiler';
+export type DeobGroup = 'current' | 'legacy' | 'decompiler' | 'env-logger';
 
 export interface DeobfuscatorView {
   id: string;
@@ -83,7 +83,7 @@ export interface DeobfuscatorView {
   firstSeen?: PartialDate;
   coverage: CoverageView[];
   breaksLatest: boolean;
-  /** Tools for commercial obfuscators, tools for legacy ones, or decompilers. */
+  /** Tools for commercial obfuscators, tools for legacy ones, decompilers or env loggers. */
   group: DeobGroup;
   score: DeobScore;
   stale: boolean;
@@ -297,8 +297,8 @@ async function build(): Promise<SiteData> {
       firstSeen: d.data.firstSeen ? parseDate(d.data.firstSeen) : undefined,
       coverage,
       breaksLatest: coverage.some((c) => c.isLatest && c.effect === 'break'),
-      group: (d.data.kind === 'decompiler'
-        ? 'decompiler'
+      group: (d.data.kind !== 'deobfuscator'
+        ? d.data.kind
         : coverage.some((c) => c.segment === 'current')
           ? 'current'
           : 'legacy') as DeobGroup,
@@ -477,7 +477,9 @@ function deriveEvents(
       summary:
         d.data.kind === 'decompiler'
           ? `Decompiles ${listRuntimes(d.data.decompiles)} bytecode.`
-          : `Targets ${targets}.`,
+          : d.data.kind === 'env-logger' && !targets
+            ? 'Logs what a protected script does at runtime.'
+            : `Targets ${targets}.`,
       href: `/deobfuscators/${d.id}`,
       deobfuscator: d.id,
       sources: d.data.sources,

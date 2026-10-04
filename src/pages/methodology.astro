@@ -18,6 +18,7 @@ import {
   DEOB_WEIGHTS,
   DIFFICULTY_WEIGHT,
   EFFECT_WEIGHT,
+  ENV_LOGGER_RELEVANCE,
   OUTPUT_WEIGHT,
   RECENT_DAYS,
   SEGMENT_WEIGHT,
@@ -211,14 +212,16 @@ const toc = [
 
       <h2 id="deobfuscator-score">Deobfuscator Score</h2>
       <p>
-        Deobfuscators and decompilers are ranked by how much they matter to the scene today. What a tool breaks counts most; a tool for a dead or
-        open-source obfuscator ranks low however polished it is.
+        Deobfuscators, decompilers and env loggers are ranked by how much they matter to the scene today. What a tool breaks counts most; a
+        tool for a dead or open-source obfuscator ranks low however polished it is.
       </p>
       <p>
         Each version a tool covers has a <strong>relevance</strong>: {SEGMENT_WEIGHT.current} for a commercial obfuscator and {SEGMENT_WEIGHT.legacy}{' '}
         for a legacy one, times {VERSION_WEIGHT.latest} for the current version, {VERSION_WEIGHT.recent} for a version replaced in the last{' '}
         {RECENT_DAYS} days, and {VERSION_WEIGHT.older} for anything older. Decompilers break no obfuscator on their own and get a flat relevance of{' '}
-        {DECOMPILER_RELEVANCE}.
+        {DECOMPILER_RELEVANCE}. Env loggers, which run a protected script in a hooked environment and record what it does instead of
+        recovering its source, get a flat relevance of {ENV_LOGGER_RELEVANCE}; their logs rate as constants-level output, so they never
+        break a version on their own, and the access weight below ranks a paid logger under a free or open-source one.
       </p>
       <table>
         <thead><tr><th>Component</th><th>Weight</th><th>Basis</th></tr></thead>

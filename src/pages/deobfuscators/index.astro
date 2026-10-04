@@ -28,6 +28,12 @@ const GROUPS: { group: DeobGroup; title: string; description: string }[] = [
     title: 'Decompilers',
     description: 'General tools that turn standard bytecode back into source. They break no obfuscator on their own, but finish the job once a VM is lifted.',
   },
+  {
+    group: 'env-logger',
+    title: 'Environment loggers',
+    description:
+      'Tools that run a protected script in a hooked environment and log what it does — services, remotes, URLs and constants — without recovering its source. They work against any obfuscator that does not detect them.',
+  },
 ];
 const groups = GROUPS.map((g) => ({ ...g, items: deobfuscators.filter((d) => d.group === g.group) })).filter((g) => g.items.length);
 

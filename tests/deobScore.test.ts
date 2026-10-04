@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseDate } from '../src/lib/dates';
-import { computeDeobScore, versionWeight, VERSION_WEIGHT, type DeobScoreInput } from '../src/lib/deobScore';
+import { computeDeobScore, ENV_LOGGER_RELEVANCE, versionWeight, VERSION_WEIGHT, type DeobScoreInput } from '../src/lib/deobScore';
 import { segmentOf } from '../src/lib/taxonomy';
 
 const now = new Date(Date.UTC(2026, 9, 4));
@@ -57,6 +57,20 @@ describe('computeDeobScore', () => {
       coverage: [{ obfuscator: 'moonveil', version: '1.4.5', segment: 'current', latest: true, effect: 'partial', difficulty: 'easy' }],
     });
     expect(partial.impact).toBeLessThan(easyCurrent.impact);
+  });
+
+  const envLogger = (access: DeobScoreInput['access']) =>
+    computeDeobScore({ ...base, kind: 'env-logger', access, outputLevel: 'constants', coverage: [] });
+
+  it('gives env loggers a flat relevance and no named target', () => {
+    const free = envLogger('free');
+    expect(free.relevance).toBe(ENV_LOGGER_RELEVANCE);
+    expect(free.best).toBeUndefined();
+  });
+
+  it('ranks a paid env logger below a free one, and both below a real break', () => {
+    expect(envLogger('paid').total).toBeLessThan(envLogger('free').total);
+    expect(envLogger('free').total).toBeLessThan(easyCurrent.total);
   });
 });
 
