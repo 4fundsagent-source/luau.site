@@ -37,7 +37,8 @@ const unrated = obfuscators.filter((o) => o.score.unrated);
 
 const fastest = obfuscators
   .filter((o) => o.segment === 'current')
-  .flatMap((o) => o.versions.filter((v) => v.s.daysToBreak !== undefined).map((v) => ({ o, v })))
+  // Manual breaks (sample-specific or AI-assisted) have no tool to name, so they stay out of this table.
+  .flatMap((o) => o.versions.filter((v) => v.s.daysToBreak !== undefined && !v.s.manual).map((v) => ({ o, v })))
   .sort((a, b) => a.v.s.daysToBreak! - b.v.s.daysToBreak!);
 ---
 

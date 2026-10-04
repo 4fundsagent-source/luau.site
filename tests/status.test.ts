@@ -95,6 +95,30 @@ describe('deriveVersionStatus', () => {
     const s = deriveVersionStatus({ version: '14.7', status: 'broken', statusNote: 'Confirmed privately' }, []);
     expect(s.status).toBe('broken');
     expect(s.overridden).toBe(true);
+    expect(s.manual).toBe(true);
+    expect(s.brokenOn).toBeUndefined();
+  });
+
+  it('dates a manual break and takes its exposure from breakAccess', () => {
+    const s = deriveVersionStatus(
+      { version: 'May builds', released: '2026-05-18', status: 'broken', statusNote: 'Sample-specific', brokenOn: '2026-06-13', breakAccess: 'private' },
+      [],
+    );
+    expect(s.manual).toBe(true);
+    expect(s.brokenOn?.raw).toBe('2026-06-13');
+    expect(s.daysToBreak).toBe(26);
+    expect(s.exposure).toBe('private');
+    expect(s.decisive).toEqual([]);
+  });
+
+  it('prefers a real tool break over a manual date', () => {
+    const s = deriveVersionStatus(
+      { version: '15', released: '2026-08-12', status: 'broken', statusNote: 'Also seen privately', brokenOn: '2026-08-20', breakAccess: 'private' },
+      collectHits('luraph', '15', [luraphDeob]),
+    );
+    expect(s.manual).toBe(false);
+    expect(s.brokenOn?.raw).toBe('2026-09-02');
+    expect(s.exposure).toBe('open-source');
   });
 
   it('uses per-target since dates when present', () => {

@@ -1,28 +1,16 @@
 name: luawl
-tagline: Server-gated Luau runtime obfuscator (a DRM) — a fresh, polymorphic build per execution. Crackme unsolved, $150 bounty.
+tagline: Server-gated Luau runtime obfuscator (a DRM).
 description: >-
-  luawl describes itself as a DRM rather than a file obfuscator. Scripts are obfuscated per execution
-  and delivered from its servers at runtime, so there is no static file to save and no loadstring to
-  hook, and replayed responses are rejected. Code runs on a highly polymorphic stack VM, every user and
-  execution gets a different build, the vendor says it updates daily, and it uses white-box
-  cryptography plus server-side tracking of tamper flags. It also claims self-attestable,
-  enclave-based servers. These are the vendor's claims from its release post and website, where luawl
-  says each run goes through a custom Lua VM on a non-standard instruction set and returns a new,
-  uniquely obfuscated build. luawl is in heavy beta and access starts with a demo request. Plans are a
-  free Starter tier with credit-based obfuscations, Basic at $4 a month and Pro at $11 a month (both
-  billed yearly). Its public changelog has dated, named releases rather than version numbers, from
-  the protected execution model (January 20, 2026) to verification records for each run (July 23,
-  2026); luau.site tracks each one as a version. Its static protections can be tested with a public
-  crackmes.one challenge
-  (luawl-challenge-v1.2, run with Lune), rated 5.4/6 for difficulty and unsolved with a $150 bounty
-  as of October 4, 2026, after 541 downloads and no writeups. The challenge's labels, set by luawl's
-  own uploader account, list string encryption, runtime decryption, a VM, control-flow obfuscation
-  and a state-machine dispatcher.
+  luawl obfuscates at runtime: a loader requests each run from its servers, where the script is
+  virtualized on a custom, non-standard Lua VM and returned as a fresh build, so there is no static
+  file to save. Its protected execution model launched on January 20, 2026; later changelog updates
+  changed delivery and verification, not the obfuscation. A public crackmes.one challenge
+  (luawl-challenge-v1.2) is rated 5.4/6 and still unsolved, with a $150 bounty.
 website: https://luawl.org
 vendor: Luawl, Inc.
 since: 2026
 pricing: freemium
-# Dated, named changelog entries, but no version numbers.
+# Dated changelog entries, but no version numbers.
 disclosure: public
 availability: request-only
 beta: true
@@ -48,37 +36,17 @@ challenges:
       - url: https://crackmes.one/crackme/6a84e079184836c0dbe7d836
         title: crackmes.one — luawl-challenge-v1.2 (difficulty, quality, downloads and writeups)
         accessed: 2026-10-04
-# Each dated changelog release is tracked as a version (named after its changelog title).
+# The obfuscation has not changed since the January release; later changelog entries are about
+# delivery and verification, so they are not tracked as versions.
 versions:
-  - version: Protected execution model
+  - version: current
     released: 2026-01-20
-    notes: Scripts prepared for the protected execution model; the loader returns protected output only for a valid execution.
-    sources:
-      - url: https://luawl.org/changelog
-        title: luawl changelog — January 20, 2026
-        accessed: 2026-10-04
-  - version: Loader authorization controls
-    released: 2026-03-12
-    notes: Per-project execution requirements checked before protected output is returned; webhooks for completed runs.
-    sources:
-      - url: https://luawl.org/changelog
-        title: luawl changelog — March 12, 2026
-        accessed: 2026-10-04
-  - version: Execution receipts
-    released: 2026-05-14
-    notes: A verification record for every completed run.
-    sources:
-      - url: https://luawl.org/changelog
-        title: luawl changelog — May 14, 2026
-        accessed: 2026-10-04
-  - version: Privacy and transparency
-    released: 2026-07-23
     notes: >-
-      Run records can be reviewed independently without exposing the protected program. Heavy beta,
-      updated daily per the vendor.
+      The protected execution model from luawl's first changelog entry. Later updates (March to July
+      2026) covered loader authorization, run receipts and verification, not the obfuscation.
     sources:
       - url: https://luawl.org/changelog
-        title: luawl changelog — July 23, 2026
+        title: luawl changelog — "Protected execution model", January 20, 2026
         accessed: 2026-10-04
 verified: false
 lastVerified: 2026-10-04

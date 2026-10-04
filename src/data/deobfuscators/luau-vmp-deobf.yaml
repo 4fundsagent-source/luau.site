@@ -23,8 +23,15 @@ targets:
     difficulty: hard
     notes: '"Safe public Luraph v14.7 devirtualization" committed August 8, 2026.'
   - obfuscator: luraph
-    versions: ["14.8", "14.9"]
+    versions: ["14.8"]
     support: partial
+    difficulty: hard
+    notes: README claims v14.x loader support; only v14.7 is covered by its regression corpus.
+  - obfuscator: luraph
+    versions: ["14.9"]
+    support: partial
+    # v14.9 shipped August 6, 2026, after this tool first appeared, so the claim's date is unknown.
+    since: unknown
     difficulty: hard
     notes: README claims v14.x loader support; only v14.7 is covered by its regression corpus.
   - obfuscator: moonveil

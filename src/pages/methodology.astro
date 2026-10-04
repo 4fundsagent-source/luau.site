@@ -87,6 +87,17 @@ const toc = [
         A maintainer can override a derived status in rare cases, for example a break confirmed privately. An override must include a written note and
         sources, and it is labelled on the page.
       </p>
+      <p>
+        Some breaks have no tool behind them. A <strong>sample-specific deobfuscation</strong> shown by one researcher, or a version that public AI
+        models can deobfuscate on their own, is recorded as a manual break with the date it became known and how available it is. Sample-specific
+        work counts as <em>private</em>, so the version keeps the credit of a privately broken one; anything anyone can repeat, such as pasting a
+        script into a public AI chat, counts as <em>free</em>. These breaks appear on the timeline and in the event log, but not in the fastest-break
+        table, which names the first tool.
+      </p>
+      <p>
+        When a version's release date is unknown but it was already out by some date, that date only places it on the timeline; it never feeds time
+        to break or the proving period.
+      </p>
 
       <h2 id="score">Security Score</h2>
       <p>The score runs from 0 to 100 and has four components, all evaluated against the obfuscator's <em>current</em> version:</p>

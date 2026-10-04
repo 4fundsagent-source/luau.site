@@ -30,6 +30,8 @@ export type SourceRef = ObfData['sources'][number];
 
 export interface VersionView {
   version: string;
+  /** Release date unknown: already out by this date (timeline placement only). */
+  seen?: PartialDate;
   notes?: string;
   sources: SourceRef[];
   s: VersionStatus;
@@ -207,6 +209,7 @@ async function build(): Promise<SiteData> {
       if (isLatest && !s.released && observedSince) s.observedSince = observedSince;
       return {
         version: v.version,
+        seen: v.seen ? parseDate(v.seen) : undefined,
         notes: v.notes,
         sources: v.sources,
         s,
@@ -371,14 +374,16 @@ function deriveStanding(obfuscators: ObfuscatorView[], now: Date): StandingView[
     const challenge = o.data.challenges
       .filter((c) => c.status === 'open')
       .sort((a, b) => compareDates(parseDate(a.posted), parseDate(b.posted)))[0];
-    const since = challenge ? parseDate(challenge.posted) : (s.released ?? o.observedSince);
+    // A dated version has stood since its release; an open challenge only starts the clock for an
+    // undated one (it is still reported, and drawn on the timeline, either way).
+    const since = s.released ?? (challenge ? parseDate(challenge.posted) : o.observedSince);
     if (!since) continue;
     out.push({
       obfuscator: o.id,
       version: o.latest.version,
       since,
       days: Math.max(0, daysBetween(since, now)),
-      reason: challenge ? 'challenge' : s.released ? 'release' : 'observation',
+      reason: s.released ? 'release' : challenge ? 'challenge' : 'observation',
       challenge,
     });
   }
@@ -410,14 +415,30 @@ function deriveEvents(
         });
       }
       if (v.s.status === 'broken' && v.s.brokenOn) {
-        const key = `${v.s.brokenOn.raw}|${v.s.decisive[0]!.deobfuscator}`;
+        const key = `${v.s.brokenOn.raw}|${v.s.decisive[0]?.deobfuscator ?? `manual-${v.version}`}`;
         breaks.set(key, [...(breaks.get(key) ?? []), v]);
       }
     }
     for (const group of breaks.values()) {
       const first = group[0]!;
-      const tool = deob.get(first.s.decisive[0]!.deobfuscator)!;
       const timed = group.find((v) => v.s.daysToBreak !== undefined);
+      if (first.s.manual) {
+        // No tool behind it: the override's note says how it was broken.
+        events.push({
+          id: `break-${o.id}-${group.map((v) => v.version).join('-')}`,
+          date: first.s.brokenOn!,
+          kind: 'break',
+          title: /^\d/.test(first.version) ? `${o.data.name} ${formatVersion(first.version)} broken` : `${o.data.name} broken`,
+          summary:
+            (first.s.statusNote ?? 'Broken without a public tool.') +
+            (timed ? ` ${formatDuration(timed.s.daysToBreak!, timed.s.fuzzy)} after release.` : ''),
+          href: `/obfuscators/${o.id}`,
+          obfuscator: o.id,
+          sources: first.sources.length ? first.sources : o.data.sources,
+        });
+        continue;
+      }
+      const tool = deob.get(first.s.decisive[0]!.deobfuscator)!;
       breakDates.add(`${tool.id}|${first.s.brokenOn!.raw}`);
       events.push({
         id: `break-${o.id}-${group.map((v) => v.version).join('-')}`,

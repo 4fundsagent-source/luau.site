@@ -20,14 +20,26 @@ disclosure: public
 # Per the FAQ: "the latest patches of all major Lua releases after v5.1, LuaJIT, and Luau".
 targets: [luau, lua51, lua52, lua53, lua54, luajit]
 techniques: [vm, polymorphic-vm, const-encryption, string-encryption, cff, anti-tamper, macros]
+# Release dates from Luraph's Discord announcements, as reported by the luau.site maintainers.
 versions:
-  # TODO(verify): exact release dates for the 14.x line.
   - version: "14.7"
+    released: 2026-02-16
+    notes: >-
+      Added SMALL_INTEGERS (32-bit integers on Lua 5.3/5.4); up to 30% faster obfuscation of large
+      scripts, smaller constant serialization, faster LPH_ENCFUNC and deserialization on Luau, and
+      anti-tamper improvements.
   - version: "14.8"
+    released: 2026-03-25
+    notes: Improved internal key generation; fixed random errors on Roblox.
   - version: "14.9"
+    released: 2026-08-06
   - version: "15"
-    # Month only: reported as an August 2026 release.
-    released: "2026-08"
+    released: 2026-08-11
+    notes: Released for the Node.js platform only at first.
+    sources:
+      - url: https://lura.ph/dashboard/documents/v15
+        title: Luraph v15 documentation (dashboard)
+        accessed: 2026-10-04
   - version: "15.1"
     released: 2026-10-02
     notes: Reported by the luau.site maintainers; changelog link pending.

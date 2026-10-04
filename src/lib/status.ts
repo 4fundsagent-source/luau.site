@@ -33,6 +33,10 @@ export interface VersionLike {
   released?: string;
   status?: Status;
   statusNote?: string;
+  /** Manual break with no tool behind it: when it became known. */
+  brokenOn?: string;
+  /** Manual break: how available it is (private for sample-specific work). */
+  breakAccess?: Access;
 }
 
 /** One deobfuscator's coverage of one obfuscator version. */
@@ -72,6 +76,8 @@ export interface VersionStatus {
    */
   observedSince?: PartialDate;
   overridden: boolean;
+  /** Broken by a manual override with no tool behind it (sample-specific or AI-assisted work). */
+  manual: boolean;
   statusNote?: string;
 }
 
@@ -119,11 +125,16 @@ export function deriveVersionStatus(version: VersionLike, hits: Hit[]): VersionS
   if (version.status) status = version.status;
 
   const decisive = status === 'broken' ? breaks : status === 'partial' ? partials : [];
-  const brokenOn = status === 'broken' ? breaks[0]?.date : undefined;
+  // A manual break carries its own date and availability, since no tool supplies them.
+  const manual = status === 'broken' && !breaks.length;
+  const brokenOn = status === 'broken' ? (manual ? dateOf(version.brokenOn) : breaks[0]?.date) : undefined;
   const daysToBreak = brokenOn && released ? Math.max(0, daysBetween(released, brokenOn)) : undefined;
   const exposing = [...breaks, ...partials.filter((h) => h.support === 'full' && h.outputLevel === 'bytecode')];
-  const exposure =
-    status === 'broken' && breaks.length ? EXPOSURE_ORDER.find((a) => exposing.some((b) => b.access === a)) : undefined;
+  const exposure = manual
+    ? version.breakAccess
+    : status === 'broken' && breaks.length
+      ? EXPOSURE_ORDER.find((a) => exposing.some((b) => b.access === a))
+      : undefined;
   const difficulty = status === 'broken' ? easiestDifficulty(breaks) : undefined;
 
   return {
@@ -137,6 +148,7 @@ export function deriveVersionStatus(version: VersionLike, hits: Hit[]): VersionS
     exposure,
     difficulty,
     overridden,
+    manual,
     statusNote: version.statusNote,
   };
 }

@@ -11,7 +11,7 @@
  * Static SVG at build time; a small script adds tooltips. The event log on
  * /timeline is the accessible list view of the same data.
  */
-import { formatDate, formatDuration, formatPlainDate } from '~/lib/dates';
+import { formatDate, formatDuration, formatPlainDate, parseDate } from '~/lib/dates';
 import { formatVersion, type SiteData } from '~/lib/data';
 import { STATUS_META, type DisplayStatus, type Status } from '~/lib/taxonomy';
 import StatusIcon from './StatusIcon.astro';
@@ -75,11 +75,13 @@ const lanes: Lane[] = [];
 for (const o of data.obfuscators) {
   if (only && !only.includes(o.id)) continue;
   const items: Item[] = [];
-  const dated = o.versions.filter((v) => v.s.released);
+  // Dated versions, plus undated ones known to have been out by some date ("seen").
+  const dated = o.versions.filter((v) => v.s.released || v.seen);
+  const startOf = (v: (typeof o.versions)[number]) => (v.s.released ?? v.seen)!;
 
   dated.forEach((v, i) => {
-    const start = v.s.released!.date.getTime();
-    const next = dated[i + 1]?.s.released?.date.getTime();
+    const start = startOf(v).date.getTime();
+    const next = dated[i + 1] ? startOf(dated[i + 1]!).date.getTime() : undefined;
     const broken = v.s.status === 'broken' && v.s.brokenOn ? v.s.brokenOn.date.getTime() : undefined;
     const end = Math.max(broken ?? next ?? now, start + DAY);
     if (end < t0) return;
@@ -98,39 +100,42 @@ for (const o of data.obfuscators) {
       tip: [
         `${o.data.name} ${formatVersion(v.version)}`,
         STATUS_META[v.s.status].label,
-        `Released ${formatDate(v.s.released)}`,
+        v.s.released ? `Released ${formatDate(v.s.released)}` : `Out by ${formatDate(v.seen)} · release date unknown`,
         broken
           ? `Broken ${formatDate(v.s.brokenOn)}${v.s.daysToBreak !== undefined ? ` · ${formatDuration(v.s.daysToBreak, v.s.fuzzy)}` : ''}`
           : endKind === 'superseded'
-            ? `Superseded ${formatDate(dated[i + 1]!.s.released)}`
+            ? `Superseded ${formatDate(startOf(dated[i + 1]!))}`
             : 'Still current',
+        ...(v.s.manual && v.s.statusNote ? [v.s.statusNote] : []),
       ],
       from: 0,
       to: 0,
     });
   });
 
-  // An undated version still standing: from its open challenge (or observation start) to today.
-  const st = data.standing.find((s) => s.obfuscator === o.id && s.reason !== 'release');
+  // An open public challenge (on any current version), or an undated version being watched:
+  // a dashed bar from the challenge or observation start to today.
+  const st = data.standing.find((s) => s.obfuscator === o.id && (s.challenge || s.reason === 'observation'));
   if (st) {
     const c = st.challenge;
+    const watchStart = c ? parseDate(c.posted) : st.since;
     items.push({
       kind: 'watch',
       label: c
         ? `${/crackme/i.test(c.platform) ? 'crackme' : 'challenge'}${c.bounty ? ` · ${c.bounty} bounty` : ''} · unsolved`
         : `watching · day ${st.days}`,
-      start: st.since.date.getTime(),
+      start: watchStart.date.getTime(),
       end: now,
       status: 'holding',
       endKind: 'ongoing',
-      clipped: st.since.date.getTime() < t0,
+      clipped: watchStart.date.getTime() < t0,
       trophy: Boolean(c),
       row: 0,
       href: c ? `/obfuscators/${o.id}#challenges` : `/obfuscators/${o.id}`,
       tip: [
         `${o.data.name} ${formatVersion(st.version)}`,
         `Unbroken for ${st.days} days`,
-        c ? `Public ${c.platform} challenge posted ${formatDate(st.since)}` : `Watched since ${formatDate(st.since)}`,
+        c ? `Public ${c.platform} challenge posted ${formatDate(watchStart)}` : `Watched since ${formatDate(st.since)}`,
         ...(c ? [`Still unsolved${c.bounty ? ` · ${c.bounty} bounty` : ''}`] : []),
       ],
       from: 0,
@@ -141,13 +146,14 @@ for (const o of data.obfuscators) {
   // Undated versions broken inside the window, grouped by day.
   const crosses = new Map<string, typeof o.versions>();
   for (const v of o.versions) {
-    if (v.s.released || v.s.status !== 'broken' || !v.s.brokenOn) continue;
+    if (v.s.released || v.seen || v.s.status !== 'broken' || !v.s.brokenOn) continue;
     if (v.s.brokenOn.date.getTime() < t0) continue;
     crosses.set(v.s.brokenOn.raw, [...(crosses.get(v.s.brokenOn.raw) ?? []), v]);
   }
   for (const group of crosses.values()) {
     const when = group[0]!.s.brokenOn!;
-    const tool = data.deob.get(group[0]!.s.decisive[0]!.deobfuscator);
+    const decisive = group[0]!.s.decisive[0];
+    const tool = decisive ? data.deob.get(decisive.deobfuscator) : undefined;
     items.push({
       kind: 'cross',
       label: group.map((v) => formatVersion(v.version)).join(', '),

@@ -56,14 +56,28 @@ const version = z
   .object({
     version: z.string().min(1),
     released: date.optional(),
+    /** Release date unknown: the version was already out by this date. Only places it on the timeline. */
+    seen: date.optional(),
     notes: z.string().optional(),
     /** Manual override of the derived status. Requires a note and sources. */
     status: z.enum(STATUSES).optional(),
     statusNote: z.string().optional(),
+    /**
+     * A manual break with no tool behind it (sample-specific work, or something anyone can repeat,
+     * like pasting a script into a public AI model): when it became known, and how available it is.
+     */
+    brokenOn: date.optional(),
+    breakAccess: z.enum(ACCESS).optional(),
     sources: sources.default([]),
   })
   .refine((v) => !v.status || (v.statusNote && v.sources.length > 0), {
     message: 'A status override needs a statusNote and at least one source',
+  })
+  .refine((v) => (!v.brokenOn && !v.breakAccess) || v.status === 'broken', {
+    message: 'brokenOn and breakAccess only go with a manual "broken" status',
+  })
+  .refine((v) => !(v.seen && v.released), {
+    message: 'Use seen only when the release date is unknown',
   });
 
 const grade = z.number().int().min(0).max(4);
