@@ -1,0 +1,143 @@
+{
+  "fetchedAt": "2026-10-26",
+  "repos": {
+    "0x251/prometheus-deobfuscator": {
+      "stars": 67,
+      "forks": 31,
+      "pushedAt": "2025-08-08",
+      "archived": false
+    },
+    "0x251/prometheus-deobfuscatorv2": {
+      "stars": 53,
+      "forks": 22,
+      "pushedAt": "2025-08-08",
+      "archived": false
+    },
+    "approu/hercules-deobfuscator": {
+      "stars": 3,
+      "forks": 1,
+      "pushedAt": "2026-08-14",
+      "archived": false
+    },
+    "axomtools/ironbrew2-deobfuscator": {
+      "stars": 1,
+      "forks": 1,
+      "pushedAt": "2026-08-23",
+      "archived": false
+    },
+    "binxgtl/luau-vmp-deobf": {
+      "stars": 49,
+      "forks": 53,
+      "pushedAt": "2026-09-27",
+      "archived": false
+    },
+    "caomod2077/deobfuscator-luraph-v15": {
+      "stars": 172,
+      "forks": 90,
+      "pushedAt": "2026-10-04",
+      "archived": false
+    },
+    "gork3m/ironbrew2-deobfuscator": {
+      "stars": 26,
+      "forks": 13,
+      "pushedAt": "2021-12-25",
+      "archived": false
+    },
+    "hamiexd/luast-deobfuscator": {
+      "stars": 3,
+      "forks": 0,
+      "pushedAt": "2026-08-30",
+      "archived": false
+    },
+    "hutaoshusband/prometheus-weare-devs-dumper": {
+      "stars": 48,
+      "forks": 24,
+      "pushedAt": "2026-07-11",
+      "archived": false
+    },
+    "kiet1308/tovek": {
+      "stars": 30,
+      "forks": 10,
+      "pushedAt": "2026-10-18",
+      "archived": false
+    },
+    "kryptit/luraph-v15-v14.x-deobfuscator": {
+      "stars": 30,
+      "forks": 28,
+      "pushedAt": "2026-10-22",
+      "archived": false
+    },
+    "memcpython/psu-deobfuscator": {
+      "stars": 3,
+      "forks": 4,
+      "pushedAt": "2026-09-11",
+      "archived": false
+    },
+    "prometheus-lua/prometheus": {
+      "stars": 530,
+      "forks": 233,
+      "pushedAt": "2026-07-27",
+      "archived": false
+    },
+    "prostone4/prometheus-deobfuscator": {
+      "stars": 21,
+      "forks": 8,
+      "pushedAt": "2026-10-14",
+      "archived": false
+    },
+    "richdentistboy/moonsecv3dumper": {
+      "stars": 23,
+      "forks": 6,
+      "pushedAt": "2024-03-10",
+      "archived": true
+    },
+    "sfr-development/lua-obfuscator-clyde-protection": {
+      "stars": 54,
+      "forks": 21,
+      "pushedAt": "2026-10-04",
+      "archived": false
+    },
+    "shrimp-nz/medal": {
+      "stars": 87,
+      "forks": 82,
+      "pushedAt": "2024-11-26",
+      "archived": true
+    },
+    "sixzensed/lua-deobfuscator": {
+      "stars": 40,
+      "forks": 23,
+      "pushedAt": "2023-11-01",
+      "archived": false
+    },
+    "tr4ash/moonsec-v3-deobfuscator": {
+      "stars": 14,
+      "forks": 3,
+      "pushedAt": "2024-01-12",
+      "archived": false
+    },
+    "trollicus/ironbrew-2": {
+      "stars": 87,
+      "forks": 94,
+      "pushedAt": "2023-09-21",
+      "archived": false
+    },
+    "tupsutumppu/moonsecdeobfuscator": {
+      "stars": 92,
+      "forks": 55,
+      "pushedAt": "2025-12-30",
+      "archived": false
+    },
+    "xgladius/luaudec": {
+      "stars": 95,
+      "forks": 10,
+      "pushedAt": "2024-07-15",
+      "archived": false
+    },
+    "zeusssz/hercules-obfuscator": {
+      "stars": 235,
+      "forks": 78,
+      "pushedAt": "2026-06-17",
+      "archived": false
+    }
+  }
+}
